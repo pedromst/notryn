@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest a focused improvement to Neura.
+title: "[Idea]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What should become easier?
+      description: Describe the user's goal or difficulty before proposing a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposed behavior
+      description: Explain the smallest useful change and how someone would use it.
+    validations:
+      required: true
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Product principles
+      options:
+        - label: The idea keeps Markdown files portable.
+        - label: The idea does not require an account, cloud service or AI provider.
+        - label: The idea can be used without a mouse or has an accessible equivalent.
