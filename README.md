@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="site/index.html">Landing draft</a> ·
-  <a href="https://github.com/pedromst/notryn/releases/tag/v0.2.0-alpha.1">Private alpha download</a> ·
+  <a href="https://github.com/pedromst/notryn/releases/tag/v0.2.0-alpha.2">Private alpha download</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="SECURITY.md">Security</a> ·
   <a href="docs/PUBLIC-RELEASE-CHECKLIST.md">Release checklist</a>
@@ -30,7 +30,7 @@ Private self-contained desktop packages are available for Intel macOS and x86_64
 
 See [Private alpha installation](docs/PRIVATE-ALPHA.md) for the exact verified download, install, terminal and uninstall commands. Public distribution remains disabled while signing, licensing and release review are unfinished.
 
-The actual installable files are hosted in the [private GitHub Release](https://github.com/pedromst/notryn/releases/tag/v0.2.0-alpha.1), rather than inside the source tree.
+The actual installable files are hosted in the [private GitHub Release](https://github.com/pedromst/notryn/releases/tag/v0.2.0-alpha.2), rather than inside the source tree.
 
 ## Get started
 
@@ -223,7 +223,7 @@ Omarchy does not automatically color arbitrary web applications. NOTRYN includes
 
 On a first visit, an available Omarchy palette is selected automatically. Choosing a NOTRYN preset stops following the desktop; choose **Follow Omarchy** to resume. The app checks about every two seconds while visible and following. No reload, theme hook, desktop configuration edit or extension is needed. If Omarchy is not detected, follow mode uses Glass and waits for a palette; a server connection failure keeps the last colors. The colors come from the computer running the local server.
 
-The bridge follows the [Omarchy theme configuration](https://github.com/omacom/omarchy/blob/quattro/manual/43-making-your-own-theme.md) and [active-theme staging paths](https://github.com/omacom/omarchy/blob/quattro/bin/omarchy-theme-set). Legacy/new-path fixtures and a live dark-to-light palette change have been tested locally. Validation in a native Omarchy session is still pending.
+The bridge follows the [Omarchy theme configuration](https://github.com/omacom/omarchy/blob/quattro/manual/43-making-your-own-theme.md) and [active-theme staging paths](https://github.com/omacom/omarchy/blob/quattro/bin/omarchy-theme-set). Legacy/new-path fixtures and a live dark-to-light palette change have been tested locally. The private Linux package has also been installed and opened successfully in a native Omarchy session; a broader palette-switching review there is still pending.
 
 ## Files and protection
 
@@ -272,4 +272,4 @@ Before a future release, include only code, documentation, tests and visual asse
 
 Typography: JetBrains Mono, the default base family used by [Omarchy](https://learn.omacom.io/2/the-omarchy-manual), bundled with its [OFL license](web/fonts/OFL-JetBrainsMono.txt). Icons are SVG and do not depend on Nerd Font glyphs.
 
-Keyboard conflict references: [Chrome](https://support.google.com/chrome/answer/157179?hl=en), [Firefox](https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly), [Safari](https://support.apple.com/guide/safari/keyboard-shortcuts-and-gestures-cpsh003/mac) and [Omarchy](https://github.com/omacom/omarchy/blob/quattro/manual/07-hotkeys.md). Native validation in the user's Linux session remains pending.
+Keyboard conflict references: [Chrome](https://support.google.com/chrome/answer/157179?hl=en), [Firefox](https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly), [Safari](https://support.apple.com/guide/safari/keyboard-shortcuts-and-gestures-cpsh003/mac) and [Omarchy](https://github.com/omacom/omarchy/blob/quattro/manual/07-hotkeys.md). The packaged app now has an initial native Omarchy smoke test; full shortcut coverage across supported systems remains pending.

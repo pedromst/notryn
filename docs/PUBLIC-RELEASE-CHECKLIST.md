@@ -7,7 +7,8 @@ The private repository is a preparation and backup space. Complete this review b
 - [ ] Review every path boundary, symbolic-link guard and read-only check.
 - [ ] Verify that save, move, remove and restore cannot overwrite unrelated files.
 - [ ] Test fresh installation without any personal Brain, `.notryn/` state or legacy `.neura/` state.
-- [ ] Test Linux/Omarchy and Windows natively.
+- [x] Install and open the private x86_64 package on Linux/Omarchy.
+- [ ] Complete native interaction coverage on Linux/Omarchy and Windows.
 - [ ] Confirm external file deletion refreshes the library and Brain safely.
 - [ ] Review the temporary sharing gateway and document its limits.
 
