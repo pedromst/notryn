@@ -64,4 +64,17 @@ class StoreTests(unittest.TestCase):
     def test_two_brains_are_separate(self):
         second=self.store.add('Another');self.store.write(self.bid,'A.md','one',None);self.store.write(second['id'],'A.md','two',None)
         self.assertEqual(self.store.read(self.bid,'A.md')['content'],'one');self.assertEqual(self.store.read(second['id'],'A.md')['content'],'two')
+    def test_connected_folder_includes_wiki_logs_indexes_and_nested_notes_without_changing_files(self):
+        root=self.root/'imported';root.mkdir()
+        originals={'wiki/log.md':'# Alterações materiais', 'wiki/index.md':'# Índice compacto',
+                   'wiki/perfil-pedro.md':'# Perfil do Pedro', 'wiki/projects/deep/project.md':'# Project',
+                   'raw/archive/note.md':'# Archived note'}
+        for path,content in originals.items():
+            target=root/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content,encoding='utf-8')
+        (root/'wiki/empty').mkdir()
+        brain=self.store.add('Imported',str(root),False)
+        graph=self.store.graph(brain['id'])
+        self.assertEqual({n['path'] for n in graph['nodes']},set(originals))
+        self.assertEqual(graph['skipped'],0);self.assertIn('wiki/empty',graph['folders'])
+        for path,content in originals.items():self.assertEqual((root/path).read_text(encoding='utf-8'),content)
 if __name__=='__main__':unittest.main()

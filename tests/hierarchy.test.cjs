@@ -42,6 +42,39 @@ test('search remains global while folder browsing stays layered',()=>{
  assert.equal(view.search,true);assert.deepEqual(Array.from(view.nodes,n=>n.id),['projects/live/new']);
 });
 
+test('wiki filenames remain identifiable and search accepts words, paths, accents and hyphens',()=>{
+ const wiki={folders:['wiki','wiki/projects'],edges:[],nodes:[
+  {id:'wiki/log',path:'wiki/log.md',folder:'wiki',title:'Alterações materiais'},
+  {id:'wiki/perfil-pedro',path:'wiki/perfil-pedro.md',folder:'wiki',title:'Perfil do Pedro'},
+  {id:'wiki/index',path:'wiki/index.md',folder:'wiki',title:'Índice compacto'}
+ ]};
+ assert.deepEqual(Array.from(hierarchy.view(wiki,'wiki').nodes,n=>n.displayName||n.title),['projects','log.md','perfil-pedro.md','index.md']);
+ for(const query of ['perfil pedro','perfil-pedro.md','Pedro perfil','PERFIL DO PEDRO','wiki/perfil-pedro']){
+  assert.deepEqual(Array.from(hierarchy.view(wiki,'wiki/projects',query).nodes,n=>n.id),['wiki/perfil-pedro']);
+ }
+ for(const query of ['log.md','log','alteracoes materiais'])assert.deepEqual(Array.from(hierarchy.searchNotes(wiki,query),n=>n.id),['wiki/log']);
+ assert.equal(hierarchy.searchNotes(wiki,'missing note').length,0);
+});
+
+test('search returns all matching files including results beyond thirty',()=>{
+ const many={nodes:Array.from({length:75},(_,i)=>({id:'notes/'+i,path:'notes/'+i+'.md',folder:'notes',title:'Daily note '+i}))};
+ assert.equal(hierarchy.searchNotes(many,'daily note').length,75);
+ assert.equal(hierarchy.view(many,'elsewhere','daily note').nodes.length,75);
+});
+
+test('exact filenames and stems rank ahead of partial matches',()=>{
+ const files={nodes:[
+  {id:'changelog',path:'archive/CHANGELOG.md',title:'Changes'},
+  {id:'login',path:'people/login.md',title:'Profile'},
+  {id:'log',path:'wiki/log.md',title:'Alterações materiais'},
+  {id:'profile-reference',path:'archive/perfil-pedro-reference.md',title:'Old profile'},
+  {id:'profile',path:'wiki/perfil-pedro.md',title:'Perfil do Pedro'}
+ ]};
+ for(const query of ['log.md','log','wiki/log.md'])assert.equal(hierarchy.searchNotes(files,query)[0].id,'log');
+ for(const query of ['perfil pedro','perfil-pedro.md'])assert.equal(hierarchy.searchNotes(files,query)[0].id,'profile');
+ assert.equal(hierarchy.searchNotes(files,'log').length,3);
+});
+
 test('folder navigation keeps only the current layer, including a leaf with no subfolders',()=>{
  assert.deepEqual(Array.from(hierarchy.navigation(data)),['core','projects']);
  assert.deepEqual(Array.from(hierarchy.navigation(data,'projects')),['projects','projects/archive','projects/live']);

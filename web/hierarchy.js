@@ -5,6 +5,23 @@ window.NeuraHierarchy=(()=>{
  const parent=path=>normalize(path).split('/').slice(0,-1).join('/');
  const name=path=>normalize(path).split('/').pop()||'';
  const clean=value=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const filename=node=>name(node.path)||node.title;
+ const words=value=>clean(value).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+ function matchesNote(node,query=''){
+  const haystack=words((node.title||'')+' '+(node.path||'')).join(' ');
+  return words(query).every(word=>haystack.includes(word));
+ }
+ function searchNotes(data,query=''){
+  const phrase=words(query).join(' ');
+  function rank(node){
+   if(clean(node.path)===clean(query)||clean(filename(node))===clean(query))return 0;
+   if(words(filename(node).replace(/\.md$/i,'')).join(' ')===phrase)return 1;
+   if(words(node.title||'').join(' ')===phrase)return 2;
+   if(matchesNote({path:filename(node)},query))return 3;
+   return 4;
+  }
+  return(data.nodes||[]).filter(node=>matchesNote(node,query)).sort((a,b)=>rank(a)-rank(b)||a.path.localeCompare(b.path));
+ }
  const folderId=path=>'@folder:'+normalize(path);
  function ancestors(path){
   const parts=normalize(path).split('/').filter(Boolean),result=[];
@@ -21,9 +38,9 @@ window.NeuraHierarchy=(()=>{
   path=normalize(path);query=clean(query.trim());const allNodes=data.nodes||[],allEdges=data.edges||[];
   // Keep folder colors consistent across layers, search and theme changes.
   const foldersByPath=[...new Set([...(data.folders||[]),...allNodes.map(node=>normalize(node.folder))])].filter(Boolean).sort((a,b)=>a.localeCompare(b));
-  const colorGroups=['',...foldersByPath].map(folderId),asNote=node=>({...node,kind:'note',group:folderId(node.folder)});
+  const colorGroups=['',...foldersByPath].map(folderId),asNote=node=>({...node,displayName:filename(node),kind:'note',group:folderId(node.folder)});
   if(query){
-   const nodes=allNodes.filter(node=>clean(node.title+' '+node.path).includes(query)).map(asNote);
+   const nodes=searchNotes(data,query).map(asNote);
    const ids=new Set(nodes.map(node=>node.id));
    return{path,nodes,colorGroups,edges:allEdges.filter(edge=>ids.has(edge.source)&&ids.has(edge.target)),folderCount:0,noteCount:nodes.length,search:true};
   }
@@ -47,5 +64,5 @@ window.NeuraHierarchy=(()=>{
   }
   return{path,nodes,colorGroups,edges,folderCount:folderNodes.length,noteCount:notes.length,search:false};
  }
- return{normalize,parent,name,folderId,ancestors,directFolders,navigation,view};
+ return{normalize,parent,name,filename,matchesNote,searchNotes,folderId,ancestors,directFolders,navigation,view};
 })();

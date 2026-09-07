@@ -60,7 +60,8 @@ Open the Brain name in the top bar, or press **B**, to reach **Your Brains**. **
 - Searchable command palette and a keyboard reference with clickable actions.
 - Connections from `[[note-name]]` links and Markdown links to `.md` files.
 - A glass brain with translucent hemispheres, layered filaments, luminous notes and pulses along real note connections.
-- Each opened folder shows every direct subfolder and Markdown file by name. Dense layers use compact, non-overlapping labels instead of silently hiding less-connected items.
+- Each opened folder lists its direct subfolders and Markdown filenames, matching the files on disk. The Brain uses the same filenames; opening a note keeps sibling dots and labels visible. Dense layers use compact, non-overlapping labels where space permits.
+- Search covers every indexed note, regardless of the open folder. It matches words in filenames, paths and document titles across spaces, hyphens and accents, with exact filenames first. Search results are no longer capped at 30; the reader retains the original document title.
 - Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
 - Iris on a floating glass surface, with a large voice circle, conversation and writing below. English speech when a local voice is available. Local commands, search, excerpts and drafts; no generative AI model is connected yet.
 - Mobile navigation for the brain, notes, creation and Iris.

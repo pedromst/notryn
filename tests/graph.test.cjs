@@ -75,7 +75,15 @@ test('a narrow desktop Brain labels every direct folder and file',()=>{
  const labels=g.layoutLabels();assert.equal(labels.length,g.nodes.length);assertLegible(g,labels);
 });
 test('mobile keeps every direct item named without overlaps',()=>{
- const g=labelsGraph(30);g.width=390;g.height=690;
+ const g=labelsGraph(30);g.width=390;g.height=690;g.mobile.matches=true;
  g.nodes.forEach(n=>g.points.set(n.id,{x:195,y:330,z:0,s:1}));
  const labels=g.layoutLabels();assert.equal(labels.length,g.nodes.length);assertLegible(g,labels);
+});
+
+test('opening an unconnected note keeps every sibling label and its filename visible',()=>{
+ const g=labelsGraph(16);
+ g.nodes[0].title='Alterações materiais';g.nodes[0].displayName='log.md';
+ g.select(g.nodes[1].id);
+ const labels=g.layoutLabels();assert.equal(labels.length,16);assertLegible(g,labels);
+ assert.equal(labels.find(label=>label.id===g.nodes[0].id).name,'log.md');
 });

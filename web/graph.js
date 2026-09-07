@@ -176,14 +176,14 @@ window.NeuraGraph=class{
   const buckets=rect=>{const keys=[];for(let x=Math.floor(rect.x/cellSize);x<=Math.floor((rect.x+rect.w)/cellSize);x++)for(let y=Math.floor(rect.y/cellSize);y<=Math.floor((rect.y+rect.h)/cellSize);y++)keys.push(x+':'+y);return keys;};
   const occupy=rect=>{for(const key of buckets(rect)){if(!cells.has(key))cells.set(key,[]);cells.get(key).push(rect);}};
   const overlaps=rect=>buckets(rect).some(key=>(cells.get(key)||[]).some(b=>rect.x<b.x+b.w+3&&rect.x+rect.w+3>b.x&&rect.y<b.y+b.h+3&&rect.y+rect.h+3>b.y));
-  const items=this.nodes.filter(n=>{const p=this.points.get(n.id);return p&&this.filter(n)&&(focused(n)||(!this.selected||this.neighbors.has(n.id))&&p.x>=0&&p.x<=w&&p.y>=54&&p.y<=h-66);});
+  const items=this.nodes.filter(n=>{const p=this.points.get(n.id);return p&&this.filter(n)&&(focused(n)||p.x>=0&&p.x<=w&&p.y>=54&&p.y<=h-66);});
   // Protect the dots as well as other names; labels stay beside their own node.
   for(const n of items){const p=this.points.get(n.id),r=this.noteRadius(n,p)+2;occupy({x:p.x-r,y:p.y-r,w:r*2,h:r*2});}
   items.sort((a,b)=>Number(focused(b))-Number(focused(a))||this.labelRank.get(a.id)-this.labelRank.get(b.id));
   for(const n of items){
    const p=this.points.get(n.id),r=this.noteRadius(n,p),isFocused=focused(n),dense=items.length>18||w<620;
    const size=dense?10:11,font=(isFocused?'500 ':'')+size+'px JetBrains';c.font=font;
-   const limit=Math.max(12,Math.min(dense?22:30,Math.floor((w-40)/(dense?6:6.6)))),name=n.title.length>limit?n.title.slice(0,limit-2)+'…':n.title;
+   const title=n.displayName||n.title,limit=Math.max(12,Math.min(dense?22:30,Math.floor((w-40)/(dense?6:6.6)))),name=title.length>limit?title.slice(0,limit-2)+'…':title;
    const tw=c.measureText(name).width,lw=tw+12,lh=dense?21:23,right=p.x+r+9,left=p.x-r-9-lw,center=p.x-lw/2;
    const positions=[[right,p.y-lh/2],[left,p.y-lh/2],[center,p.y-r-9-lh],[center,p.y+r+9]];
    for(const dy of [-27,27,-54,54])positions.push([right,p.y-lh/2+dy],[left,p.y-lh/2+dy]);
@@ -195,7 +195,7 @@ window.NeuraGraph=class{
     positions.push([p.x+Math.cos(angle)*distance-lw/2,p.y+Math.sin(angle)*distance-lh/2]);
    }
    let rect=positions.map(([x,y])=>({x,y,w:lw,h:lh})).find(b=>b.x>=8&&b.x+b.w<=w-8&&b.y>=54&&b.y+b.h<=h-66&&!overlaps(b));
-   if(!rect&&!this.mobile.matches){
+   if(!rect){
     let nearest=null,distance=Infinity;
     for(let y=54;y+lh<=h-66;y+=lh+3)for(let x=8;x+lw<=w-8;x+=8){
      const candidate={x,y,w:lw,h:lh};if(overlaps(candidate))continue;
@@ -214,9 +214,9 @@ window.NeuraGraph=class{
   const sorted=[...this.nodes].sort((a,b)=>this.points.get(b.id).z-this.points.get(a.id).z);
   for(const n of sorted){
    const p=this.points.get(n.id),color=this.color(n.group),visible=this.filter(n);
-   const focused=this.selected===n.id||this.hover===n.id||(keyboard&&this.keyboardId===n.id),active=!this.selected||this.neighbors.has(n.id);
+   const focused=this.selected===n.id||this.hover===n.id||(keyboard&&this.keyboardId===n.id);
    const r=this.noteRadius(n,p);
-   c.globalAlpha=visible?(active?1:.16):.04;
+   c.globalAlpha=visible?1:.04;
    const aura=c.createRadialGradient(p.x,p.y,0,p.x,p.y,r*5);aura.addColorStop(0,color+'55');aura.addColorStop(.3,color+'18');aura.addColorStop(1,color+'00');
    c.fillStyle=aura;c.fillRect(p.x-r*5,p.y-r*5,r*10,r*10);
    const pearl=c.createRadialGradient(p.x-r*.3,p.y-r*.4,.1,p.x,p.y,r);
@@ -251,5 +251,5 @@ window.NeuraGraph=class{
   this.drawConnections();this.drawNotes();
  }
  hit(x,y){for(const label of this.labelRects)if(x>=label.x&&x<=label.x+label.w&&y>=label.y&&y<=label.y+label.h)return this.ids.get(label.id);let best=null,min=18;for(const n of this.nodes){if(!this.filter(n))continue;const p=this.points.get(n.id);if(!p)continue;const d=Math.hypot(p.x-x,p.y-y);if(d<min){best=n;min=d;}}return best;}
- events(){const c=this.canvas,tip=document.querySelector('#graph-tooltip'),pos=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};c.onpointerdown=e=>{this.cameraTarget=null;const p=pos(e);this.pointers.set(e.pointerId,p);c.setPointerCapture(e.pointerId);this.drag={...p,startX:p.x,startY:p.y,moved:false};if(this.pointers.size>1){this.pinching=true;const[a,b]=[...this.pointers.values()];this.distance=Math.hypot(a.x-b.x,a.y-b.y);}tip.hidden=true;};c.onpointermove=e=>{const p=pos(e);if(this.pointers.has(e.pointerId))this.pointers.set(e.pointerId,p);if(this.pointers.size>1){const[a,b]=[...this.pointers.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(this.distance)this.zoom=Math.max(.4,Math.min(3,this.zoom*d/this.distance));this.distance=d;this.dirty=true;return;}if(this.drag){const dx=p.x-this.drag.x,dy=p.y-this.drag.y;if(Math.hypot(p.x-this.drag.startX,p.y-this.drag.startY)>5)this.drag.moved=true;this.rotation+=dx*.006;this.tilt=Math.max(-1,Math.min(1,this.tilt+dy*.006));this.drag.x=p.x;this.drag.y=p.y;this.dirty=true;return;}const n=this.hit(p.x,p.y);this.hover=n?.id||null;c.style.cursor=n?'pointer':'grab';tip.hidden=!n;if(n){tip.textContent=n.kind==='folder'?n.title+' · Folder · '+n.count+(n.count===1?' item':' items'):n.title+' · '+n.degree+(n.degree===1?' connection':' connections');tip.style.left=Math.max(10,Math.min(p.x+17,this.width-240))+'px';tip.style.top=Math.max(75,p.y-35)+'px';}this.dirty=true;};const release=e=>{const p=pos(e);if(this.drag&&!this.drag.moved&&!this.pinching){const n=this.hit(p.x,p.y);if(n)this.onSelect(n.id);}this.pointers.delete(e.pointerId);this.drag=null;this.distance=null;if(!this.pointers.size)this.pinching=false;};c.onpointerup=release;c.onpointercancel=e=>{this.pointers.delete(e.pointerId);this.drag=null;this.pinching=false;};c.onpointerleave=()=>{tip.hidden=true;this.hover=null;this.dirty=true;};c.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;e.preventDefault();const units=e.deltaMode===1?16:e.deltaMode===2?this.height:1;this.zoomBy(Math.exp(-Math.max(-240,Math.min(240,e.deltaY*units))*.001));},{passive:false});}
+ events(){const c=this.canvas,tip=document.querySelector('#graph-tooltip'),pos=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};c.onpointerdown=e=>{this.cameraTarget=null;const p=pos(e);this.pointers.set(e.pointerId,p);c.setPointerCapture(e.pointerId);this.drag={...p,startX:p.x,startY:p.y,moved:false};if(this.pointers.size>1){this.pinching=true;const[a,b]=[...this.pointers.values()];this.distance=Math.hypot(a.x-b.x,a.y-b.y);}tip.hidden=true;};c.onpointermove=e=>{const p=pos(e);if(this.pointers.has(e.pointerId))this.pointers.set(e.pointerId,p);if(this.pointers.size>1){const[a,b]=[...this.pointers.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(this.distance)this.zoom=Math.max(.4,Math.min(3,this.zoom*d/this.distance));this.distance=d;this.dirty=true;return;}if(this.drag){const dx=p.x-this.drag.x,dy=p.y-this.drag.y;if(Math.hypot(p.x-this.drag.startX,p.y-this.drag.startY)>5)this.drag.moved=true;this.rotation+=dx*.006;this.tilt=Math.max(-1,Math.min(1,this.tilt+dy*.006));this.drag.x=p.x;this.drag.y=p.y;this.dirty=true;return;}const n=this.hit(p.x,p.y);this.hover=n?.id||null;c.style.cursor=n?'pointer':'grab';tip.hidden=!n;if(n){tip.textContent=n.kind==='folder'?n.title+' · Folder · '+n.count+(n.count===1?' item':' items'):(n.path||n.title)+' · '+n.title+' · '+n.degree+(n.degree===1?' connection':' connections');tip.style.left=Math.max(10,Math.min(p.x+17,this.width-240))+'px';tip.style.top=Math.max(75,p.y-35)+'px';}this.dirty=true;};const release=e=>{const p=pos(e);if(this.drag&&!this.drag.moved&&!this.pinching){const n=this.hit(p.x,p.y);if(n)this.onSelect(n.id);}this.pointers.delete(e.pointerId);this.drag=null;this.distance=null;if(!this.pointers.size)this.pinching=false;};c.onpointerup=release;c.onpointercancel=e=>{this.pointers.delete(e.pointerId);this.drag=null;this.pinching=false;};c.onpointerleave=()=>{tip.hidden=true;this.hover=null;this.dirty=true;};c.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;e.preventDefault();const units=e.deltaMode===1?16:e.deltaMode===2?this.height:1;this.zoomBy(Math.exp(-Math.max(-240,Math.min(240,e.deltaY*units))*.001));},{passive:false});}
 };
