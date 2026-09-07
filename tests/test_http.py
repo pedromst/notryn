@@ -82,9 +82,12 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(code,200);self.assertEqual([f['name'] for f in data['folders']],['Child'])
         self.assertEqual(self.http.store.config.read_bytes(),before)
     def test_quoted_folder_connects_through_http(self):
-        folder=Path(self.temp.name)/'Brain with spaces';folder.mkdir()
+        folder=Path(self.temp.name)/'Brain with spaces';folder.mkdir();(folder/'Projects').mkdir();(folder/'Projects'/'First.md').write_text('# First')
         code,data=self.request('/api/brains',{'action':'connect','name':'Tester','path':"'"+str(folder)+"'"},{'Origin':self.origin,'X-Notryn-Token':self.http.token})
         self.assertEqual(code,201);self.assertEqual(data['brain']['root'],str(folder.resolve()));self.assertTrue(data['brain']['readOnly'])
+        self.assertEqual(data['graph']['brain']['id'],data['brain']['id'])
+        self.assertEqual(data['graph']['folders'],['Projects'])
+        self.assertEqual([node['path'] for node in data['graph']['nodes']],['Projects/First.md'])
     def test_brain_access_changes_only_through_the_local_authenticated_api(self):
         folder=Path(self.temp.name)/'Access';folder.mkdir();brain=self.http.store.add('Access',str(folder),False)
         payload={'action':'access','brain':brain['id'],'writable':True};headers={'Origin':self.origin,'X-Notryn-Token':self.http.token}

@@ -1,6 +1,8 @@
-# Notryn 0.2.0-alpha.1
+# Notryn 0.2.0-alpha.2
 
 This is a private test build for the repository owner. It is not a public release.
+
+Alpha 2 fixes the first connection on Linux: after opening or creating a Brain folder, its folders and Markdown files now appear immediately without restarting Notryn.
 
 The downloads are hosted as assets on this repository's private GitHub Release. The installers do not require administrator access. They verify the downloaded archive, install the application only for the current user, and open Notryn in its own desktop window. The private server binds only to `127.0.0.1`, and Brains and private state stay outside the application directory. Reinstalling or uninstalling the app does not delete those files.
 
@@ -16,9 +18,11 @@ Download this private release and install it:
 
 ```sh
 mkdir -p "$HOME/Downloads/notryn-alpha"
-gh release download v0.2.0-alpha.1 --repo pedromst/notryn --clobber --pattern '*linux*' --pattern 'install-notryn-linux.sh' --dir "$HOME/Downloads/notryn-alpha"
-sh "$HOME/Downloads/notryn-alpha/install-notryn-linux.sh" "$HOME/Downloads/notryn-alpha/Notryn-0.2.0-alpha.1-linux-x86_64.tar.gz"
+gh release download v0.2.0-alpha.2 --repo pedromst/notryn --clobber --pattern '*linux*' --pattern 'install-notryn-linux.sh' --dir "$HOME/Downloads/notryn-alpha"
+sh "$HOME/Downloads/notryn-alpha/install-notryn-linux.sh" "$HOME/Downloads/notryn-alpha/Notryn-0.2.0-alpha.2-linux-x86_64.tar.gz"
 ```
+
+Close Notryn before reinstalling an updated alpha. Reinstalling replaces the application package and preserves connected Brains and settings.
 
 Notryn appears in the desktop application menu and opens as a normal application, without a browser address bar. Its private local server can also be managed from the terminal:
 
@@ -40,8 +44,8 @@ The application is installed at `~/.local/lib/notryn`. Its launcher and desktop 
 
 ```sh
 mkdir -p "$HOME/Downloads/notryn-alpha"
-gh release download v0.2.0-alpha.1 --repo pedromst/notryn --clobber --pattern '*macos*' --pattern 'install-notryn-macos.sh' --dir "$HOME/Downloads/notryn-alpha"
-sh "$HOME/Downloads/notryn-alpha/install-notryn-macos.sh" "$HOME/Downloads/notryn-alpha/Notryn-0.2.0-alpha.1-macos-x86_64.zip"
+gh release download v0.2.0-alpha.2 --repo pedromst/notryn --clobber --pattern '*macos*' --pattern 'install-notryn-macos.sh' --dir "$HOME/Downloads/notryn-alpha"
+sh "$HOME/Downloads/notryn-alpha/install-notryn-macos.sh" "$HOME/Downloads/notryn-alpha/Notryn-0.2.0-alpha.2-macos-x86_64.zip"
 ```
 
 The app is installed at `~/Applications/Notryn.app`, opens in its own macOS window and keeps its separate state at `~/Library/Application Support/Notryn`.
