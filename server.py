@@ -6,6 +6,7 @@ import json
 import mimetypes
 import secrets
 import subprocess
+import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -13,9 +14,11 @@ from urllib.parse import parse_qs, unquote, urlparse
 from store import Store, Problem
 from themes import omarchy_theme
 from desktop import reveal_note
+from notryn_version import VERSION
 
 HERE=Path(__file__).resolve().parent
-WEB=HERE/'web'
+RESOURCE_ROOT=Path(getattr(sys,'_MEIPASS',HERE))
+WEB=RESOURCE_ROOT/'web'
 SPEECH_LOCK=threading.Lock()
 SPEECH_PROCESS=None
 
@@ -60,6 +63,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if parsed.path=='/api/state':
                 return self.send(200,{**self.server.store.state(),'token':self.server.token})
+            if parsed.path=='/api/runtime':
+                return self.send(200,{'app':'notryn','version':VERSION,'instance':self.server.instance_id})
             if parsed.path=='/api/graph':
                 default=next((b['id'] for b in self.server.store.brains if not b.get('removedAt')), '')
                 return self.send(200,self.server.store.graph(param('brain',default)))
@@ -160,20 +165,17 @@ class Handler(BaseHTTPRequestHandler):
         self.send(405,{'error':'Action unavailable. File deletion is not supported.'})
     do_PUT=do_PATCH=do_DELETE=reject
 
-if __name__=='__main__':
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--port',type=int,default=4783)
-    parser.add_argument('--data-dir',help='Directory for settings, new Brains and backups')
-    parser.add_argument('--open',action='store_true',help='Open NOTRYN in your default browser')
-    args=parser.parse_args()
-    app=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
-    app.store=Store(args.data_dir)
+def serve(port=4783,data_dir=None,open_browser=False,instance_id=None):
+    global SPEECH_PROCESS
+    app=ThreadingHTTPServer(('127.0.0.1',port),Handler)
+    app.store=Store(data_dir)
     app.token=secrets.token_urlsafe(32)
+    app.instance_id=instance_id or secrets.token_urlsafe(24)
     app.voice=has_voice()
-    if args.open:
+    if open_browser:
         import webbrowser
-        threading.Timer(.5,webbrowser.open,args=(f'http://127.0.0.1:{args.port}/',)).start()
-    print(f'NOTRYN 0.2 · http://127.0.0.1:{args.port} · {len(app.store.brains)} Brain(s)',flush=True)
+        threading.Timer(.5,webbrowser.open,args=(f'http://127.0.0.1:{port}/',)).start()
+    print(f'NOTRYN {VERSION} · http://127.0.0.1:{port} · {len(app.store.brains)} Brain(s)',flush=True)
     try:
         app.serve_forever()
     except KeyboardInterrupt:
@@ -182,3 +184,13 @@ if __name__=='__main__':
         if SPEECH_PROCESS and SPEECH_PROCESS.poll() is None:
             SPEECH_PROCESS.terminate()
         app.server_close()
+    return 0
+
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--port',type=int,default=4783)
+    parser.add_argument('--data-dir',help='Directory for settings, new Brains and backups')
+    parser.add_argument('--open',action='store_true',help='Open NOTRYN in your default browser')
+    args=parser.parse_args()
+    raise SystemExit(serve(args.port,args.data_dir,args.open))

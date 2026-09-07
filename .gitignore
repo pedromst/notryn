@@ -9,3 +9,5 @@ qa-artifacts/
 node_modules/
 docs/DIRECTION.md
 docs/VISUAL-REVIEW.md
+.build/
+dist/

@@ -23,6 +23,12 @@ Preview 0.2 is in development. The platform is in English and adapts to desktop 
 
 > **Private development preview.** The repository is being prepared for a public, community-reviewed release. The code license and contributor terms have not been finalized, so this repository does not currently grant permission to copy, distribute or sell the software.
 
+## Private alpha installation
+
+Private self-contained desktop packages are available for Intel macOS and x86_64 Linux, including Omarchy. They open Notryn in its own application window, install only for the current user, require no Python runtime on the destination computer, expose the private server only on `127.0.0.1`, and preserve Brains independently from application updates or removal.
+
+See [Private alpha installation](docs/PRIVATE-ALPHA.md) for the exact verified download, install, terminal and uninstall commands. Public distribution remains disabled while signing, licensing and release review are unfinished.
+
 ## Get started
 
 Requires Python 3.10 or later. No external Python dependencies, account, API key or cloud service is required.

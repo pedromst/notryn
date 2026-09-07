@@ -15,7 +15,7 @@ from store import Store
 class HttpTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.http=ThreadingHTTPServer(('127.0.0.1',0),Handler)
-        self.http.store=Store(Path(self.temp.name)/'state');self.http.token='test-only-session-token';self.http.voice=False
+        self.http.store=Store(Path(self.temp.name)/'state');self.http.token='test-only-session-token';self.http.voice=False;self.http.instance_id='test-instance'
         self.origin='http://127.0.0.1:'+str(self.http.server_port)
         self.thread=threading.Thread(target=self.http.serve_forever,daemon=True);self.thread.start()
     def tearDown(self):self.http.shutdown();self.http.server_close();self.thread.join();self.temp.cleanup()
@@ -39,6 +39,10 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(code,403);self.assertEqual((folder/'one.md').read_text(),'original')
     def test_unknown_host_cannot_read_state(self):
         self.assertEqual(self.request('/api/state',headers={'Host':'external.example'})[0],403)
+    def test_runtime_identifies_only_this_local_instance(self):
+        code,data=self.request('/api/runtime')
+        self.assertEqual(code,200);self.assertEqual(data['app'],'notryn')
+        self.assertEqual(data['instance'],'test-instance');self.assertTrue(data['version'])
     def test_removal_preview_execution_list_and_restore_require_local_session(self):
         brain=self.http.store.add('Removal test');bid=brain['id'];self.http.store.write(bid,'A.md','original',None)
         paths=['/api/removals/preview','/api/removals','/api/removals/list','/api/removals/restore']
