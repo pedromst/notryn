@@ -14,7 +14,7 @@ from urllib.parse import unquote, urlsplit
 HERE = Path(__file__).resolve().parent
 MAX_NOTE_BYTES = 1024 * 1024
 MAX_NODES = 2000
-SKIP = {'.git', '.obsidian', '.neura', 'node_modules', '__pycache__', '.venv', 'venv'}
+SKIP = {'.git', '.obsidian', '.notryn', '.neura', 'node_modules', '__pycache__', '.venv', 'venv'}
 LABELS = {'projects':'Projects','topics':'Knowledge','core':'System','learning':'System','financas':'Finance'}
 
 class Problem(Exception):
@@ -67,7 +67,7 @@ def slug(value):
     return re.sub(r'[^a-z0-9]+', '-', text).strip('-')[:70] or 'brain'
 
 def atomic(path, data):
-    fd, temporary = tempfile.mkstemp(prefix='.neura-', dir=path.parent)
+    fd, temporary = tempfile.mkstemp(prefix='.notryn-', dir=path.parent)
     try:
         with os.fdopen(fd, 'wb') as stream:
             stream.write(data)
@@ -82,7 +82,12 @@ def atomic(path, data):
 
 class Store:
     def __init__(self, home=None):
-        self.home = Path(home or os.environ.get('NEURA_HOME', HERE / '.neura')).expanduser().resolve()
+        # Prefer the Notryn namespace, while continuing to open pre-rename Neura
+        # installations without losing their connected Brains or recovery data.
+        configured = home or os.environ.get('NOTRYN_HOME') or os.environ.get('NEURA_HOME')
+        default = HERE / '.notryn'
+        legacy = HERE / '.neura'
+        self.home = Path(configured or (legacy if not default.exists() and legacy.exists() else default)).expanduser().resolve()
         self.home.mkdir(parents=True, exist_ok=True)
         self.config = self.home / 'brains.json'
         self.lock = threading.RLock()
@@ -239,7 +244,7 @@ class Store:
         if not target.resolve().is_relative_to(base):
             raise Problem('The path is outside this Brain.',403)
         if not allow_removed and self.is_removed(brain, relative):
-            raise Problem('This item was removed from Neura. Restore it from Removed items first.',404)
+            raise Problem('This item was removed from Notryn. Restore it from Removed items first.',404)
         return target
 
     def inventory(self, brain, include_removed=False):

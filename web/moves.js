@@ -1,6 +1,6 @@
 'use strict';
 // File organization is shared by drag-and-drop, row menus and the command palette.
-window.NeuraFiles=(()=>{
+window.NotrynFiles=(()=>{
  let dragged=null,context=null,moving=false,returnKey=null;
  const tree=$('#file-tree'),root=$('#brain-root'),menu=$('#item-dialog'),dialog=$('#move-dialog');
  function itemFor(key){
@@ -37,7 +37,7 @@ window.NeuraFiles=(()=>{
  for(const kind of ['note','folder'])$('#item-new-'+kind).onclick=()=>{const path=context?.kind==='folder'?context.path:'';menu.close();openCreate(kind,'',path);};
  menu.addEventListener('close',()=>{if(!dialog.open&&!$('#create-dialog').open)restoreFocus();});
  menu.addEventListener('keydown',e=>{
-  if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+  if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
   const rows=[...menu.querySelectorAll('.item-action:not([hidden])')],index=rows.indexOf(document.activeElement);
   e.preventDefault();rows[e.key==='Home'?0:e.key==='End'?rows.length-1:Math.max(0,Math.min(rows.length-1,index+(e.key==='ArrowDown'?1:-1)))]?.focus();
  });
@@ -66,7 +66,7 @@ window.NeuraFiles=(()=>{
  }
  $('#move-filter').oninput=renderDestinations;
  $('#move-filter').onkeydown=e=>{
-  if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowUp','ArrowDown','Enter'].includes(e.key))return;
+  if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowUp','ArrowDown','Enter'].includes(e.key))return;
   e.preventDefault();if(e.key==='Enter'){if(destinations.length)move(context,destinations[destinationIndex]);return;}
   destinationIndex=Math.max(0,Math.min(destinations.length-1,destinationIndex+(e.key==='ArrowDown'?1:-1)));highlightDestination();
  };
@@ -136,7 +136,7 @@ window.NeuraFiles=(()=>{
   row.draggable=writable();
   row.addEventListener('dragstart',e=>{
    if(!canOrganize()){e.preventDefault();return;}
-   dragged={...item,brain:state.brain};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-neura-item',item.key);
+   dragged={...item,brain:state.brain};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-notryn-item',item.key);
    row.classList.add('drag-source');tree.classList.add('is-dragging');document.body.classList.add('file-dragging');$('#library-drop-hint').textContent='Drop on a folder or Brain root';$('#library-drop-hint').hidden=false;
   });
   row.addEventListener('dragend',clearDrag);

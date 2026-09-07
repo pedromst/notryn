@@ -62,10 +62,10 @@ $('#folder-filter').oninput=()=>{
  clearTimeout(folderBrowser.timer);++folderBrowser.serial;folderBusy(true);
  folderBrowser.timer=setTimeout(()=>loadFolders(folderBrowser.data?.path||null,$('#folder-filter').value),160);
 };
-$('#folder-filter').onkeydown=e=>{if(NeuraKeyboard.available(e)&&!e.shiftKey&&['ArrowDown','Enter'].includes(e.key)){e.preventDefault();if(!folderBrowser.loading)focusFolderResult();}};
+$('#folder-filter').onkeydown=e=>{if(NotrynKeyboard.available(e)&&!e.shiftKey&&['ArrowDown','Enter'].includes(e.key)){e.preventDefault();if(!folderBrowser.loading)focusFolderResult();}};
 $('#folder-results').onfocusin=e=>{if(!e.target.matches('button'))return;$$('#folder-results button').forEach(b=>b.tabIndex=b===e.target?0:-1);};
 $('#folder-results').onkeydown=e=>{
- if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowDown','ArrowUp','ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;
+ if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowDown','ArrowUp','ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;
  const rows=$$('#folder-results button:not([disabled])'),i=rows.indexOf(e.target);if(i<0)return;e.preventDefault();
  if(e.key==='ArrowRight'){rows[i].click();return;}
  if(e.key==='ArrowLeft'){if(folderBrowser.data?.parent)navigateFolder(folderBrowser.data.parent,true);return;}

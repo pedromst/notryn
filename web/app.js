@@ -3,45 +3,45 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const state={brains:[],brain:null,token:'',data:{nodes:[],edges:[],folders:[]},graphView:null,folderPath:'',selected:null,note:null,editing:false,dirty:false,newNote:false,query:'',group:null,recent:false,closed:new Set(),voice:false,nativeVoice:false,noteSerial:0,loadSerial:0};
 state.saving=false;
 let singleKeys=true;
-try{singleKeys=localStorage.getItem('neura-single-keys')!=='off';}catch{}
+try{singleKeys=localStorage.getItem('notryn-single-keys')!=='off';}catch{}
 let interfaceHints=true;
-try{interfaceHints=localStorage.getItem('neura-interface-hints')!=='off';}catch{}
+try{interfaceHints=localStorage.getItem('notryn-interface-hints')!=='off';}catch{}
 const clean=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
 function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS(svg.namespaceURI,'use');svg.classList.add('icon');use.setAttribute('href','/icons.svg#'+name);svg.append(use);return svg;}
 function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').hidden=true,3800);}
-const graph=new NeuraGraph($('#graph'),id=>openGraphItem(id));
+const graph=new NotrynGraph($('#graph'),id=>openGraphItem(id));
 function endpoint(path,params){return path+'?'+new URLSearchParams(params);}
-async function api(url,data){const opts=data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Neura-Token':state.token},body:JSON.stringify(data)};const r=await fetch(url,opts);let body;try{body=await r.json();}catch{throw Error('The local app did not respond. Check that the server is running.');}if(!r.ok){const e=Error(body.error||'Could not complete the action.');e.status=r.status;throw e;}return body;}
+async function api(url,data){const opts=data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Notryn-Token':state.token},body:JSON.stringify(data)};const r=await fetch(url,opts);let body;try{body=await r.json();}catch{throw Error('The local app did not respond. Check that the server is running.');}if(!r.ok){const e=Error(body.error||'Could not complete the action.');e.status=r.status;throw e;}return body;}
 function current(){return state.brains.find(b=>b.id===state.brain);}
 function writable(){return !!current()&&!current().readOnly;}
-function visible(n){return NeuraHierarchy.matchesNote(n,state.query);}
+function visible(n){return NotrynHierarchy.matchesNote(n,state.query);}
 function neighbors(id){return state.data.edges.filter(e=>e.source===id||e.target===id).map(e=>state.data.nodes.find(n=>n.id===(e.source===id?e.target:e.source))).filter(Boolean);}
 function renderGraphView(){
- state.graphView=NeuraHierarchy.view(state.data,state.folderPath,state.query);graph.setData(state.graphView);graph.filter=()=>true;
+ state.graphView=NotrynHierarchy.view(state.data,state.folderPath,state.query);graph.setData(state.graphView);graph.filter=()=>true;
  graph.select(graph.ids.has(state.selected)?state.selected:null);updateBrainScope();
 }
 function openGraphItem(id){return id.startsWith('@folder:')?navigateBrainFolder(id.slice(8)):openNote(id);}
 function navigateBrainFolder(path,{focus=false}={}){
- path=NeuraHierarchy.normalize(path);if(path&&!state.data.folders.includes(path))return toast('That folder is no longer available.');
+ path=NotrynHierarchy.normalize(path);if(path&&!state.data.folders.includes(path))return toast('That folder is no longer available.');
  state.folderPath=path;state.query='';state.group=null;state.recent=false;$('#search').value='';
  renderGraphView();renderLegend();renderTree();$('#file-tree').scrollTop=0;graph.fit();
  if(focus)$('#graph').focus({preventScroll:true});
 }
-function upBrainFolder({library=false}={}){if(!state.folderPath)return toast('You are already at the Brain root.');navigateBrainFolder(NeuraHierarchy.parent(state.folderPath),{focus:!library});if(library)($('#library-back').hidden?$('#file-tree .tree-row'):$('#library-back'))?.focus({preventScroll:true});}
+function upBrainFolder({library=false}={}){if(!state.folderPath)return toast('You are already at the Brain root.');navigateBrainFolder(NotrynHierarchy.parent(state.folderPath),{focus:!library});if(library)($('#library-back').hidden?$('#file-tree .tree-row'):$('#library-back'))?.focus({preventScroll:true});}
 function showDialog(id){const d=$(id);if(!d.open)d.showModal();return d;}
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 // Search inputs consume Escape in some browsers. Follow the dialog's normal
 // cancellation route, including any guard against closing during an operation.
 document.addEventListener('keydown',e=>{
- if(e.key!=='Escape'||e.shiftKey||!NeuraKeyboard.available(e)||!e.target.matches('dialog input[type="search"]'))return;
+ if(e.key!=='Escape'||e.shiftKey||!NotrynKeyboard.available(e)||!e.target.matches('dialog input[type="search"]'))return;
  const dialog=e.target.closest('dialog');if(!dialog.open)return;
  e.preventDefault();e.stopPropagation();if(dialog.dispatchEvent(new Event('cancel',{cancelable:true})))dialog.close();
 },true);
 // Include buttons in the normal Tab order even on mobile WebKit. Keep focus
 // within modal dialogs; at workspace edges, leave browser navigation native.
 document.addEventListener('keydown',e=>{
- if(e.key!=='Tab'||!NeuraKeyboard.available(e))return;
+ if(e.key!=='Tab'||!NotrynKeyboard.available(e))return;
  const active=document.activeElement,dialog=active.closest('dialog[open]');
  if(!dialog&&$('dialog[open]'))return;
  const controls=[...(dialog||document.body).querySelectorAll('button,a[href],input,select,textarea,[tabindex],[contenteditable="true"]')].filter(node=>
@@ -60,11 +60,11 @@ function canLeave(){if(state.saving){toast('Saving to disk. Please wait a moment
 function closeDocumentUnsafe(){setNoteFocus(false);state.noteSerial++;state.selected=null;state.note=null;state.editing=false;state.dirty=false;$('#document').hidden=true;$('#document-error').hidden=true;graph.select(null);rich.setVisible(false);renderTree();}
 async function closeDocument(){if(await canLeave())closeDocumentUnsafe();}
 async function loadBrains(){const result=await api('/api/state');state.token=result.token;state.brains=result.brains;state.remotePreview=!!result.remotePreview;['#welcome-create','#welcome-open','#open-removed','#brains-removed'].forEach(id=>$(id).hidden=state.remotePreview);$('#brain-actions').hidden=false;['#add-new-brain','#add-existing-brain'].forEach(id=>$(id).disabled=state.remotePreview);$('#brains-preview-note').hidden=!state.remotePreview;$('#brain-count').textContent=state.brains.length+(state.brains.length===1?' Brain':' Brains');return result;}
-async function switchBrain(id){if(!await canLeave())return;closeDocumentUnsafe();state.brain=id;state.query='';state.group=null;state.folderPath='';state.closed.clear();$('#search').value='';localStorage.setItem('neura-brain',id);await loadGraph();}
+async function switchBrain(id){if(!await canLeave())return;closeDocumentUnsafe();state.brain=id;state.query='';state.group=null;state.folderPath='';state.closed.clear();$('#search').value='';localStorage.setItem('notryn-brain',id);await loadGraph();}
 async function loadGraph(){const serial=++state.loadSerial;const b=current();document.body.classList.toggle('no-brain',!b);$('#brain-name').textContent=b?.name||'Your Brains';$('#new-note').disabled=!b||b.readOnly;$('#new-folder').disabled=!b||b.readOnly;$('#new-note').title=b?.readOnly?'This Brain is read-only':'New note (N)';$('#access-state').replaceChildren(icon(b?.readOnly?'lock':'folder'),document.createTextNode(b?.readOnly?'Read-only':'Local files'));$('#welcome').hidden=!!b;$('#empty-brain').hidden=true;
  if(!b){state.data={nodes:[],edges:[],folders:[]};state.folderPath='';renderGraphView();renderTree();return;}
  $('#refresh').disabled=true;
- try{const data=await api(endpoint('/api/graph',{brain:b.id}));if(serial!==state.loadSerial)return;state.data=data;while(state.folderPath&&!data.folders.includes(state.folderPath))state.folderPath=NeuraHierarchy.parent(state.folderPath);if(state.folderPolicyBrain!==b.id){state.closed=new Set(data.folders.filter(f=>f.includes('/')||data.folders.length>60));state.folderPolicyBrain=b.id;}state.brains=state.brains.map(x=>x.id===b.id?data.brain:x);renderGraphView();$('#note-total').textContent=data.nodes.length;$('#empty-brain').hidden=data.nodes.length>0;$('#empty-create').disabled=!writable();$('#notebook-create').disabled=!writable();$('#empty-brain p').textContent=writable()?'Create your first note. Connections follow.':'This folder does not contain any Markdown notes yet.';renderTree();renderLegend();if(data.skipped)toast(data.skipped+' files were skipped (size, format or count limit).');}
+ try{const data=await api(endpoint('/api/graph',{brain:b.id}));if(serial!==state.loadSerial)return;state.data=data;while(state.folderPath&&!data.folders.includes(state.folderPath))state.folderPath=NotrynHierarchy.parent(state.folderPath);if(state.folderPolicyBrain!==b.id){state.closed=new Set(data.folders.filter(f=>f.includes('/')||data.folders.length>60));state.folderPolicyBrain=b.id;}state.brains=state.brains.map(x=>x.id===b.id?data.brain:x);renderGraphView();$('#note-total').textContent=data.nodes.length;$('#empty-brain').hidden=data.nodes.length>0;$('#empty-create').disabled=!writable();$('#notebook-create').disabled=!writable();$('#empty-brain p').textContent=writable()?'Create your first note. Connections follow.':'This folder does not contain any Markdown notes yet.';renderTree();renderLegend();if(data.skipped)toast(data.skipped+' files were skipped (size, format or count limit).');}
  catch(e){$('#graph-summary').textContent='Brain unavailable';$('#file-tree').replaceChildren(el('p','empty-list',e.message));toast(e.message);}
  finally{$('#refresh').disabled=false;}}
 function renderLegend(){
@@ -72,14 +72,14 @@ function renderLegend(){
  if(state.folderPath){
   const back=el('button','legend-back folder-back');back.id='legend-back';back.append(icon('arrow'),el('span','','Back'),el('kbd','','U'));
   back.setAttribute('aria-label','Back to parent folder');back.setAttribute('aria-keyshortcuts','U');
-  back.title='Back to '+(NeuraHierarchy.parent(state.folderPath)||'Brain root')+' (U)';
+  back.title='Back to '+(NotrynHierarchy.parent(state.folderPath)||'Brain root')+' (U)';
   back.onclick=upBrainFolder;box.append(back);
  }
  const all=el('button','legend-all','All');all.id='legend-all';
  all.title='Show the Brain root';all.classList.toggle('active',!state.folderPath&&!state.query);all.setAttribute('aria-pressed',String(!state.folderPath&&!state.query));all.onclick=()=>navigateBrainFolder('',{focus:true});box.append(all);
- for(const folder of NeuraHierarchy.navigation(state.data,state.folderPath)){
+ for(const folder of NotrynHierarchy.navigation(state.data,state.folderPath)){
   const active=folder===state.folderPath,b=el('button',active?'legend-folder active':'legend-folder');
-  b.append(el('span','',NeuraHierarchy.name(folder)));b.dataset.colorGroup=NeuraHierarchy.folderId(folder);
+  b.append(el('span','',NotrynHierarchy.name(folder)));b.dataset.colorGroup=NotrynHierarchy.folderId(folder);
   b.style.setProperty('--color',graph.color(b.dataset.colorGroup));b.setAttribute('aria-pressed',String(active));
   b.title=active?folder:'Open '+folder;b.onclick=()=>navigateBrainFolder(folder,{focus:true});box.append(b);
  }
@@ -88,42 +88,42 @@ function renderLegend(){
 function renderTree(){
  updateBrainScope();
  $('#brain-root').hidden=!writable();
- $('#library-back').hidden=!state.folderPath;$('#library-back').title='Back to '+(NeuraHierarchy.parent(state.folderPath)||'Brain root')+' (U)';
+ $('#library-back').hidden=!state.folderPath;$('#library-back').title='Back to '+(NotrynHierarchy.parent(state.folderPath)||'Brain root')+' (U)';
  const box=$('#file-tree'),focused=box.contains(document.activeElement)?document.activeElement.dataset.key:null;
  const preferred=focused||state.libraryKey;box.replaceChildren();
  $('#all-notes').classList.toggle('active',!state.recent);$('#recent-notes').classList.toggle('active',state.recent);
  const nodes=state.data.nodes.filter(visible),noteRow=n=>{
-  const b=el('button','tree-row'+(n.id===state.selected?' active':''));b.append(icon('note'),el('span','',NeuraHierarchy.filename(n)));
+  const b=el('button','tree-row'+(n.id===state.selected?' active':''));b.append(icon('note'),el('span','',NotrynHierarchy.filename(n)));
   b.title=n.path+' · '+n.title;b.dataset.key='note:'+n.id;b.dataset.parent=n.folder;b.setAttribute('aria-current',String(n.id===state.selected));b.onclick=()=>openNote(n.id);return b;
  };
- if(state.recent||state.query){(state.query?NeuraHierarchy.searchNotes(state.data,state.query):nodes.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))).forEach(n=>box.append(noteRow(n)));}
+ if(state.recent||state.query){(state.query?NotrynHierarchy.searchNotes(state.data,state.query):nodes.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))).forEach(n=>box.append(noteRow(n)));}
  else{
-  for(const f of NeuraHierarchy.directFolders(state.data,state.folderPath)){
-   const item=state.graphView?.nodes.find(node=>node.id===NeuraHierarchy.folderId(f)),b=el('button','tree-row folder-row');
+  for(const f of NotrynHierarchy.directFolders(state.data,state.folderPath)){
+   const item=state.graphView?.nodes.find(node=>node.id===NotrynHierarchy.folderId(f)),b=el('button','tree-row folder-row');
    b.dataset.key='folder:'+f;b.dataset.parent=state.folderPath;b.title=f;b.setAttribute('aria-label','Open '+f);
-   b.append(icon('folder'),el('span','',NeuraHierarchy.name(f)),el('small','',String(item?.count||0)));const chevron=icon('chevron');chevron.classList.add('folder-toggle');b.append(chevron);
+   b.append(icon('folder'),el('span','',NotrynHierarchy.name(f)),el('small','',String(item?.count||0)));const chevron=icon('chevron');chevron.classList.add('folder-toggle');b.append(chevron);
    b.onclick=()=>navigateBrainFolder(f);box.append(b);
   }
   nodes.filter(n=>n.folder===state.folderPath).sort((a,b)=>a.path.localeCompare(b.path)).forEach(n=>box.append(noteRow(n)));
  }
  const rows=[...box.querySelectorAll('.tree-row')],entry=rows.find(b=>b.dataset.key===preferred)||rows.find(b=>b.getAttribute('aria-current')==='true')||rows[0];
- rows.forEach(b=>{b.tabIndex=b===entry?0:-1;window.NeuraFiles?.decorate(b);});
+ rows.forEach(b=>{b.tabIndex=b===entry?0:-1;window.NotrynFiles?.decorate(b);});
  if(focused&&entry)entry.focus({preventScroll:true});
  if(!box.children.length){const p=el('div','empty-list',state.data.nodes.length?'No notes found.':'Your notes will appear here.');if(writable()){const b=el('button','','Create your first note');b.onclick=()=>openCreate('note');p.append(b);}box.append(p);}
 }
 $('#file-tree').onfocusin=e=>{const row=e.target.closest('.tree-row');if(!row)return;state.libraryKey=row.dataset.key;$$('#file-tree .tree-row').forEach(b=>b.tabIndex=b===row?0:-1);};
 $('#file-tree').onkeydown=e=>{
- if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+ if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
  const rows=$$('#file-tree .tree-row'),row=e.target.closest('.tree-row'),i=rows.indexOf(row);if(i<0)return;e.preventDefault();
  let target;
  if(e.key==='ArrowDown')target=rows[Math.min(rows.length-1,i+1)];
  if(e.key==='ArrowUp')target=rows[Math.max(0,i-1)];
  if(e.key==='Home')target=rows[0];if(e.key==='End')target=rows.at(-1);
  if(e.key==='ArrowRight'&&row.dataset.key?.startsWith('folder:'))row.click();
- if(e.key==='ArrowLeft'&&state.folderPath){navigateBrainFolder(NeuraHierarchy.parent(state.folderPath));target=$('#file-tree .tree-row');}
+ if(e.key==='ArrowLeft'&&state.folderPath){navigateBrainFolder(NotrynHierarchy.parent(state.folderPath));target=$('#file-tree .tree-row');}
  target?.focus();
 };
-$('#search').addEventListener('keydown',e=>{if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowDown','Enter'].includes(e.key))return;const first=$('#file-tree .tree-row');if(first){e.preventDefault();first.focus();if(e.key==='Enter')first.click();}});
+$('#search').addEventListener('keydown',e=>{if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowDown','Enter'].includes(e.key))return;const first=$('#file-tree .tree-row');if(first){e.preventDefault();first.focus();if(e.key==='Enter')first.click();}});
 $('#library-back').onclick=()=>upBrainFolder({library:true});
 $('#search').oninput=e=>{state.query=clean(e.target.value.trim());renderGraphView();renderLegend();renderTree();};$('#all-notes').onclick=clearBrainFilters;$('#recent-notes').onclick=()=>{state.recent=true;renderTree();};$('#refresh').onclick=loadGraph;
 
@@ -161,7 +161,7 @@ function setNotebookView(enabled,{focus=true,remember=true}={}){
   $$('button[data-mobile]').forEach(b=>b.classList.toggle('active',b.dataset.mobile===document.body.dataset.mobile));
  }
  updateBrainToggle();
- if(remember)try{localStorage.setItem('neura-workspace',enabled?'notes':'brain');}catch{}
+ if(remember)try{localStorage.setItem('notryn-workspace',enabled?'notes':'brain');}catch{}
  if(focus){
   const target=enabled?(!$('#document').hidden?$('#doc-close'):$('#file-tree .tree-row')||$('#open-command')):$('#graph');
   target.focus({preventScroll:true});
@@ -203,7 +203,7 @@ function resolveNote(link,kind='wiki'){
  if(kind==='wiki'){const matches=known.filter(id=>id.split('/').pop()===target);if(matches.length===1)return state.data.nodes.find(n=>n.id===matches[0]);}
 }
 function markdown(text,stripTitle=false){
- const root=NeuraRichText.render(text,stripTitle);
+ const root=NotrynRichText.render(text,stripTitle);
  root.querySelectorAll('[data-note-target],a').forEach(link=>{
   const target=link.dataset.noteTarget||link.getAttribute('href');if(!target)return;
   const note=resolveNote(target,link.dataset.noteTarget?'wiki':'markdown');
@@ -211,8 +211,8 @@ function markdown(text,stripTitle=false){
  });return root;
 }
 let writingMode='visual';
-try{writingMode=localStorage.getItem('neura-writing-mode')==='source'?'source':'visual';}catch{}
-const rich=NeuraRichText.create({mount:$('#rich-editor'),toolbar:$('#format-toolbar'),formatButton:$('#format-note'),linkDialog:$('#link-dialog'),getNotes:()=>state.data.nodes,onChange:value=>{$('#editor').value=value;updateEditor();},onRaw:()=>setWritingMode('source'),onLeave:leaveTextField});
+try{writingMode=localStorage.getItem('notryn-writing-mode')==='source'?'source':'visual';}catch{}
+const rich=NotrynRichText.create({mount:$('#rich-editor'),toolbar:$('#format-toolbar'),formatButton:$('#format-note'),linkDialog:$('#link-dialog'),getNotes:()=>state.data.nodes,onChange:value=>{$('#editor').value=value;updateEditor();},onRaw:()=>setWritingMode('source'),onLeave:leaveTextField});
 function showEditorSurface(){
  const showing=state.editing&&!state.previewReading&&$('#editor-preview').hidden&&!$('#document').hidden;
  rich.setVisible(showing&&writingMode==='visual');$('#editor').hidden=!showing||writingMode==='visual';
@@ -224,7 +224,7 @@ function setWritingMode(mode){
  if(mode===writingMode)return focusEditor();
  writingMode=mode;if(mode==='visual')rich.load($('#editor').value);
  $('#editor-preview').hidden=true;$('#preview-toggle').textContent='Preview';showEditorSurface();focusEditor();
- try{localStorage.setItem('neura-writing-mode',mode);}catch{}
+ try{localStorage.setItem('notryn-writing-mode',mode);}catch{}
 }
 $('#visual-mode').onclick=()=>setWritingMode('visual');$('#source-mode').onclick=()=>setWritingMode('source');
 
@@ -256,7 +256,7 @@ function appendFileLocation(container){
  footer.append(button);container.append(footer);
 }
 async function showNoteInFolder(){
- if(state.remotePreview)return toast('Open Neura on the host computer to show local files.');
+ if(state.remotePreview)return toast('Open Notryn on the host computer to show local files.');
  if(!state.note||state.newNote)return toast('Open a saved note first.');
  try{const result=await api('/api/notes/reveal',{brain:state.brain,path:state.note.path});toast(result.mode==='folder'?'Opened the note’s folder.':'Requested the file in your file manager.');}
  catch(error){toast(error.message);}
@@ -271,7 +271,7 @@ function chooseBrainFolder(){
  ($('#legend button[aria-pressed="true"]')||$('#legend button'))?.focus({preventScroll:true});
 }
 $('#legend').addEventListener('keydown',e=>{
- if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+ if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
  const rows=$$('#legend button:not([disabled])'),i=rows.indexOf(document.activeElement);if(i<0)return;
  e.preventDefault();e.stopPropagation();rows[e.key==='Home'?0:e.key==='End'?rows.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:-1)+rows.length)%rows.length]?.focus();
 });
@@ -306,26 +306,26 @@ async function saveNote({finish=false}={}){
 $('#save-note').onclick=()=>saveNote({finish:true});$('#doc-close').onclick=closeDocument;
 
 function expandFolderPath(path){while(path){state.closed.delete(path);path=path.split('/').slice(0,-1).join('/');}}
-let createKind='note';async function openCreate(kind,title='',destination=window.NeuraFiles?.destinationHere()||state.folderPath||''){if(!current())return openBrainForm('create');if(!writable())return toast('This Brain is read-only. Create or choose a writable Brain.');if(!await canLeave())return;setBrainFocus(false);document.body.classList.remove('brain-peek');createKind=kind;$('#create-title').textContent=kind==='folder'?'New folder':'New note';$('#create-name').value=title;$('#create-name').setCustomValidity('');$('#create-name').placeholder=kind==='folder'?'Projects':'The beginning of an idea';$('#create-submit').textContent=kind==='folder'?'Create folder':'Start writing';$('#create-folder').replaceChildren();const option=el('option','','Brain root');option.value='';$('#create-folder').append(option);for(const f of state.data.folders){const o=el('option','',f);o.value=f;$('#create-folder').append(o);}$('#create-folder').value=destination;$('#create-dialog .form-error').hidden=true;showDialog('#create-dialog');$('#create-name').focus();}
+let createKind='note';async function openCreate(kind,title='',destination=window.NotrynFiles?.destinationHere()||state.folderPath||''){if(!current())return openBrainForm('create');if(!writable())return toast('This Brain is read-only. Create or choose a writable Brain.');if(!await canLeave())return;setBrainFocus(false);document.body.classList.remove('brain-peek');createKind=kind;$('#create-title').textContent=kind==='folder'?'New folder':'New note';$('#create-name').value=title;$('#create-name').setCustomValidity('');$('#create-name').placeholder=kind==='folder'?'Projects':'The beginning of an idea';$('#create-submit').textContent=kind==='folder'?'Create folder':'Start writing';$('#create-folder').replaceChildren();const option=el('option','','Brain root');option.value='';$('#create-folder').append(option);for(const f of state.data.folders){const o=el('option','',f);o.value=f;$('#create-folder').append(o);}$('#create-folder').value=destination;$('#create-dialog .form-error').hidden=true;showDialog('#create-dialog');$('#create-name').focus();}
 $('#create-form').onsubmit=async e=>{e.preventDefault();const name=$('#create-name').value.trim(),folder=$('#create-folder').value,error=$('#create-dialog .form-error');if(!name||/[\\/]/.test(name)||name.startsWith('.')){error.textContent='Use a name without slashes or a leading dot.';error.hidden=false;return;}const path=(folder?folder+'/':'')+name+(createKind==='note'&&!/\.md$/i.test(name)?'.md':'');$('#create-submit').disabled=true;try{if(createKind==='folder'){await api('/api/folders',{brain:state.brain,path});expandFolderPath(folder);await loadGraph();$('#create-dialog').close();toast('Folder created.');}else{if(state.data.nodes.some(n=>n.path===path))throw Error('A note with this name already exists.');closeDocumentUnsafe();state.newNote=true;state.editing=true;expandFolderPath(folder);state.note={path,content:'# '+name.replace(/\.md$/i,'')+'\n\n',revision:null};$('#document').hidden=false;$('#create-dialog').close();resetEditorView();renderDocument();focusEditor(true);}}catch(e){error.textContent=e.message;error.hidden=false;}finally{$('#create-submit').disabled=false;}};
 function resetEditorView(){state.previewReading=false;$('#editor-preview').hidden=true;$('#preview-toggle').textContent='Preview';showEditorSurface();}
 $('#new-note').onclick=()=>openCreate('note');$('#empty-create').onclick=()=>openCreate('note');$('#mobile-create').onclick=()=>openCreate('note');$('#new-folder').onclick=()=>openCreate('folder');
 let brainAction='create';async function openBrainForm(action){if(state.remotePreview)return toast('This preview provides read-only access to connected Brains.');if(!await canLeave())return;$('#brains-dialog').close();brainAction=action;$('#brain-form-title').textContent=action==='create'?'Create a Brain':'Open a folder';$('#connect-fields').hidden=action!=='connect';$('#brain-form-path').required=action==='connect';$('#brain-submit').textContent=action==='create'?'Create Brain':'Open folder';$('#brain-form-help').textContent=action==='create'?'A new space for your Markdown notes.':'Connect an existing folder. Your files stay where they are.';$('#brain-form-name').value='';$('#brain-form-path').value='';$('#brain-form-name').setCustomValidity('');$('#brain-form-path').setCustomValidity('');$('#brain-form-access').value='read';$('#brain-form-dialog .form-error').hidden=true;showDialog('#brain-form-dialog');$('#brain-form-name').focus();}
 $('#brain-form').onsubmit=async e=>{e.preventDefault();$('#brain-submit').disabled=true;try{const {brain}=await api('/api/brains',{action:brainAction,name:$('#brain-form-name').value,path:$('#brain-form-path').value,writable:$('#brain-form-access').value==='write'});await loadBrains();$('#brain-form-dialog').close();await switchBrain(brain.id);toast(brainAction==='create'?'Brain created.':'Folder connected.');}catch(e){const p=$('#brain-form-dialog .form-error');p.textContent=e.message;p.hidden=false;}finally{$('#brain-submit').disabled=false;}};
 let brainAccessId=null;
-function updateBrainAccessCopy(){const writable=$('input[name="brain-access"]:checked')?.value==='write';$('#brain-access-submit').textContent=writable?'Allow writing':'Keep read-only';$('#brain-access-help').textContent=writable?'Neura will be able to create, edit, move and remove Markdown files in this folder.':'Neura will only read this folder. Files cannot be changed from the app.';}
+function updateBrainAccessCopy(){const writable=$('input[name="brain-access"]:checked')?.value==='write';$('#brain-access-submit').textContent=writable?'Allow writing':'Keep read-only';$('#brain-access-help').textContent=writable?'Notryn will be able to create, edit, move and remove Markdown files in this folder.':'Notryn will only read this folder. Files cannot be changed from the app.';}
 async function openBrainAccess(id=state.brain){if(state.remotePreview)return toast('Brain access can only be changed in the local app.');const brain=state.brains.find(b=>b.id===id);if(!brain)return toast('Choose a Brain first.');if(!await canLeave())return;$('#brains-dialog').close();brainAccessId=id;$('#brain-access-name').textContent=brain.name;$('#brain-access-path').textContent=brain.root;const value=brain.readOnly?'read':'write';const option=$('input[name="brain-access"][value="'+value+'"]');option.checked=true;$('#brain-access-error').hidden=true;updateBrainAccessCopy();showDialog('#brain-access-dialog');option.focus();}
 function closeBrainAccess(){brainAccessId=null;$('#brain-access-dialog').close();brainPicker();}
 $$('input[name="brain-access"]').forEach(input=>input.onchange=updateBrainAccessCopy);
 $('#brain-access-close').onclick=closeBrainAccess;$('#brain-access-cancel').onclick=closeBrainAccess;$('#brain-access-dialog').oncancel=e=>{e.preventDefault();closeBrainAccess();};
 $('#brain-access-form').onsubmit=async e=>{e.preventDefault();const writable=$('input[name="brain-access"]:checked')?.value==='write',button=$('#brain-access-submit'),error=$('#brain-access-error'),id=brainAccessId;button.disabled=true;error.hidden=true;try{const {brain}=await api('/api/brains',{action:'access',brain:id,writable});await loadBrains();if(id===state.brain){if(brain.readOnly&&state.editing){state.editing=false;state.dirty=false;renderDocument();}await loadGraph();}brainAccessId=null;$('#brain-access-dialog').close();brainPicker();toast(brain.readOnly?'Brain is now read-only.':'Read and write access enabled.');}catch(e){error.textContent=e.message;error.hidden=false;}finally{button.disabled=false;}};
-function brainPicker(){const list=$('#brain-list');list.replaceChildren();$('#brain-actions').hidden=false;['#add-new-brain','#add-existing-brain'].forEach(id=>$(id).disabled=state.remotePreview);$('#brains-preview-note').hidden=!state.remotePreview;$('#brain-count').textContent=state.brains.length+(state.brains.length===1?' Brain':' Brains');for(const b of state.brains){const button=el('button','brain-card'+(b.id===state.brain?' active':'')),info=el('div');info.append(el('strong','',b.name),el('small','',!b.available?'Folder unavailable':b.readOnly?'Read-only':'Read and write'));button.append(icon('brain'),info,icon(b.id===state.brain?'chevron':'folder'));button.onclick=async()=>{$('#brains-dialog').close();await switchBrain(b.id);};const row=el('div','brain-entry');row.append(button);if(!state.remotePreview){const manage=el('button','secondary brain-manage');manage.append(icon(b.readOnly?'lock':'edit'),document.createTextNode('Access'));manage.setAttribute('aria-label','Manage access for '+b.name);manage.title='Manage access';manage.onclick=()=>openBrainAccess(b.id);const remove=el('button','icon-button brain-remove');remove.append(icon('trash'));remove.setAttribute('aria-label','Remove '+b.name+' from Neura');remove.title='Remove from Neura';remove.onclick=()=>window.NeuraRemoval.openBrain(b.id);row.append(manage,remove);}list.append(row);}if(!state.brains.length)list.append(el('p','form-help','No Brains connected yet. Create one or open a folder to begin.'));showDialog('#brains-dialog');(state.remotePreview?($('#brain-list .brain-card.active')||$('#brain-list .brain-card')):$('#add-new-brain'))?.focus();}
+function brainPicker(){const list=$('#brain-list');list.replaceChildren();$('#brain-actions').hidden=false;['#add-new-brain','#add-existing-brain'].forEach(id=>$(id).disabled=state.remotePreview);$('#brains-preview-note').hidden=!state.remotePreview;$('#brain-count').textContent=state.brains.length+(state.brains.length===1?' Brain':' Brains');for(const b of state.brains){const button=el('button','brain-card'+(b.id===state.brain?' active':'')),info=el('div');info.append(el('strong','',b.name),el('small','',!b.available?'Folder unavailable':b.readOnly?'Read-only':'Read and write'));button.append(icon('brain'),info,icon(b.id===state.brain?'chevron':'folder'));button.onclick=async()=>{$('#brains-dialog').close();await switchBrain(b.id);};const row=el('div','brain-entry');row.append(button);if(!state.remotePreview){const manage=el('button','secondary brain-manage');manage.append(icon(b.readOnly?'lock':'edit'),document.createTextNode('Access'));manage.setAttribute('aria-label','Manage access for '+b.name);manage.title='Manage access';manage.onclick=()=>openBrainAccess(b.id);const remove=el('button','icon-button brain-remove');remove.append(icon('trash'));remove.setAttribute('aria-label','Remove '+b.name+' from Notryn');remove.title='Remove from Notryn';remove.onclick=()=>window.NotrynRemoval.openBrain(b.id);row.append(manage,remove);}list.append(row);}if(!state.brains.length)list.append(el('p','form-help','No Brains connected yet. Create one or open a folder to begin.'));showDialog('#brains-dialog');(state.remotePreview?($('#brain-list .brain-card.active')||$('#brain-list .brain-card')):$('#add-new-brain'))?.focus();}
 $('#brain-picker').onclick=brainPicker;$('#home-button').onclick=brainPicker;$('#add-new-brain').onclick=()=>openBrainForm('create');$('#add-existing-brain').onclick=()=>openBrainForm('connect');$('#welcome-create').onclick=()=>openBrainForm('create');$('#welcome-open').onclick=()=>openBrainForm('connect');
-$('#brains-dialog').addEventListener('keydown',e=>{if(state.remotePreview||!singleKeys||!NeuraKeyboard.available(e))return;const key=e.key.toLowerCase(),create=key==='b'&&e.shiftKey,connect=key==='o'&&!e.shiftKey;if(!create&&!connect)return;e.preventDefault();e.stopPropagation();openBrainForm(create?'create':'connect');});
+$('#brains-dialog').addEventListener('keydown',e=>{if(state.remotePreview||!singleKeys||!NotrynKeyboard.available(e))return;const key=e.key.toLowerCase(),create=key==='b'&&e.shiftKey,connect=key==='o'&&!e.shiftKey;if(!create&&!connect)return;e.preventDefault();e.stopPropagation();openBrainForm(create?'create':'connect');});
 $('#add-new-brain kbd').textContent='Shift B';
 
 function toggleLibrary(){if(document.body.classList.contains('brain-focus')){setBrainFocus(false);setNoteFocus(false);document.body.classList.remove('library-hidden');return;}if(document.body.classList.contains('note-focus')){setNoteFocus(false);document.body.classList.remove('library-hidden');return;}document.body.classList.toggle('library-hidden');}$('#sidebar-close').onclick=toggleLibrary;$('#sidebar-open').onclick=toggleLibrary;
-$('#fit').onclick=()=>graph.fit();$('#zoom-in').onclick=()=>graph.zoomBy(1.12);$('#zoom-out').onclick=()=>graph.zoomBy(1/1.12);function updateMotionButton(){$('#motion').replaceChildren(icon(graph.moving?'pause':'play'));$('#motion').setAttribute('aria-label',graph.moving?'Pause motion':'Resume motion');$('#motion').title=(graph.moving?'Pause motion':'Resume motion')+' (Space with brain focused)';}function motion(){graph.moving=!graph.moving;graph.dirty=true;try{localStorage.setItem('neura-motion',graph.moving?'running':'paused');}catch{}updateMotionButton();}$('#motion').onclick=motion;document.addEventListener('neura-motionchange',updateMotionButton);updateMotionButton();
+$('#fit').onclick=()=>graph.fit();$('#zoom-in').onclick=()=>graph.zoomBy(1.12);$('#zoom-out').onclick=()=>graph.zoomBy(1/1.12);function updateMotionButton(){$('#motion').replaceChildren(icon(graph.moving?'pause':'play'));$('#motion').setAttribute('aria-label',graph.moving?'Pause motion':'Resume motion');$('#motion').title=(graph.moving?'Pause motion':'Resume motion')+' (Space with brain focused)';}function motion(){graph.moving=!graph.moving;graph.dirty=true;try{localStorage.setItem('notryn-motion',graph.moving?'running':'paused');}catch{}updateMotionButton();}$('#motion').onclick=motion;document.addEventListener('notryn-motionchange',updateMotionButton);updateMotionButton();
 async function mobileView(view,{focusInput=true}={}){
  if(!$('#document').hidden){if(!await canLeave())return false;closeDocumentUnsafe();}
  if(view==='map'||view==='notes')setNotebookView(view==='notes',{focus:false});
@@ -349,7 +349,7 @@ $('#brain-picker').title='Switch Brain (B)';$('#new-folder').title='New folder (
 
 // Keep the editor node, content, selection and scroll position when swapping panes.
 let noteSide='left';
-try{noteSide=localStorage.getItem('neura-note-side')==='right'?'right':'left';}catch{}
+try{noteSide=localStorage.getItem('notryn-note-side')==='right'?'right':'left';}catch{}
 function applyNoteSide(){
  const doc=$('#document'),universe=$('.universe'),active=document.activeElement;
  const scrolls=[$('#editor'),$('#rich-editor'),$('#document-read'),$('#editor-preview')].map(e=>[e,e.scrollTop]);
@@ -365,7 +365,7 @@ function applyNoteSide(){
 function swapLayout(){
  if(matchMedia('(max-width:900px)').matches)return toast('On this screen, the note uses the full width.');
  noteSide=noteSide==='left'?'right':'left';applyNoteSide();
- try{localStorage.setItem('neura-note-side',noteSide);}catch{}
+ try{localStorage.setItem('notryn-note-side',noteSide);}catch{}
  toast('Note on the '+(noteSide==='left'?'left':'right')+'. Preference saved.');
 }
 function setNoteFocus(value){
@@ -453,7 +453,7 @@ function cycleWorkspace(direction=1){
 }
 // Arrow navigation supplements normal Tab/Shift Tab in dialog action lists.
 for(const selector of ['#brain-list','#shortcut-catalog'])$(selector).addEventListener('keydown',e=>{
- if(!NeuraKeyboard.available(e)||e.shiftKey||!['ArrowDown','ArrowUp','Home','End'].includes(e.key))return;
+ if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowDown','ArrowUp','Home','End'].includes(e.key))return;
  const rows=[...$(selector).querySelectorAll('button')],i=rows.indexOf(document.activeElement);if(!rows.length)return;e.preventDefault();
  if(selector==='#shortcut-catalog'&&i===0&&e.key==='ArrowUp'){ $('#shortcut-search').focus({preventScroll:true});return; }
  const next=e.key==='Home'?0:e.key==='End'?rows.length-1:Math.max(0,Math.min(rows.length-1,i+(e.key==='ArrowDown'?1:-1)));rows[next].focus();
@@ -488,12 +488,12 @@ const actionItems=()=>[
  {title:'Switch Write / Markdown',group:'Writing',key:'Shift E',plain:'e',plainShift:true,keywords:'source visual editor codigo escrita',icon:'edit',run:()=>{if(!state.editing)return toast('Edit a note first.');setWritingMode(writingMode==='visual'?'source':'visual');}},
  {title:'Format text',group:'Writing',key:'Shift F',plain:'f',plainShift:true,icon:'edit',run:()=>{if(!state.editing||writingMode!=='visual')return toast('Open a note in Write mode first.');$('#editor-preview').hidden=true;$('#preview-toggle').textContent='Preview';showEditorSurface();rich.showTools();}},
  ...[['Bold','strong','Ctrl / Cmd + B'],['Italic','em','Ctrl / Cmd + I'],['Strikethrough','strike','Ctrl / Cmd + Shift X'],['Insert or edit link','link','Ctrl / Cmd + K'],['Undo','undo','Ctrl / Cmd + Z'],['Redo','redo','Ctrl / Cmd + Shift Z'],['Paragraph','text'],['Heading 1','h1'],['Heading 2','h2'],['Heading 3','h3'],['Heading 4','h4'],['Heading 5','h5'],['Heading 6','h6'],['Bullet list','bullet'],['Numbered list','ordered'],['Blockquote','quote'],['Code block','code'],['Inline code','inline-code']].map(([title,format,key])=>({title,format,key,group:'Formatting',context:'visual',keywords:'text format formatting '+format,icon:'edit',run:()=>formatNote(format)})),
- {title:'Remove note or folder from Neura',group:'Writing',key:'D',plain:'d',icon:'trash',run:()=>window.NeuraRemoval.openItem()},
- {title:'Removed items',group:'Navigation',key:'Shift D',plain:'d',plainShift:true,keywords:'restore forget remove from list recuperar lista',icon:'trash',run:()=>window.NeuraRemoval.openRemoved()},
- {title:'Remove this Brain from Neura',group:'Brains',icon:'trash',run:()=>window.NeuraRemoval.openBrain()},
+ {title:'Remove note or folder from Notryn',group:'Writing',key:'D',plain:'d',icon:'trash',run:()=>window.NotrynRemoval.openItem()},
+ {title:'Removed items',group:'Navigation',key:'Shift D',plain:'d',plainShift:true,keywords:'restore forget remove from list recuperar lista',icon:'trash',run:()=>window.NotrynRemoval.openRemoved()},
+ {title:'Remove this Brain from Notryn',group:'Brains',icon:'trash',run:()=>window.NotrynRemoval.openBrain()},
  {title:'Manage Brain access',group:'Brains',icon:'lock',run:()=>openBrainAccess()},
- {title:'Move note or folder',group:'Writing',key:'M',plain:'m',icon:'swap',run:()=>window.NeuraFiles.openMove()},
- {title:'Note or folder actions',group:'Writing',key:'Shift M',plain:'m',plainShift:true,keywords:'context menu item options',icon:'folder',run:()=>window.NeuraFiles.openMenu()},
+ {title:'Move note or folder',group:'Writing',key:'M',plain:'m',icon:'swap',run:()=>window.NotrynFiles.openMove()},
+ {title:'Note or folder actions',group:'Writing',key:'Shift M',plain:'m',plainShift:true,keywords:'context menu item options',icon:'folder',run:()=>window.NotrynFiles.openMenu()},
  {title:'Show note in folder',group:'Writing',key:'Shift O',plain:'o',plainShift:true,keywords:'reveal finder explorer file location localizar ficheiro pasta',icon:'folder',run:showNoteInFolder},
  {title:'Save note',group:'Writing',key:'Ctrl / Cmd + S',plain:'s',editorKey:'s',icon:'save',run:saveNote},
  {title:'Save and finish editing',group:'Writing',key:'Shift S',plain:'s',plainShift:true,keywords:'done read guardar terminar leitura',icon:'save',run:()=>saveNote({finish:true})},
@@ -526,7 +526,7 @@ const commandSearchAliases={
  'New folder':'create directory criar nova pasta',
  'Manage Brain access':'permissions read only write edit permissoes leitura escrita acesso',
  'Swap note and brain':'left right sides trocar esquerda direita',
- 'Remove note or folder from Neura':'delete remove apagar remover nota pasta',
+ 'Remove note or folder from Notryn':'delete remove apagar remover nota pasta',
  'Removed items':'trash restore undo deleted lixo recuperar removidos',
  'Save note':'save guardar gravar',
  'Move note or folder':'move organize mover organizar arrastar',
@@ -574,7 +574,7 @@ function openShortcuts(){
 }
 $('#shortcut-search').oninput=renderShortcuts;
 $('#shortcut-search').onkeydown=e=>{
- if(!NeuraKeyboard.available(e)||e.shiftKey)return;
+ if(!NotrynKeyboard.available(e)||e.shiftKey)return;
  if(e.key==='Escape'){e.preventDefault();$('#shortcuts-dialog').close();return;}
  if(!['ArrowDown','ArrowUp','Enter'].includes(e.key))return;
  const rows=$$('#shortcut-catalog button');e.preventDefault();
@@ -583,11 +583,11 @@ $('#shortcut-search').onkeydown=e=>{
 };
 $('#open-shortcuts').onclick=openShortcuts;$('#open-shortcuts').title='Commands and shortcuts (?)';
 let commandItems=[],commandIndex=0;
-function renderCommands(){const q=clean($('#command-input').value.trim()),actions=actionItems().filter(a=>matchesCommand(a,q)),notes=(q?NeuraHierarchy.searchNotes(state.data,q):[...state.data.nodes].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).slice(0,5)).map(n=>({title:NeuraHierarchy.filename(n),detail:n.path+' · '+n.title,icon:'note',run:()=>openNote(n.id)}));const box=$('#commands');box.replaceChildren();commandItems=[];for(const[label,items]of[['Notes',notes],['Actions',actions]]){if(!items.length)continue;box.append(el('div','command-group-label',label));for(const item of items){const index=commandItems.length;commandItems.push(item);const b=el('button','command-row');b.setAttribute('role','option');b.dataset.index=index;b.append(icon(item.icon),el('span','',item.title));if(item.detail)b.append(el('small','',item.detail));if(item.key)b.append(el('kbd','',item.key));b.onclick=()=>runCommand(index);box.append(b);}}if(!commandItems.length)box.append(el('p','empty-list','No notes or actions match that name.'));commandIndex=0;highlightCommand();}
+function renderCommands(){const q=clean($('#command-input').value.trim()),actions=actionItems().filter(a=>matchesCommand(a,q)),notes=(q?NotrynHierarchy.searchNotes(state.data,q):[...state.data.nodes].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).slice(0,5)).map(n=>({title:NotrynHierarchy.filename(n),detail:n.path+' · '+n.title,icon:'note',run:()=>openNote(n.id)}));const box=$('#commands');box.replaceChildren();commandItems=[];for(const[label,items]of[['Notes',notes],['Actions',actions]]){if(!items.length)continue;box.append(el('div','command-group-label',label));for(const item of items){const index=commandItems.length;commandItems.push(item);const b=el('button','command-row');b.setAttribute('role','option');b.dataset.index=index;b.append(icon(item.icon),el('span','',item.title));if(item.detail)b.append(el('small','',item.detail));if(item.key)b.append(el('kbd','',item.key));b.onclick=()=>runCommand(index);box.append(b);}}if(!commandItems.length)box.append(el('p','empty-list','No notes or actions match that name.'));commandIndex=0;highlightCommand();}
 function highlightCommand(){const rows=$$('#commands .command-row');rows.forEach((b,i)=>b.setAttribute('aria-selected',String(i===commandIndex)));rows[commandIndex]?.scrollIntoView({block:'nearest'});}
 function runCommand(i){const item=commandItems[i];if(!item)return;$('#command-dialog').close();item.run();}
 function openCommand(){if($('dialog[open]')&& !$('#command-dialog').open)return;showDialog('#command-dialog');$('#command-input').value='';renderCommands();$('#command-input').focus();}
-$('#open-command').onclick=openCommand;$('#command-input').oninput=renderCommands;$('#command-input').onkeydown=e=>{if(NeuraKeyboard.available(e)&&!e.shiftKey&&['ArrowDown','ArrowUp','Enter'].includes(e.key)){e.preventDefault();if(e.key==='Enter')runCommand(commandIndex);else{commandIndex=Math.max(0,Math.min(commandItems.length-1,commandIndex+(e.key==='ArrowDown'?1:-1)));highlightCommand();}}};$('.mod').textContent='P';
+$('#open-command').onclick=openCommand;$('#command-input').oninput=renderCommands;$('#command-input').onkeydown=e=>{if(NotrynKeyboard.available(e)&&!e.shiftKey&&['ArrowDown','ArrowUp','Enter'].includes(e.key)){e.preventDefault();if(e.key==='Enter')runCommand(commandIndex);else{commandIndex=Math.max(0,Math.min(commandItems.length-1,commandIndex+(e.key==='ArrowDown'?1:-1)));highlightCommand();}}};$('.mod').textContent='P';
 function updateKeyboardPreference(){
  $('#single-key-toggle').checked=singleKeys;
  $('#full-brain kbd').hidden=!singleKeys;
@@ -596,14 +596,14 @@ function updateKeyboardPreference(){
  $('.mod').textContent=singleKeys?'P':'Tab';
  $('#shortcut-mode-status').textContent=singleKeys?'Letters work outside text fields. While writing: Esc, then a command.':'Single-key shortcuts are off. Use Tab and Enter, the command palette or buttons.';
 }
-$('#single-key-toggle').onchange=e=>{singleKeys=e.target.checked;try{localStorage.setItem('neura-single-keys',singleKeys?'on':'off');}catch{}updateKeyboardPreference();renderShortcuts();};
+$('#single-key-toggle').onchange=e=>{singleKeys=e.target.checked;try{localStorage.setItem('notryn-single-keys',singleKeys?'on':'off');}catch{}updateKeyboardPreference();renderShortcuts();};
 updateKeyboardPreference();
 function updateInterfaceHints(){
  document.documentElement.dataset.interfaceHints=interfaceHints?'on':'off';
  $('#interface-hints-toggle').checked=interfaceHints;
 }
 function setInterfaceHints(enabled){
- interfaceHints=enabled;try{localStorage.setItem('neura-interface-hints',enabled?'on':'off');}catch{}
+ interfaceHints=enabled;try{localStorage.setItem('notryn-interface-hints',enabled?'on':'off');}catch{}
  updateInterfaceHints();
  if($('#shortcuts-dialog').open)renderShortcuts();
 }
@@ -617,11 +617,11 @@ function leaveTextField(){
  if(singleKeys&&interfaceHints)toast('H show/hide brain · Shift H full Brain · P commands · S save');
 }
 document.addEventListener('keydown',e=>{
- if(!NeuraKeyboard.available(e)||$('dialog[open]'))return;
+ if(!NotrynKeyboard.available(e)||$('dialog[open]'))return;
  const active=document.activeElement,typing=['INPUT','TEXTAREA','SELECT'].includes(active.tagName)||active.isContentEditable;
  if(typing&&e.key==='Escape'&&!e.shiftKey){e.preventDefault();if(!e.repeat)leaveTextField();return;}
  const selected=!!window.getSelection()?.toString();
- const action=NeuraKeyboard.match(actionItems(),e,{typing,selected,graph:active===$('#graph'),enabled:singleKeys});
+ const action=NotrynKeyboard.match(actionItems(),e,{typing,selected,graph:active===$('#graph'),enabled:singleKeys});
  if(!action)return;
  e.preventDefault();if(!e.repeat||action.repeat)action.run(e);
 });
@@ -629,7 +629,7 @@ document.addEventListener('keydown',e=>{
 // browser shortcuts, uppercase letters and IME composition keep their behavior.
 $('#document').addEventListener('keydown',e=>{
  if($('dialog[open]'))return;
- const action=NeuraKeyboard.matchEditor(actionItems(),e,{editing:state.editing&&writable()});
+ const action=NotrynKeyboard.matchEditor(actionItems(),e,{editing:state.editing&&writable()});
  if(!action)return;e.preventDefault();e.stopPropagation();if(!e.repeat)action.run();
 },true);
 window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
@@ -687,4 +687,4 @@ async function ask(question){
 }
 
 $('#ask-form').onsubmit=e=>{e.preventDefault();const q=$('#question').value;$('#question').value='';ask(q);};$$('[data-question]').forEach(b=>b.onclick=()=>ask(b.dataset.question));window.addEventListener('pagehide',stopSpeech);
-(async()=>{try{await loadBrains();const saved=localStorage.getItem('neura-brain');state.brain=state.brains.some(b=>b.id===saved)?saved:state.brains[0]?.id||null;await loadGraph();if(current()&&localStorage.getItem('neura-workspace')==='notes')setNotebookView(true,{focus:false,remember:false});const voice=await api('/api/voice');state.nativeVoice=voice.available;}catch(e){toast(e.message);}})();
+(async()=>{try{await loadBrains();const saved=localStorage.getItem('notryn-brain');state.brain=state.brains.some(b=>b.id===saved)?saved:state.brains[0]?.id||null;await loadGraph();if(current()&&localStorage.getItem('notryn-workspace')==='notes')setNotebookView(true,{focus:false,remember:false});const voice=await api('/api/voice');state.nativeVoice=voice.available;}catch(e){toast(e.message);}})();

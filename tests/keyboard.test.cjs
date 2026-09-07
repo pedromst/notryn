@@ -7,7 +7,7 @@ const web=path.join(__dirname,'../web');
 const context={window:{},interfaceHints:true,clean:s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(web,'keyboard.js'),'utf8'),context);
-const policy=context.window.NeuraKeyboard;
+const policy=context.window.NotrynKeyboard;
 const app=fs.readFileSync(path.join(web,'app.js'),'utf8');
 const catalogSource=app.slice(app.indexOf('const actionItems=()=>['),app.indexOf('function openShortcuts(){'));
 for(const match of catalogSource.matchAll(/run:([a-zA-Z]\w*)[,}]/g))context[match[1]]=()=>{};
@@ -87,7 +87,7 @@ test('key searches distinguish exact letters and Shift variants',()=>{
  assert.deepEqual(find('ArrowUp'),['Rotate brain']);
 });
 test('less frequent and visual actions are available by searchable command name',()=>{
- for(const title of ['Manage Brain access','Remove this Brain from Neura','Expand all folders','Collapse all folders','Show note in folder','Configure keyboard shortcuts','Heading 1','Heading 2','Heading 3','Bullet list','Numbered list','Blockquote','Code block','Inline code','Insert or edit link','Undo','Redo']){
+ for(const title of ['Manage Brain access','Remove this Brain from Notryn','Expand all folders','Collapse all folders','Show note in folder','Configure keyboard shortcuts','Heading 1','Heading 2','Heading 3','Bullet list','Numbered list','Blockquote','Code block','Inline code','Insert or edit link','Undo','Redo']){
   const action=actions.find(a=>a.title===title);assert.ok(action,title);assert.equal(typeof action.run,'function');assert.ok(context.matchesCommand(action,title),title);
  }
 });

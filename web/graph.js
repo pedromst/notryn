@@ -1,18 +1,18 @@
 'use strict';
 // Original filament geometry with refined glass reflections and luminous notes.
 // The glass cortex is illustrative. Bright nodes and their links come from Markdown.
-window.NeuraGraph=class{
+window.NotrynGraph=class{
  constructor(canvas,onSelect){
   this.canvas=canvas;this.ctx=canvas.getContext('2d');this.onSelect=onSelect;
   this.nodes=[];this.edges=[];this.zoom=1;this.rotation=.32;this.tilt=-.12;this.cameraTarget=null;
   this.motionPreference=matchMedia('(prefers-reduced-motion:reduce)');this.mobile=matchMedia('(max-width:900px)');
   this.moving=!this.motionPreference.matches;
-  try{if(localStorage.getItem('neura-motion')==='paused')this.moving=false;}catch{}
+  try{if(localStorage.getItem('notryn-motion')==='paused')this.moving=false;}catch{}
   this.points=new Map();this.pointers=new Map();this.labelRects=[];this.filter=()=>true;
   this.selected=null;this.hover=null;this.keyboardId=null;this.time=0;this.last=0;this.dirty=true;
-  this.setTheme(window.NeuraThemes.build(window.NeuraThemes.current).graph);
+  this.setTheme(window.NotrynThemes.build(window.NotrynThemes.current).graph);
   this.cortex=this.buildCortex();
-  this.motionPreference.addEventListener('change',e=>{if(e.matches){this.moving=false;document.dispatchEvent(new Event('neura-motionchange'));}this.dirty=true;});
+  this.motionPreference.addEventListener('change',e=>{if(e.matches){this.moving=false;document.dispatchEvent(new Event('notryn-motionchange'));}this.dirty=true;});
   new ResizeObserver(()=>this.resize()).observe(canvas);this.events();
   this.tick=this.tick.bind(this);requestAnimationFrame(this.tick);document.fonts.ready.then(()=>this.dirty=true);
  }

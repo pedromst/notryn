@@ -1,6 +1,6 @@
 'use strict';
 // Convert a complete Markdown index into one navigable folder layer.
-window.NeuraHierarchy=(()=>{
+window.NotrynHierarchy=(()=>{
  const normalize=path=>String(path||'').replace(/^\/+|\/+$/g,'');
  const parent=path=>normalize(path).split('/').slice(0,-1).join('/');
  const name=path=>normalize(path).split('/').pop()||'';

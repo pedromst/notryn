@@ -6,7 +6,7 @@ const vm=require('node:vm');
 
 const context={window:{}};vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/hierarchy.js'),'utf8'),context);
-const hierarchy=context.window.NeuraHierarchy;
+const hierarchy=context.window.NotrynHierarchy;
 const data={
  folders:['core','projects','projects/archive','projects/live'],
  nodes:[
@@ -84,7 +84,7 @@ test('folder navigation keeps only the current layer, including a leaf with no s
 
 test('folder colors match their notes and remain stable when navigating, searching and changing theme',()=>{
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/graph.js'),'utf8'),context);
- const graph=Object.create(context.window.NeuraGraph.prototype);
+ const graph=Object.create(context.window.NotrynGraph.prototype);
  graph.brainPoint=()=>({x:0,y:0,z:0});graph.fit=()=>{};
  const views=[hierarchy.view(data),hierarchy.view(data,'projects'),hierarchy.view(data,'projects/live'),hierarchy.view(data,'core','new')];
  const original=JSON.stringify(data);

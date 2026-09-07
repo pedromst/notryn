@@ -43,7 +43,7 @@ class PreviewTests(unittest.TestCase):
     def request(self, path, data=None, authenticated=True):
         headers = {'Host': 'preview.example'}
         if authenticated:
-            headers['Cookie'] = '__Host-neura=preview-test-session'
+            headers['Cookie'] = '__Host-notryn=preview-test-session'
         req = urllib.request.Request(
             f'http://127.0.0.1:{self.gateway.server_port}{path}',
             data=json.dumps(data).encode() if data is not None else None, headers=headers)

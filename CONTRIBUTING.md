@@ -1,25 +1,25 @@
-# Contributing to Neura
+# Contributing to Notryn
 
 Thank you for helping make local-first note taking simpler, safer and more accessible.
 
-Neura is preparing for a public release. Every change arrives through a pull request and is reviewed before it reaches the default branch. A pull request is a proposal, not automatic permission to change the product.
+Notryn is preparing for a public release. Every change arrives through a pull request and is reviewed before it reaches the default branch. A pull request is a proposal, not automatic permission to change the product.
 
 ## Before you start
 
 - Search existing issues and pull requests first.
 - Open an issue before a large feature or architectural change.
-- Never include real Brains, notes, paths, backups, tokens or `.neura/` data.
+- Never include real Brains, notes, paths, backups, tokens, `.notryn/` data or legacy `.neura/` data.
 - Keep the interface, commands, accessibility labels and documentation in English.
 - Preserve normal Markdown files as the source of truth.
 - Do not add a required account, cloud service, AI provider or telemetry.
 
 ## Local setup
 
-Neura requires Python 3.10 or later to run. Node.js is needed only for frontend development and rebuilding the visual editor.
+Notryn requires Python 3.10 or later to run. Node.js is needed only for frontend development and rebuilding the visual editor.
 
 ```sh
-git clone https://github.com/pedromst/neura.git
-cd neura
+git clone https://github.com/pedromst/notryn.git
+cd notryn
 python3 server.py
 ```
 
