@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="site/index.html">Landing page</a> ·
+  <a href="https://pedromst.github.io/neura-site/">Landing page</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="SECURITY.md">Security</a> ·
   <a href="docs/PUBLIC-RELEASE-CHECKLIST.md">Release checklist</a>
