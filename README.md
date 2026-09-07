@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="site/assets/neura-card.svg" alt="Neura — Your notes already connect. See the shape." width="900">
+  <img src="site/assets/notryn-card.svg" alt="Notryn — Your notes already connect. See the shape." width="900">
 </p>
 
 <p align="center">
@@ -13,11 +13,11 @@
   <a href="docs/PUBLIC-RELEASE-CHECKLIST.md">Release checklist</a>
 </p>
 
-# NEURA
+# NOTRYN
 
 Open a folder you already use or create a new Brain. Your files stay yours, in an open format.
 
-NEURA works locally without a login. Files remain ordinary Markdown, so you can use other editors or agents alongside it. An AI connection is not required to read, write or organize your notes.
+NOTRYN works locally without a login. Files remain ordinary Markdown, so you can use other editors or agents alongside it. An AI connection is not required to read, write or organize your notes.
 
 Preview 0.2 is in development. The platform is in English and adapts to desktop and mobile screens. Your note content and the names of your files, folders and Brains stay in their original language.
 
@@ -31,7 +31,7 @@ Requires Python 3.10 or later. No external Python dependencies, account, API key
 python3 server.py
 ```
 
-On Windows, use `py -3 server.py`. Open [NEURA locally](http://127.0.0.1:4783).
+On Windows, use `py -3 server.py`. Open [NOTRYN locally](http://127.0.0.1:4783).
 
 The landing page is also private during development. Preview it locally with:
 
@@ -40,8 +40,8 @@ python3 -m http.server 4794 --bind 127.0.0.1 --directory site
 ```
 
 Then open [the local landing draft](http://127.0.0.1:4794/).
-On macOS, you can also use `Open NEURA.command`.
-On Linux, run `./start.sh` to start NEURA and open your default browser. The launcher works from any working directory, requires no desktop installation and accepts server options such as `--port 4790`. Stop the server with Ctrl C. If file permissions were lost when copying it, use `sh start.sh`.
+On macOS, you can also use `Open NOTRYN.command`.
+On Linux, run `./start.sh` to start NOTRYN and open your default browser. The launcher works from any working directory, requires no desktop installation and accepts server options such as `--port 4790`. Stop the server with Ctrl C. If file permissions were lost when copying it, use `sh start.sh`.
 
 A fresh installation starts with no Brains. Choose **Create a Brain** or **Open a folder**. For an existing folder, paste its path or click the folder icon to browse Home, Desktop, Documents and other locations on the computer running the server. Connect multiple Brains and switch between them using the top picker.
 
@@ -49,12 +49,12 @@ The folder picker supports search by name, arrow-key navigation, Enter or → to
 
 Existing folders connect as **Read-only** by default. Choose **Read and write** when connecting a folder to edit its files. A protected folder cannot be made writable by reconnecting it through a parent or child folder.
 
-Open the Brain name in the top bar, or press **B**, to reach **Your Brains**. **Create a Brain** and **Open a folder** are the first actions in this space. Every connected Brain has an **Access** control that can change it between Read-only and Read and write later. Enabling writing shows the exact folder and confirms that Neura may create, edit, move and remove Markdown files there. This changes only Neura's permission setting; no file is changed until the user performs a separate file action. Temporary shared previews remain read-only and explain that Brain management is available in the local app.
+Open the Brain name in the top bar, or press **B**, to reach **Your Brains**. **Create a Brain** and **Open a folder** are the first actions in this space. Every connected Brain has an **Access** control that can change it between Read-only and Read and write later. Enabling writing shows the exact folder and confirms that Notryn may create, edit, move and remove Markdown files there. This changes only Notryn's permission setting; no file is changed until the user performs a separate file action. Temporary shared previews remain read-only and explain that Brain management is available in the local app.
 
 ## Your workspace
 
 - Library with drag-and-drop notes/folders, contextual creation, filtering and recent notes.
-- Remove notes, folders or Brains from Neura while keeping their files, with optional recoverable Trash and a searchable Removed items space.
+- Remove notes, folders or Brains from Notryn while keeping their files, with optional recoverable Trash and a searchable Removed items space.
 - Visual note writing with selection-based formatting, an optional Markdown view, preview and explicit saving.
 - Note on the left by default, a saved preference for swapping sides, and a full-width focus mode.
 - Searchable command palette and a keyboard reference with clickable actions.
@@ -108,7 +108,7 @@ Shortcuts use the same letters on macOS, Windows and Linux. They work outside te
 
 Swapping panes preserves unsaved text, the cursor and the reading position. Esc inside a text field leaves it while keeping the draft; outside fields it leaves focus mode or closes the current panel, asking before discarding unsaved writing. On mobile, the note already uses the full width and the layout controls are hidden.
 
-Global NEURA commands do not bind Ctrl, Cmd, Alt, AltGr or Super combinations, or function keys. Browser and window-manager commands keep their native bindings outside the editor. Inside an editable note, **Ctrl/Cmd+S saves without leaving writing** and **Ctrl/Cmd+Enter toggles Preview**. The Save button and Shift S save and return to reading; Done returns when there are no changes. A failed save or newer unsaved edits keep the editor open. No autosave is enabled. Ctrl/Cmd plus scrolling keeps browser zoom; ordinary scrolling over the brain zooms the brain. Tab and Shift Tab keep native focus navigation, including in Markdown.
+Global NOTRYN commands do not bind Ctrl, Cmd, Alt, AltGr or Super combinations, or function keys. Browser and window-manager commands keep their native bindings outside the editor. Inside an editable note, **Ctrl/Cmd+S saves without leaving writing** and **Ctrl/Cmd+Enter toggles Preview**. The Save button and Shift S save and return to reading; Done returns when there are no changes. A failed save or newer unsaved edits keep the editor open. No autosave is enabled. Ctrl/Cmd plus scrolling keeps browser zoom; ordinary scrolling over the brain zooms the brain. Tab and Shift Tab keep native focus navigation, including in Markdown.
 
 Tab/Shift Tab follow the visible control order, including buttons on mobile WebKit. Modal dialogs keep focus inside; at workspace edges, browser navigation remains available. Escape closes a search dialog even when its search field contains text, while respecting any operation that temporarily blocks cancellation.
 
@@ -153,7 +153,7 @@ W cycles through visible panes and Shift W reverses direction outside text field
 
 All actions remain in the P command palette, including actions without a dedicated key. Type an action name, navigate with arrows and press Enter. Typed characters in the palette, theme picker and forms are handled locally and do not trigger workspace commands.
 
-Less frequent flows share that same route: **Manage Brain access**, **Remove this Brain from Neura**, **Expand all folders**, **Collapse all folders**, **Read an excerpt of this note**, **Start a draft**, and **Configure keyboard shortcuts**. Permissions, restoration and removal still require choosing an item and confirming in their dialogs with Tab/Enter. Open the folder browser with **O**, Tab to **Browse folders**, Enter; arrows/Enter browse directories and Tab reaches **Choose folder**. The Brain picker uses the same **Shift B** and **O** bindings as the workspace. Themes use T, arrows and Enter; Iris uses A, type the request, Enter.
+Less frequent flows share that same route: **Manage Brain access**, **Remove this Brain from Notryn**, **Expand all folders**, **Collapse all folders**, **Read an excerpt of this note**, **Start a draft**, and **Configure keyboard shortcuts**. Permissions, restoration and removal still require choosing an item and confirming in their dialogs with Tab/Enter. Open the folder browser with **O**, Tab to **Browse folders**, Enter; arrows/Enter browse directories and Tab reaches **Choose folder**. The Brain picker uses the same **Shift B** and **O** bindings as the workspace. Themes use T, arrows and Enter; Iris uses A, type the request, Enter.
 
 ### Organizing files
 
@@ -167,15 +167,15 @@ Ordinary wiki links, Markdown inline/reference links and local attachment links 
 
 ### Removing and restoring
 
-Choose **Remove from Neura…** in a note or folder's **⋯** menu, or press **D** with its library row focused. The command palette also includes **Remove this Brain from Neura**. Each Brain in the top picker has a removal button.
+Choose **Remove from Notryn…** in a note or folder's **⋯** menu, or press **D** with its library row focused. The command palette also includes **Remove this Brain from Notryn**. Each Brain in the top picker has a removal button.
 
-The default **Remove from Neura** keeps every file on the device. A note or folder disappears from this installation's library, searches and Brain view; a whole Brain is disconnected. These choices live in Neura's private state, so other applications and the original Markdown files are unaffected. Read-only Brains support this default operation too.
+The default **Remove from Notryn** keeps every file on the device. A note or folder disappears from this installation's library, searches and Brain view; a whole Brain is disconnected. These choices live in Notryn's private state, so other applications and the original Markdown files are unaffected. Read-only Brains support this default operation too.
 
-The review shows the affected location. The separate **Also move files to Neura Trash** checkbox starts unchecked. Select it to move the item, including a folder's contents and attachments, out of its original location into recoverable storage. Removing an entire Brain this way also requires typing its exact name. Neura Trash is managed by the app, not the operating system's Trash, and does not permanently erase files or free their disk space. Read-only, protected and overlapping Brain folders cannot be moved to Trash.
+The review shows the affected location. The separate **Also move files to Notryn Trash** checkbox starts unchecked. Select it to move the item, including a folder's contents and attachments, out of its original location into recoverable storage. Removing an entire Brain this way also requires typing its exact name. Notryn Trash is managed by the app, not the operating system's Trash, and does not permanently erase files or free their disk space. Read-only, protected and overlapping Brain folders cannot be moved to Trash.
 
 Open **Removed items** from the library's trash icon, the Brain picker or the command palette. Search, use ↑/↓ to reach **Restore**, and press **Enter** to bring an item back. Restore its Brain and parent folder first if they were also removed. Restoration never overwrites a file already at the original location; resolve that conflict before retrying. Save any open draft before removing or restoring items.
 
-Removed records survive restarts. Preserve the private state and recovery storage until everything you need is restored. On the same filesystem, Trash is under the private state's `trash/` directory; another filesystem uses a hidden `.neura-trash/` beside the Brain, or inside its root when needed. Each recovery slot includes its original location. There is no permanent-delete or Empty Trash action in this preview.
+Removed records survive restarts. Preserve the private state and recovery storage until everything you need is restored. On the same filesystem, Trash is under the private state's `trash/` directory; another filesystem uses a hidden `.notryn-trash/` beside the Brain, or inside its root when needed. Each recovery slot includes its original location. There is no permanent-delete or Empty Trash action in this preview.
 
 ### Write naturally
 
@@ -197,7 +197,7 @@ Speech is off by default. When enabled, it uses a local English browser voice or
 
 ### Appearance and Omarchy
 
-Use the appearance icon or **T** outside text fields. While writing, press **Esc**, then **T**. **↑/↓** choose a theme, **Enter** applies it and **Esc** cancels. Home/End jump to the first/last option; typing a theme name selects it. The command palette and shortcut reference include **Choose theme**. Your preference is saved in this browser, including after restarting NEURA. Changing themes preserves unsaved writing, the cursor, scroll and brain position.
+Use the appearance icon or **T** outside text fields. While writing, press **Esc**, then **T**. **↑/↓** choose a theme, **Enter** applies it and **Esc** cancels. Home/End jump to the first/last option; typing a theme name selects it. The command palette and shortcut reference include **Choose theme**. Your preference is saved in this browser, including after restarting NOTRYN. Changing themes preserves unsaved writing, the cursor, scroll and brain position.
 
 | Theme | Atmosphere |
 | --- | --- |
@@ -210,22 +210,22 @@ Use the appearance icon or **T** outside text fields. While writing, press **Esc
 
 Iris also understands `Switch to Matrix`, `Use light theme`, `Change theme to Dusk`, `Follow Omarchy` and `Show themes`. These are local commands; no AI connection is required.
 
-Omarchy does not automatically color arbitrary web applications. NEURA includes a read-only bridge to its active `colors.toml`, covering the newer `~/.local/state/omarchy/current/theme/` location and the older `~/.config/omarchy/current/theme/` location. XDG state/config locations and legacy theme symlinks are also supported. Light mode is read from `mode = "light"` or the older `light.mode` marker. Background, foreground, accent and palette colors style both the interface and the brain, with text adjusted for legibility.
+Omarchy does not automatically color arbitrary web applications. NOTRYN includes a read-only bridge to its active `colors.toml`, covering the newer `~/.local/state/omarchy/current/theme/` location and the older `~/.config/omarchy/current/theme/` location. XDG state/config locations and legacy theme symlinks are also supported. Light mode is read from `mode = "light"` or the older `light.mode` marker. Background, foreground, accent and palette colors style both the interface and the brain, with text adjusted for legibility.
 
-On a first visit, an available Omarchy palette is selected automatically. Choosing a NEURA preset stops following the desktop; choose **Follow Omarchy** to resume. The app checks about every two seconds while visible and following. No reload, theme hook, desktop configuration edit or extension is needed. If Omarchy is not detected, follow mode uses Glass and waits for a palette; a server connection failure keeps the last colors. The colors come from the computer running the local server.
+On a first visit, an available Omarchy palette is selected automatically. Choosing a NOTRYN preset stops following the desktop; choose **Follow Omarchy** to resume. The app checks about every two seconds while visible and following. No reload, theme hook, desktop configuration edit or extension is needed. If Omarchy is not detected, follow mode uses Glass and waits for a palette; a server connection failure keeps the last colors. The colors come from the computer running the local server.
 
 The bridge follows the [Omarchy theme configuration](https://github.com/omacom/omarchy/blob/quattro/manual/43-making-your-own-theme.md) and [active-theme staging paths](https://github.com/omacom/omarchy/blob/quattro/bin/omarchy-theme-set). Legacy/new-path fixtures and a live dark-to-light palette change have been tested locally. Validation in a native Omarchy session is still pending.
 
 ## Files and protection
 
-Private installation state lives in `.neura/`, which is excluded from Git:
+Private installation state lives in `.notryn/`, which is excluded from Git:
 
 - `brains.json`: Brain names, paths, permissions and removal/recovery records.
 - `brains/`: Brains created in this installation.
-- `backups/`: the previous version of each note changed by NEURA.
+- `backups/`: the previous version of each note changed by NOTRYN.
 - `trash/`: recoverable files explicitly moved out of their original location.
 
-To use another location, run `python3 server.py --data-dir /path/to/state` or set `NEURA_HOME`. Existing folders stay in their original location. Back up your Brains and private state before moving or replacing the installation.
+To use another location, run `python3 server.py --data-dir /path/to/state` or set `NOTRYN_HOME`. Existing Neura installations keep reading `NEURA_HOME` and a legacy `.neura/` directory, so the rename does not disconnect Brains or recovery data. Existing folders stay in their original location. Back up your Brains and private state before moving or replacing the installation.
 
 Saving checks the file revision to reject concurrent changes, keeps the previous version and replaces the file atomically. Creating a note never overwrites an existing file. Removal defaults to keeping files on the device; the optional Trash action and restoration use recoverable moves and reject stale reviews or destination conflicts.
 
@@ -257,9 +257,9 @@ Python tests use temporary folders and cover saving, moves, removal/restore, con
 
 Iris tests cover speech lifecycle, cancellation races, reduced motion and suspension of animation in hidden panels or background tabs. Speech mocks do not play audio.
 
-The visual editor is bundled locally using [ProseMirror](https://github.com/ProseMirror/prosemirror-markdown). Running NEURA still needs only Python and a browser. Contributors need Node.js to rebuild it with `npm ci` and `npm run build:editor`; the browser uses `web/vendor/editor.js` without a CDN. Dependency licenses are bundled in `web/vendor/EDITOR-LICENSES.txt`. Editor tests also cover exact source preservation, protected blocks, Markdown round trips and unsafe links.
+The visual editor is bundled locally using [ProseMirror](https://github.com/ProseMirror/prosemirror-markdown). Running NOTRYN still needs only Python and a browser. Contributors need Node.js to rebuild it with `npm ci` and `npm run build:editor`; the browser uses `web/vendor/editor.js` without a CDN. Dependency licenses are bundled in `web/vendor/EDITOR-LICENSES.txt`. Editor tests also cover exact source preservation, protected blocks, Markdown round trips and unsafe links.
 
-Before a future release, include only code, documentation, tests and visual assets. Never publish `.neura/`, Brains, backups or sharing credentials. Public distribution and a code license have not been finalized. See the [public release checklist](docs/PUBLIC-RELEASE-CHECKLIST.md), [contribution guide](CONTRIBUTING.md) and [security policy](SECURITY.md).
+Before a future release, include only code, documentation, tests and visual assets. Never publish `.notryn/`, legacy `.neura/`, Brains, backups or sharing credentials. Public distribution and a code license have not been finalized. See the [public release checklist](docs/PUBLIC-RELEASE-CHECKLIST.md), [contribution guide](CONTRIBUTING.md) and [security policy](SECURITY.md).
 
 Typography: JetBrains Mono, the default base family used by [Omarchy](https://learn.omacom.io/2/the-omarchy-manual), bundled with its [OFL license](web/fonts/OFL-JetBrainsMono.txt). Icons are SVG and do not depend on Nerd Font glyphs.
 

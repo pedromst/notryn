@@ -1,6 +1,6 @@
 'use strict';
 (()=>{
- const themes=window.NeuraThemes,dialog=$('#theme-dialog'),list=$('#theme-list');
+ const themes=window.NotrynThemes,dialog=$('#theme-dialog'),list=$('#theme-list');
  let index=0,origin=null,omarchy=null,syncing=false,lastPalette='',initial=true,typeahead='',typeTimer;
  const options=()=>[...themes.presets,{id:'omarchy',name:'Follow Omarchy',description:omarchy?'Live palette · '+omarchy.name:'Use your Linux desktop colors automatically.'}];
  function status(){
@@ -28,7 +28,7 @@
  };
  dialog.addEventListener('close',restoreFocus);
  list.addEventListener('keydown',e=>{
-  if(!NeuraKeyboard.available(e)||e.shiftKey)return;
+  if(!NotrynKeyboard.available(e)||e.shiftKey)return;
   if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End','Enter',' '].includes(e.key)){
    e.preventDefault();e.stopPropagation();
    if(e.key==='Enter'||e.key===' '){applySelection();return;}
@@ -39,7 +39,7 @@
   }
  });
  $('#open-themes').onclick=window.openThemes;$('#open-themes').title='Themes (T outside text fields)';
- document.addEventListener('neura-themechange',e=>{
+ document.addEventListener('notryn-themechange',e=>{
   graph.setTheme(e.detail);
   // Updating swatches in place preserves library and legend keyboard focus.
   $$('#legend button[data-color-group]').forEach(b=>b.style.setProperty('--color',graph.color(b.dataset.colorGroup)));

@@ -28,14 +28,14 @@ class HttpTests(unittest.TestCase):
     def test_write_requires_origin_and_session_token(self):
         body={'action':'create','name':'Test'}
         self.assertEqual(self.request('/api/brains',body)[0],403)
-        self.assertEqual(self.request('/api/brains',body,{'Origin':'https://other.example','X-Neura-Token':self.http.token})[0],403)
-        self.assertEqual(self.request('/api/brains',body,{'Origin':self.origin,'X-Neura-Token':'wrong'})[0],403)
-        code,data=self.request('/api/brains',body,{'Origin':self.origin,'X-Neura-Token':self.http.token});self.assertEqual(code,201)
+        self.assertEqual(self.request('/api/brains',body,{'Origin':'https://other.example','X-Notryn-Token':self.http.token})[0],403)
+        self.assertEqual(self.request('/api/brains',body,{'Origin':self.origin,'X-Notryn-Token':'wrong'})[0],403)
+        code,data=self.request('/api/brains',body,{'Origin':self.origin,'X-Notryn-Token':self.http.token});self.assertEqual(code,201)
         self.assertEqual(data['brain']['name'],'Test')
     def test_readonly_source_rejects_browser_writes(self):
         folder=Path(self.temp.name)/'existing';folder.mkdir();(folder/'one.md').write_text('original')
         brain=self.http.store.add('Existing',str(folder),False)
-        code,_=self.request('/api/notes',{'brain':brain['id'],'path':'one.md','content':'overwrite','revision':None},{'Origin':self.origin,'X-Neura-Token':self.http.token})
+        code,_=self.request('/api/notes',{'brain':brain['id'],'path':'one.md','content':'overwrite','revision':None},{'Origin':self.origin,'X-Notryn-Token':self.http.token})
         self.assertEqual(code,403);self.assertEqual((folder/'one.md').read_text(),'original')
     def test_unknown_host_cannot_read_state(self):
         self.assertEqual(self.request('/api/state',headers={'Host':'external.example'})[0],403)
@@ -43,10 +43,10 @@ class HttpTests(unittest.TestCase):
         brain=self.http.store.add('Removal test');bid=brain['id'];self.http.store.write(bid,'A.md','original',None)
         paths=['/api/removals/preview','/api/removals','/api/removals/list','/api/removals/restore']
         for path in paths:
-            for headers in [{},{'Origin':'https://elsewhere.example','X-Neura-Token':self.http.token},{'Origin':self.origin,'X-Neura-Token':'wrong'}]:
+            for headers in [{},{'Origin':'https://elsewhere.example','X-Notryn-Token':self.http.token},{'Origin':self.origin,'X-Notryn-Token':'wrong'}]:
                 self.assertEqual(self.request(path,{},headers)[0],403)
             self.assertEqual(self.request(path)[0],404)
-        headers={'Origin':self.origin,'X-Neura-Token':self.http.token}
+        headers={'Origin':self.origin,'X-Notryn-Token':self.http.token}
         code,preview=self.request(paths[0],{'brain':bid,'path':'A.md','kind':'note'},headers);self.assertEqual(code,200)
         code,result=self.request(paths[1],{'preview':preview['id']},headers);self.assertEqual(code,200);self.assertEqual(result['mode'],'hidden')
         self.assertEqual((Path(brain['root'])/'A.md').read_text(),'original')
@@ -58,32 +58,32 @@ class HttpTests(unittest.TestCase):
         brain=self.http.store.add('Moves');bid=brain['id']
         self.http.store.write(bid,'One.md','# One',None);self.http.store.folder(bid,'Ideas')
         body={'brain':bid,'source':'One.md','destination':'Ideas','kind':'note'}
-        for headers in [{},{'Origin':'https://other.example','X-Neura-Token':self.http.token},{'Origin':self.origin,'X-Neura-Token':'wrong'}]:
+        for headers in [{},{'Origin':'https://other.example','X-Notryn-Token':self.http.token},{'Origin':self.origin,'X-Notryn-Token':'wrong'}]:
             self.assertEqual(self.request('/api/move',body,headers)[0],403)
-        code,result=self.request('/api/move',body,{'Origin':self.origin,'X-Neura-Token':self.http.token})
+        code,result=self.request('/api/move',body,{'Origin':self.origin,'X-Notryn-Token':self.http.token})
         self.assertEqual(code,200);self.assertEqual(result['path'],'Ideas/One.md')
         self.assertEqual(self.http.store.read(bid,'Ideas/One.md')['content'],'# One')
         self.http.store.brains[0]['readOnly']=True
         body.update(source='Ideas/One.md',destination='')
-        self.assertEqual(self.request('/api/move',body,{'Origin':self.origin,'X-Neura-Token':self.http.token})[0],403)
+        self.assertEqual(self.request('/api/move',body,{'Origin':self.origin,'X-Notryn-Token':self.http.token})[0],403)
     def test_folder_browsing_requires_local_origin_and_token(self):
         folder=Path(self.temp.name)/'Browse here';folder.mkdir();(folder/'Child').mkdir()
         body={'path':str(folder)}
-        for headers in [{},{'Origin':'https://other.example','X-Neura-Token':self.http.token},{'Origin':self.origin,'X-Neura-Token':'wrong'}]:
+        for headers in [{},{'Origin':'https://other.example','X-Notryn-Token':self.http.token},{'Origin':self.origin,'X-Notryn-Token':'wrong'}]:
             code,data=self.request('/api/folders/browse',body,headers)
             self.assertEqual(code,403);self.assertNotIn('folders',data)
         self.assertEqual(self.request('/api/folders/browse')[0],404)
         before=self.http.store.config.read_bytes()
-        code,data=self.request('/api/folders/browse',body,{'Origin':self.origin,'X-Neura-Token':self.http.token})
+        code,data=self.request('/api/folders/browse',body,{'Origin':self.origin,'X-Notryn-Token':self.http.token})
         self.assertEqual(code,200);self.assertEqual([f['name'] for f in data['folders']],['Child'])
         self.assertEqual(self.http.store.config.read_bytes(),before)
     def test_quoted_folder_connects_through_http(self):
         folder=Path(self.temp.name)/'Brain with spaces';folder.mkdir()
-        code,data=self.request('/api/brains',{'action':'connect','name':'Tester','path':"'"+str(folder)+"'"},{'Origin':self.origin,'X-Neura-Token':self.http.token})
+        code,data=self.request('/api/brains',{'action':'connect','name':'Tester','path':"'"+str(folder)+"'"},{'Origin':self.origin,'X-Notryn-Token':self.http.token})
         self.assertEqual(code,201);self.assertEqual(data['brain']['root'],str(folder.resolve()));self.assertTrue(data['brain']['readOnly'])
     def test_brain_access_changes_only_through_the_local_authenticated_api(self):
         folder=Path(self.temp.name)/'Access';folder.mkdir();brain=self.http.store.add('Access',str(folder),False)
-        payload={'action':'access','brain':brain['id'],'writable':True};headers={'Origin':self.origin,'X-Neura-Token':self.http.token}
+        payload={'action':'access','brain':brain['id'],'writable':True};headers={'Origin':self.origin,'X-Notryn-Token':self.http.token}
         self.assertEqual(self.request('/api/brains',payload)[0],403)
         code,data=self.request('/api/brains',payload,headers);self.assertEqual(code,200);self.assertFalse(data['brain']['readOnly'])
         self.assertEqual(self.request('/api/brains',{**payload,'writable':'yes'},headers)[0],400)
@@ -92,9 +92,9 @@ class HttpTests(unittest.TestCase):
 
     def test_reveal_requires_local_session_before_native_dispatch(self):
         body={'brain':'fixture','path':'projects/A note.md'}
-        headers={'Origin':self.origin,'X-Neura-Token':self.http.token}
+        headers={'Origin':self.origin,'X-Notryn-Token':self.http.token}
         with patch('server.reveal_note',return_value={'requested':True,'mode':'selected'}) as reveal:
-            for bad in [{},{**headers,'Origin':'https://external.example'},{**headers,'X-Neura-Token':'wrong'}]:
+            for bad in [{},{**headers,'Origin':'https://external.example'},{**headers,'X-Notryn-Token':'wrong'}]:
                 self.assertEqual(self.request('/api/notes/reveal',body,bad)[0],403)
             self.assertEqual(self.request('/api/notes/reveal')[0],404)
             reveal.assert_not_called()
@@ -105,9 +105,9 @@ class HttpTests(unittest.TestCase):
         brain=self.http.store.add('Forget test')
         preview=self.http.store.removal_preview(brain['id'],'','brain')
         removed=self.http.store.remove(preview['id']);payload={'id':removed['entry']}
-        headers={'Origin':self.origin,'X-Neura-Token':self.http.token}
+        headers={'Origin':self.origin,'X-Notryn-Token':self.http.token}
         for endpoint in ['/api/removals/forget/preview','/api/removals/forget']:
-            for bad in [{},{**headers,'Origin':'https://external.example'},{**headers,'X-Neura-Token':'bad'}]:
+            for bad in [{},{**headers,'Origin':'https://external.example'},{**headers,'X-Notryn-Token':'bad'}]:
                 self.assertEqual(self.request(endpoint,payload,bad)[0],403)
         code,review=self.request('/api/removals/forget/preview',payload,headers);self.assertEqual(code,200)
         self.assertEqual(self.request('/api/removals/forget',payload,headers)[0],409)

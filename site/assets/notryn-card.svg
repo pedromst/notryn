@@ -7,7 +7,7 @@
   <g transform="translate(72 72)" fill="none" stroke="#a9e8d1" stroke-width="2">
     <ellipse cx="26" cy="26" rx="9" ry="22"/><ellipse cx="26" cy="26" rx="9" ry="22" transform="rotate(60 26 26)"/><ellipse cx="26" cy="26" rx="9" ry="22" transform="rotate(120 26 26)"/>
   </g>
-  <text x="140" y="112" fill="#e8f2f0" font-family="monospace" font-size="39" font-weight="700">neura</text>
+  <text x="140" y="112" fill="#e8f2f0" font-family="monospace" font-size="39" font-weight="700">notryn</text>
   <text x="72" y="285" fill="#e8f2f0" font-family="monospace" font-size="66" font-weight="700">Your notes already connect.</text>
   <text x="72" y="372" fill="#a9e8d1" font-family="monospace" font-size="66" font-weight="700">See the shape.</text>
   <text x="76" y="446" fill="#8fa3a9" font-family="monospace" font-size="22">Local-first · Markdown-native · No account required</text>

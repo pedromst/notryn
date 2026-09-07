@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NEURA local application server. Standard library only, Python 3.9+."""
+"""NOTRYN local application server. Standard library only, Python 3.9+."""
 import argparse
 import hmac
 import json
@@ -91,7 +91,7 @@ class Handler(BaseHTTPRequestHandler):
             raise Problem('Invalid request.')
 
     def do_POST(self):
-        if not self.host_ok() or self.headers.get('Origin')!='http://'+self.headers.get('Host','') or not hmac.compare_digest(self.headers.get('X-Neura-Token',''),self.server.token):
+        if not self.host_ok() or self.headers.get('Origin')!='http://'+self.headers.get('Host','') or not hmac.compare_digest(self.headers.get('X-Notryn-Token',''),self.server.token):
             return self.send(403,{'error':'This action must be started in the local app.'})
         try:
             body=self.body()
@@ -164,7 +164,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--port',type=int,default=4783)
     parser.add_argument('--data-dir',help='Directory for settings, new Brains and backups')
-    parser.add_argument('--open',action='store_true',help='Open NEURA in your default browser')
+    parser.add_argument('--open',action='store_true',help='Open NOTRYN in your default browser')
     args=parser.parse_args()
     app=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     app.store=Store(args.data_dir)
@@ -173,7 +173,7 @@ if __name__=='__main__':
     if args.open:
         import webbrowser
         threading.Timer(.5,webbrowser.open,args=(f'http://127.0.0.1:{args.port}/',)).start()
-    print(f'NEURA 0.2 · http://127.0.0.1:{args.port} · {len(app.store.brains)} Brain(s)',flush=True)
+    print(f'NOTRYN 0.2 · http://127.0.0.1:{args.port} · {len(app.store.brains)} Brain(s)',flush=True)
     try:
         app.serve_forever()
     except KeyboardInterrupt:

@@ -12,7 +12,7 @@
 
 ## Safety and privacy
 
-- [ ] I did not include real notes, Brain data, credentials, local paths or `.neura/` files.
+- [ ] I did not include real notes, Brain data, credentials, local paths, `.notryn/` files or legacy `.neura/` files.
 - [ ] File writes use temporary fixtures in tests.
 - [ ] I considered read-only mode, path boundaries and recovery behavior where relevant.
 - [ ] Interface text and documentation are in English.

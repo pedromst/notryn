@@ -37,7 +37,7 @@ def snapshot(source):
         info = p.lstat()
         seen += 1
         if seen > MAX_SCAN:
-            raise Problem('Too many files to safely prepare this operation. Remove it from Neura only.', 413)
+            raise Problem('Too many files to safely prepare this operation. Remove it from Notryn only.', 413)
         relative = p.relative_to(source).as_posix()
         link = os.readlink(p) if stat.S_ISLNK(info.st_mode) else ''
         digest.update(json.dumps([relative, info.st_mode, info.st_ino, info.st_dev, info.st_size, info.st_mtime_ns, link]).encode())
@@ -57,11 +57,11 @@ def snapshot(source):
 
 def device_reason(store, brain, source, kind):
     if not store.can_write(brain):
-        return 'This Brain is read-only. You can remove it from Neura while keeping its files.'
+        return 'This Brain is read-only. You can remove it from Notryn while keeping its files.'
     if not source.exists():
         return 'The files are not available at this location.'
     if os.path.ismount(source):
-        return 'A mounted device cannot be moved to Trash. Remove it from Neura only.'
+        return 'A mounted device cannot be moved to Trash. Remove it from Notryn only.'
     if source.resolve() != source or source.is_symlink():
         return 'The original path now passes through a symbolic link. Files will stay on this device.'
     if (kind != 'note' and not source.is_dir()) or (kind == 'note' and not source.is_file()):
@@ -83,7 +83,7 @@ def preview(store, brain_id, path, kind):
         try:
             info = snapshot(source)
         except (OSError, Problem):
-            reason = reason or 'The contents cannot be fully checked. You can still remove it from Neura only.'
+            reason = reason or 'The contents cannot be fully checked. You can still remove it from Notryn only.'
         token = secrets.token_urlsafe(24)
         store.removal_plans = {k: v for k, v in store.removal_plans.items() if time.monotonic() - v['created'] < 600}
         if len(store.removal_plans) >= 100:
@@ -102,9 +102,9 @@ def trash_slot(store, brain, source):
     # Never copy-then-delete across volumes. Keep an atomic rename on the same device.
     root = store.home / 'trash'
     if source.stat().st_dev != store.home.stat().st_dev:
-        root = Path(brain['root']).parent / '.neura-trash'
+        root = Path(brain['root']).parent / '.notryn-trash'
         if root.parent.stat().st_dev != source.stat().st_dev:
-            root = Path(brain['root']) / '.neura-trash'
+            root = Path(brain['root']) / '.notryn-trash'
     if root.is_symlink() or root.resolve() != root:
         raise Problem('The recovery folder is not safe to use. Files have not been moved.', 403)
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -119,7 +119,7 @@ def remove(store, preview_id, device=False, confirm_name=''):
     with store.lock:
         plan = store.removal_plans.get(preview_id)
         if not plan or time.monotonic() - plan['created'] >= 600:
-            raise Problem('This review has expired. Open Remove from Neura again.', 409)
+            raise Problem('This review has expired. Open Remove from Notryn again.', 409)
         if plan['config'] != config_revision(store):
             raise Problem('The library changed. Close this review and open it again.', 409)
         brain = store.get(plan['brain'])
@@ -148,7 +148,7 @@ def remove(store, preview_id, device=False, confirm_name=''):
             store.persist()
         except OSError:
             store.brains, store.removals = before_brains, before_removals
-            raise Problem('Could not update Neura. Your files and library have not changed.', 500)
+            raise Problem('Could not update Notryn. Your files and library have not changed.', 500)
         if device:
             try:
                 source.rename(entry['payload'])
@@ -160,7 +160,7 @@ def remove(store, preview_id, device=False, confirm_name=''):
                 except OSError:
                     store.brains, store.removals = after_brains, after_removals
                     raise Problem('Files stayed at their original location. Restore this item from Removed items to show it again.', 500)
-                raise Problem('Could not move the files to Trash. Nothing was removed from Neura.', 500)
+                raise Problem('Could not move the files to Trash. Nothing was removed from Notryn.', 500)
         del store.removal_plans[preview_id]
         return {'removed': True, 'entry': entry['id'], 'brain': brain['id'], 'kind': entry['kind'],
                 'path': entry['path'], 'mode': entry['mode']}
@@ -221,8 +221,8 @@ def restore(store, entry_id):
                 try:
                     source.rename(payload)
                 except OSError:
-                    raise Problem('The files are back at their original location. Restore this entry again to update Neura.', 500)
-            raise Problem('Could not update Neura. The item remains in Removed items.', 500)
+                    raise Problem('The files are back at their original location. Restore this entry again to update Notryn.', 500)
+            raise Problem('Could not update Notryn. The item remains in Removed items.', 500)
         return {'restored': True, 'brain': brain['id'], 'kind': entry['kind'], 'path': entry['path'], 'available': source.exists()}
 
 
@@ -264,6 +264,6 @@ def forget(store, entry_id, expected_revision):
             store.persist()
         except OSError:
             store.brains, store.removals = before_brains, before_removals
-            raise Problem('Could not update Neura. The item remains in Removed items.', 500)
+            raise Problem('Could not update Notryn. The item remains in Removed items.', 500)
         return {'forgotten':True, 'brain':entry['brain'], 'kind':entry['kind'], 'path':entry['path'],
                 'count':len(affected), 'recoveryPath':str(record)}

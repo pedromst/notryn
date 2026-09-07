@@ -181,4 +181,4 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
   render
  };
 }
-window.NeuraRichText={create,render};
+window.NotrynRichText={create,render};

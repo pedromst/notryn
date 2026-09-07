@@ -1,7 +1,7 @@
 'use strict';
 // Global letter bindings preserve system chords. The note editor opts into
 // two explicit modifier shortcuts, without changing normal text input.
-window.NeuraKeyboard={
+window.NotrynKeyboard={
  matchEditor(actions,e,{editing=false}={}){
   if(!editing||e.defaultPrevented||e.isComposing||e.keyCode===229||e.shiftKey||e.altKey||e.getModifierState?.('AltGraph')||!!e.ctrlKey===!!e.metaKey)return null;
   const key=e.key.toLowerCase();return actions.find(a=>a.editorKey===key)||null;

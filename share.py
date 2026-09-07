@@ -18,7 +18,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-ENTRY = b'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NEURA | Private access</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#071117;color:#c5ede2;font:16px system-ui}main{max-width:360px;padding:32px;text-align:center}h1{letter-spacing:7px}p{color:#97afb4;line-height:1.6}</style><main><h1>NEURA</h1><p id="message">Opening your private preview...</p></main><script src="/entry.js"></script></html>'''
+ENTRY = b'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NOTRYN | Private access</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#071117;color:#c5ede2;font:16px system-ui}main{max-width:360px;padding:32px;text-align:center}h1{letter-spacing:7px}p{color:#97afb4;line-height:1.6}</style><main><h1>NOTRYN</h1><p id="message">Opening your private preview...</p></main><script src="/entry.js"></script></html>'''
 ENTRY_JS = b'''(async()=>{const key=location.hash.slice(1);history.replaceState(null,'',location.pathname);const m=document.getElementById('message');if(!key){m.textContent='Open the complete link you received. This access is private and temporary.';return;}try{const r=await fetch('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});if(!r.ok)throw Error();location.replace('/');}catch{m.textContent='Access has expired or the link is incomplete. Request a new link.';}})();'''
 
 def reader_payload(path, payload):
@@ -45,7 +45,7 @@ class Gateway(BaseHTTPRequestHandler):
     def authenticated(self):
         try:
             cookies = SimpleCookie(self.headers.get('Cookie', ''))
-            value = cookies.get('__Host-neura')
+            value = cookies.get('__Host-notryn')
             return bool(value and hmac.compare_digest(value.value, self.session))
         except CookieError:
             return False
@@ -116,7 +116,7 @@ class Gateway(BaseHTTPRequestHandler):
             if not isinstance(key, str) or not hmac.compare_digest(key, self.access_key):
                 return self.send(403, {'error': 'Invalid access.'})
             seconds = max(1, int(self.deadline - time.time()))
-            self.send(200, {'ok': True}, cookie=f'__Host-neura={self.session}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age={seconds}')
+            self.send(200, {'ok': True}, cookie=f'__Host-notryn={self.session}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age={seconds}')
         except (ValueError, UnicodeError):
             self.send(400, {'error': 'Invalid request.'})
 
@@ -141,7 +141,7 @@ def main():
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     process = subprocess.Popen([tunnel_binary, 'tunnel', '--no-autoupdate', '--url', 'http://127.0.0.1:4784'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    state_path = Path(tempfile.gettempdir()) / ('neura-share-' + str(os.getpid()) + '.json')
+    state_path = Path(tempfile.gettempdir()) / ('notryn-share-' + str(os.getpid()) + '.json')
     def stop(*_):
         process.terminate()
         server.shutdown()

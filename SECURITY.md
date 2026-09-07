@@ -1,6 +1,6 @@
 # Security policy
 
-Neura reads and may write user-selected Markdown folders, so file safety and permission boundaries are part of the product.
+Notryn reads and may write user-selected Markdown folders, so file safety and permission boundaries are part of the product.
 
 ## Report a vulnerability
 
@@ -21,4 +21,4 @@ Reports will be acknowledged after review. A fix may be prepared privately befor
 
 ## Supported versions
 
-Neura is currently a private development preview. No public version is supported yet.
+Notryn is currently a private development preview. No public version is supported yet.

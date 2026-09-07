@@ -1,8 +1,15 @@
 'use strict';
+// Carry browser preferences across the Neura -> Notryn rename once.
+try{
+ for(const suffix of ['brain','interface-hints','motion','note-side','single-keys','theme','workspace','writing-mode']){
+  const current='notryn-'+suffix,legacy='neura-'+suffix;
+  if(localStorage.getItem(current)===null&&localStorage.getItem(legacy)!==null)localStorage.setItem(current,localStorage.getItem(legacy));
+ }
+}catch{}
 // Restore workspace hints before paint, independently of keyboard bindings.
-try{document.documentElement.dataset.interfaceHints=localStorage.getItem('neura-interface-hints')==='off'?'off':'on';}catch{}
+try{document.documentElement.dataset.interfaceHints=localStorage.getItem('notryn-interface-hints')==='off'?'off':'on';}catch{}
 // Runs before paint so a saved light theme never flashes a dark workspace.
-window.NeuraThemes=(()=>{
+window.NotrynThemes=(()=>{
  const presets=[
   {id:'glass',name:'Glass',description:'Quiet light in a deep blue space.',bg:'#070e18',panel:'#101e2a',text:'#e3eff0',accent:'#b4ebd9',secondary:'#95bee6',colors:['#aeeed8','#b8c4ef','#e0c49c','#a7d9ef','#d3dfb0','#dcbcd9']},
   {id:'daylight',name:'Daylight',description:'Frosted glass. A clear place to write.',bg:'#edf1ee',panel:'#fcfdf9',text:'#213a3c',accent:'#217564',secondary:'#416d9c',colors:['#287867','#6668a1','#9c6831','#376f97','#647830','#a05d7c']},
@@ -34,17 +41,17 @@ window.NeuraThemes=(()=>{
    label:panel+(light?'f5':'e8'),labelActive:soft+'f5',labelText:text,labelMuted:mix(text,panel,.14),line,pearl:light?mix(theme.accent,'#ffffff',.5):'#f0ffff'};
   return {vars,graph,light};
  }
- let saved=null;try{saved=localStorage.getItem('neura-theme');}catch{}
+ let saved=null;try{saved=localStorage.getItem('notryn-theme');}catch{}
  let choice=presets.some(t=>t.id===saved)||saved==='omarchy'?saved:'glass',current;
  function apply(theme){
   current=theme;const data=build(theme),root=document.documentElement;
   Object.entries(data.vars).forEach(([k,v])=>root.style.setProperty('--'+k,v));
   root.dataset.theme=theme.id;root.dataset.colorMode=data.light?'light':'dark';root.style.colorScheme=data.light?'light':'dark';
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme.bg);
-  document.dispatchEvent(new CustomEvent('neura-themechange',{detail:data.graph}));
+  document.dispatchEvent(new CustomEvent('notryn-themechange',{detail:data.graph}));
  }
  function choose(id,omarchy){
-  choice=id;saved=id;try{localStorage.setItem('neura-theme',id);}catch{}
+  choice=id;saved=id;try{localStorage.setItem('notryn-theme',id);}catch{}
   apply(id==='omarchy'&&omarchy?omarchy:presets.find(t=>t.id===id)||presets[0]);
  }
  function fromOmarchy(data){

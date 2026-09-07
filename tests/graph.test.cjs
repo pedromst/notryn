@@ -6,7 +6,7 @@ const context={window:{},document:{hidden:false,activeElement:null,body:{classLi
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../web/graph.js'),'utf8'),context);
 function camera(){
- const graph=Object.create(context.window.NeuraGraph.prototype);
+ const graph=Object.create(context.window.NotrynGraph.prototype);
  Object.assign(graph,{zoom:1,rotation:.32,tilt:-.12,cameraTarget:null,motionPreference:{matches:false},mobile:{matches:false},moving:false,dirty:false,last:0,time:0,width:800,height:600,canvas:{},draw(){this.draws=(this.draws||0)+1;}});
  return graph;
 }
