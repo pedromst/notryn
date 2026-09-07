@@ -69,11 +69,13 @@ test('nearby notes use alternate local positions without overlapping names or co
  const labels=g.layoutLabels();assert.equal(labels.length,4);assertLegible(g,labels);
  for(const rect of labels){const p=g.points.get(rect.id);assert.ok(Math.abs((rect.y+rect.h/2)-p.y)<=60);}
 });
-test('mobile respects available space and keyboard focus always reveals a hidden name',()=>{
+test('a narrow desktop Brain labels every direct folder and file',()=>{
+ const g=labelsGraph(16);g.width=430;g.height=620;
+ g.nodes.forEach((n,i)=>{n.kind=i<10?'folder':'note';g.points.set(n.id,{x:150+(i%4)*42,y:180+Math.floor(i/4)*48,z:0,s:1});});
+ const labels=g.layoutLabels();assert.equal(labels.length,g.nodes.length);assertLegible(g,labels);
+});
+test('mobile keeps every direct item named without overlaps',()=>{
  const g=labelsGraph(30);g.width=390;g.height=690;
  g.nodes.forEach(n=>g.points.set(n.id,{x:195,y:330,z:0,s:1}));
- const labels=g.layoutLabels();assert.ok(labels.length<g.nodes.length);assertLegible(g,labels);
- const hidden=g.nodes.find(n=>!labels.some(r=>r.id===n.id));
- context.document.activeElement=g.canvas;g.keyboardId=hidden.id;
- assert.ok(g.layoutLabels().some(r=>r.id===hidden.id));context.document.activeElement=null;
+ const labels=g.layoutLabels();assert.equal(labels.length,g.nodes.length);assertLegible(g,labels);
 });
