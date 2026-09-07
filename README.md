@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="site/index.html">Landing draft</a> ·
+  <a href="https://github.com/pedromst/notryn/releases/tag/v0.2.0-alpha.1">Private alpha download</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="SECURITY.md">Security</a> ·
   <a href="docs/PUBLIC-RELEASE-CHECKLIST.md">Release checklist</a>
@@ -28,6 +29,8 @@ Preview 0.2 is in development. The platform is in English and adapts to desktop 
 Private self-contained desktop packages are available for Intel macOS and x86_64 Linux, including Omarchy. They open Notryn in its own application window, install only for the current user, require no Python runtime on the destination computer, expose the private server only on `127.0.0.1`, and preserve Brains independently from application updates or removal.
 
 See [Private alpha installation](docs/PRIVATE-ALPHA.md) for the exact verified download, install, terminal and uninstall commands. Public distribution remains disabled while signing, licensing and release review are unfinished.
+
+The actual installable files are hosted in the [private GitHub Release](https://github.com/pedromst/notryn/releases/tag/v0.2.0-alpha.1), rather than inside the source tree.
 
 ## Get started
 

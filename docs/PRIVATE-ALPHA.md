@@ -16,7 +16,7 @@ Download this private release and install it:
 
 ```sh
 mkdir -p "$HOME/Downloads/notryn-alpha"
-gh release download v0.2.0-alpha.1 --repo pedromst/notryn --clobber --dir "$HOME/Downloads/notryn-alpha"
+gh release download v0.2.0-alpha.1 --repo pedromst/notryn --clobber --pattern '*linux*' --pattern 'install-notryn-linux.sh' --dir "$HOME/Downloads/notryn-alpha"
 sh "$HOME/Downloads/notryn-alpha/install-notryn-linux.sh" "$HOME/Downloads/notryn-alpha/Notryn-0.2.0-alpha.1-linux-x86_64.tar.gz"
 ```
 
@@ -40,13 +40,15 @@ The application is installed at `~/.local/lib/notryn`. Its launcher and desktop 
 
 ```sh
 mkdir -p "$HOME/Downloads/notryn-alpha"
-gh release download v0.2.0-alpha.1 --repo pedromst/notryn --clobber --dir "$HOME/Downloads/notryn-alpha"
+gh release download v0.2.0-alpha.1 --repo pedromst/notryn --clobber --pattern '*macos*' --pattern 'install-notryn-macos.sh' --dir "$HOME/Downloads/notryn-alpha"
 sh "$HOME/Downloads/notryn-alpha/install-notryn-macos.sh" "$HOME/Downloads/notryn-alpha/Notryn-0.2.0-alpha.1-macos-x86_64.zip"
 ```
 
 The app is installed at `~/Applications/Notryn.app`, opens in its own macOS window and keeps its separate state at `~/Library/Application Support/Notryn`.
 
 This macOS alpha has an ad-hoc signature for private testing. A public macOS release must be signed with a Developer ID certificate and notarized by Apple. The Linux archive currently supports x86_64; ARM64 packages will be added before a public release.
+
+Because this private macOS build is not notarized, macOS can ask for an explicit first-open decision under **System Settings → Privacy & Security** after a GitHub download. The installer does not remove quarantine or bypass Gatekeeper.
 
 ## Existing development state
 
