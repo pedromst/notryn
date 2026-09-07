@@ -1,0 +1,10 @@
+.neura/
+__pycache__/
+*.pyc
+.DS_Store
+.env*
+*.log
+qa-artifacts/
+node_modules/
+docs/DIRECTION.md
+docs/VISUAL-REVIEW.md

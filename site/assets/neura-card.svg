@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="g" cx="78%" cy="38%" r="55%"><stop stop-color="#21423f"/><stop offset="1" stop-color="#071014"/></radialGradient>
+    <filter id="b"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <g transform="translate(72 72)" fill="none" stroke="#a9e8d1" stroke-width="2">
+    <ellipse cx="26" cy="26" rx="9" ry="22"/><ellipse cx="26" cy="26" rx="9" ry="22" transform="rotate(60 26 26)"/><ellipse cx="26" cy="26" rx="9" ry="22" transform="rotate(120 26 26)"/>
+  </g>
+  <text x="140" y="112" fill="#e8f2f0" font-family="monospace" font-size="39" font-weight="700">neura</text>
+  <text x="72" y="285" fill="#e8f2f0" font-family="monospace" font-size="66" font-weight="700">Your notes already connect.</text>
+  <text x="72" y="372" fill="#a9e8d1" font-family="monospace" font-size="66" font-weight="700">See the shape.</text>
+  <text x="76" y="446" fill="#8fa3a9" font-family="monospace" font-size="22">Local-first · Markdown-native · No account required</text>
+  <g transform="translate(865 120)" fill="none" stroke="#9bd5cb" stroke-opacity=".35">
+    <path d="M120 0C35-25-45 54-35 158c9 100 71 181 156 182 88 0 151-84 157-183C285 54 205-24 120 0Z" fill="#9bd5cb" fill-opacity=".04"/>
+    <path d="M120 0v340M-27 129c94-38 196-38 296 0M-31 207c99-32 201-32 304 0M1 66c75 56 167 56 239 0M7 276c70-52 159-52 228 0"/>
+    <g fill="#a9e8d1" stroke="none" filter="url(#b)"><circle cx="30" cy="100" r="9"/><circle cx="174" cy="72" r="8"/><circle cx="220" cy="184" r="11"/><circle cx="71" cy="230" r="10"/><circle cx="154" cy="283" r="8"/></g>
+    <g fill="#dffaf1" stroke="none"><circle cx="30" cy="100" r="4"/><circle cx="174" cy="72" r="4"/><circle cx="220" cy="184" r="5"/><circle cx="71" cy="230" r="5"/><circle cx="154" cy="283" r="4"/></g>
+  </g>
+</svg>

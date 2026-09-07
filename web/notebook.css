@@ -1,0 +1,89 @@
+/* A reversible notes workspace. The editor stays mounted when the brain is hidden. */
+.legend .legend-all{padding-right:12px;border-right:1px solid var(--line);border-radius:0}
+.legend .legend-all::before{display:none}
+.legend .legend-all.active{color:var(--accent)}
+.legend .legend-back::before{display:none}
+.folder-back .icon{width:12px;height:12px;transform:rotate(-90deg)}
+.folder-back kbd{font:inherit;font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 3px;line-height:1}
+.library-tabs .folder-back{gap:5px;white-space:nowrap}
+.library-tabs:has(.folder-back:not([hidden])){gap:12px}
+html[data-interface-hints="off"] .folder-back kbd,html[data-single-keys="off"] .folder-back kbd{display:none}
+.universe-bottom .legend{flex:1;min-width:0;max-width:none;flex-wrap:nowrap;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:4px 2px}
+.legend::-webkit-scrollbar{display:none}
+.legend button{flex-shrink:0;white-space:nowrap}
+.legend button::before{flex-shrink:0}
+.legend .legend-folder>span{max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.legend .legend-folder::before{box-shadow:0 0 12px color-mix(in srgb,var(--color),transparent 45%)}
+#save-note.is-saved{background:var(--theme-soft);color:var(--muted);opacity:1;box-shadow:none}
+/* Hide guidance, never note content, accessible names or the help entry point. */
+html[data-interface-hints="off"] :is(#full-brain,#graph-hint,.notebook-keys,.editor-key-hint,.topbar kbd,#brain-actions kbd,#item-dialog kbd){display:none}
+
+/* The search and preferences stay in view while the command list scrolls. */
+#shortcuts-dialog{width:610px;max-height:78dvh;margin:15dvh auto auto}
+#shortcuts-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+.shortcut-heading{padding:17px 28px 0;flex-shrink:0}
+#shortcuts-dialog .shortcut-heading h2{font-size:13px;letter-spacing:0;margin:0;font-weight:500;color:var(--muted)}
+.shortcut-preferences{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px 28px 4px;flex-shrink:0}
+#shortcuts-dialog .keyboard-preference{border:0;padding:0}
+#shortcuts-dialog .keyboard-preference label{font-size:11px;gap:8px;line-height:1.5}
+#shortcuts-dialog .keyboard-preference input{flex-shrink:0}
+#shortcuts-dialog .keyboard-preference p{font-size:10px;line-height:1.6;margin-top:6px}
+#shortcuts-dialog .shortcut-search{margin:0;flex-direction:row;flex-shrink:0}
+#shortcuts-dialog #shortcut-search{padding:0;min-width:0;flex:1;width:100%;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:13px}
+#shortcut-results-status{font-size:10px;color:var(--muted);margin:12px 28px 0;line-height:1.6;flex-shrink:0}
+#shortcut-catalog{min-height:80px;overflow:auto;overscroll-behavior:contain;flex:1 1 auto;padding-top:0}
+.shortcut-command-label{min-width:0;display:flex;flex-direction:column;gap:3px}
+.shortcut-command-label small{font-size:9px;font-weight:400;color:var(--muted)}
+#shortcut-catalog .shortcut-command:focus-visible{outline-offset:-2px;background:var(--theme-soft)}
+#shortcuts-dialog .shortcut-footer{flex-shrink:0;font-size:10px;padding-block:12px;line-height:1.8}
+@media(max-width:900px){
+ #shortcuts-dialog{max-height:84dvh;margin-top:9dvh}
+ .shortcut-heading{padding:14px 20px 0}
+ .shortcut-preferences{padding:14px 20px 0;gap:13px}
+ #shortcuts-dialog .keyboard-preference label{font-size:10px;align-items:flex-start}
+ #shortcuts-dialog .keyboard-preference p{font-size:9px}
+ #shortcut-results-status{margin-inline:20px}
+ #shortcuts-dialog #shortcut-search{font-size:16px}
+ #shortcuts-dialog .shortcut-footer{padding:10px 20px}
+}
+@media(max-height:600px){
+ #shortcuts-dialog[open]{overflow:auto}
+ #shortcut-catalog{flex:none;min-height:0;overflow:visible}
+}
+.brain-visibility{gap:7px;white-space:nowrap;font-size:11px;padding:8px 10px;min-height:35px}
+.brain-visibility kbd{font:inherit;font-size:9px;color:var(--muted)}
+html[data-single-keys=off] .brain-visibility kbd,html[data-single-keys=off] .notebook-keys{display:none}
+.notebook-empty{display:none}
+.note-file-location{margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
+.note-folder-link{display:inline-flex;align-items:center;gap:9px;color:var(--muted);font-size:11px;padding:8px 0;min-height:36px}
+.note-folder-link:hover{color:var(--accent);background:none}.note-folder-link .icon{width:15px;height:15px}
+@media(max-width:900px){.note-folder-link{min-height:44px;font-size:12px}}
+body.notes-only:not(.no-brain) .universe{display:none}
+body.notes-only:not(.no-brain):has(#document[hidden]) .notebook-empty{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;gap:12px}
+.notebook-empty>.icon{width:34px;height:34px;color:var(--accent);opacity:.7}
+.notebook-empty h1{font-size:25px;font-weight:500;margin:10px 0 0;letter-spacing:-.8px}
+.notebook-empty p{color:var(--muted);font-size:12px;line-height:1.8;margin:0;max-width:400px}
+.notebook-empty>div{display:flex;gap:10px;margin:10px 0}
+.notebook-empty .notebook-keys{font-size:10px;margin-top:20px}
+@media(min-width:901px){
+ body.notes-only #document:not([hidden]){flex:1;width:0;min-width:0}
+ body.notes-only #swap-layout{display:none}
+ body.notes-only .document-read,body.notes-only #editor-preview{padding-inline:max(28px,calc((100% - 820px)/2))}
+ body.notes-only #editor{padding-inline:max(28px,calc((100% - 820px)/2))}
+ body.notes-only .ProseMirror{max-width:900px;margin-inline:auto}
+}
+@media(min-width:901px) and (max-width:1150px){.brain-visibility span{display:none}.brain-visibility{padding:8px}.global-search{width:210px}}
+@media(max-width:900px){
+ .brain-visibility{display:none}
+ body.notes-only:not(.no-brain):has(#document[hidden]) .notebook-empty{display:none}
+ body.brain-peek:not(.notes-only) #document{display:none}
+}
+.tree-row > small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.folder-row .folder-toggle {
+  margin-left: 0;
+}

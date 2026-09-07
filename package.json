@@ -1,0 +1,25 @@
+{
+  "name": "neura-local-editor",
+  "version": "0.2.0",
+  "description": "A local space to think, write and explore connections between Markdown notes. Open a folder you already use or create a new Brain. Your files stay yours, in an open format.",
+  "scripts": {
+    "build:editor": "node scripts/build-editor.mjs",
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "markdown-it": "15.0.1",
+    "prosemirror-commands": "1.7.2",
+    "prosemirror-history": "1.5.0",
+    "prosemirror-keymap": "1.2.3",
+    "prosemirror-markdown": "1.13.7",
+    "prosemirror-model": "1.25.11",
+    "prosemirror-schema-list": "1.5.1",
+    "prosemirror-state": "1.4.4",
+    "prosemirror-view": "1.42.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "private": true
+}
