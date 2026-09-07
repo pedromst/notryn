@@ -181,12 +181,29 @@ window.NeuraGraph=class{
   for(const n of items){const p=this.points.get(n.id),r=this.noteRadius(n,p)+2;occupy({x:p.x-r,y:p.y-r,w:r*2,h:r*2});}
   items.sort((a,b)=>Number(focused(b))-Number(focused(a))||this.labelRank.get(a.id)-this.labelRank.get(b.id));
   for(const n of items){
-   const p=this.points.get(n.id),r=this.noteRadius(n,p),isFocused=focused(n),font=(isFocused?'500 ':'')+'11px JetBrains';c.font=font;
-   const limit=Math.max(12,Math.min(30,Math.floor((w-40)/6.6))),name=n.title.length>limit?n.title.slice(0,limit-2)+'…':n.title;
-   const tw=c.measureText(name).width,lw=tw+12,lh=23,right=p.x+r+9,left=p.x-r-9-lw,center=p.x-lw/2;
+   const p=this.points.get(n.id),r=this.noteRadius(n,p),isFocused=focused(n),dense=items.length>18||w<620;
+   const size=dense?10:11,font=(isFocused?'500 ':'')+size+'px JetBrains';c.font=font;
+   const limit=Math.max(12,Math.min(dense?22:30,Math.floor((w-40)/(dense?6:6.6)))),name=n.title.length>limit?n.title.slice(0,limit-2)+'…':n.title;
+   const tw=c.measureText(name).width,lw=tw+12,lh=dense?21:23,right=p.x+r+9,left=p.x-r-9-lw,center=p.x-lw/2;
    const positions=[[right,p.y-lh/2],[left,p.y-lh/2],[center,p.y-r-9-lh],[center,p.y+r+9]];
    for(const dy of [-27,27,-54,54])positions.push([right,p.y-lh/2+dy],[left,p.y-lh/2+dy]);
+   // A dense folder can still show every direct item. Search progressively
+   // around its node before using the nearest free slot in the canvas.
+   const phase=this.hash(n.id+'label')*Math.PI*2;
+   for(let distance=42;distance<=126;distance+=21)for(let step=0;step<12;step++){
+    const angle=phase+step*Math.PI/6;
+    positions.push([p.x+Math.cos(angle)*distance-lw/2,p.y+Math.sin(angle)*distance-lh/2]);
+   }
    let rect=positions.map(([x,y])=>({x,y,w:lw,h:lh})).find(b=>b.x>=8&&b.x+b.w<=w-8&&b.y>=54&&b.y+b.h<=h-66&&!overlaps(b));
+   if(!rect&&!this.mobile.matches){
+    let nearest=null,distance=Infinity;
+    for(let y=54;y+lh<=h-66;y+=lh+3)for(let x=8;x+lw<=w-8;x+=8){
+     const candidate={x,y,w:lw,h:lh};if(overlaps(candidate))continue;
+     const score=(x+lw/2-p.x)**2+(y+lh/2-p.y)**2;
+     if(score<distance){nearest=candidate;distance=score;}
+    }
+    rect=nearest;
+   }
    if(!rect&&isFocused)rect={x:Math.max(8,Math.min(w-lw-8,right)),y:Math.max(54,Math.min(h-lh-66,p.y-lh/2)),w:lw,h:lh};
    if(rect){labels.push({...rect,id:n.id,name,font,focused:isFocused});occupy(rect);}
   }
