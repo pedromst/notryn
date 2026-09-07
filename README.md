@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pedromst.github.io/neura-site/">Landing page</a> ·
+  <a href="site/index.html">Landing draft</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="SECURITY.md">Security</a> ·
   <a href="docs/PUBLIC-RELEASE-CHECKLIST.md">Release checklist</a>
@@ -32,6 +32,14 @@ python3 server.py
 ```
 
 On Windows, use `py -3 server.py`. Open [NEURA locally](http://127.0.0.1:4783).
+
+The landing page is also private during development. Preview it locally with:
+
+```sh
+python3 -m http.server 4794 --bind 127.0.0.1 --directory site
+```
+
+Then open [the local landing draft](http://127.0.0.1:4794/).
 On macOS, you can also use `Open NEURA.command`.
 On Linux, run `./start.sh` to start NEURA and open your default browser. The launcher works from any working directory, requires no desktop installation and accepts server options such as `--port 4790`. Stop the server with Ctrl C. If file permissions were lost when copying it, use `sh start.sh`.
 

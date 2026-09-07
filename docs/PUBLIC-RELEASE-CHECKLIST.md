@@ -22,7 +22,9 @@ The private repository is a preparation and backup space. Complete this review b
 
 ## Distribution
 
+- [ ] Choose the public license and contributor terms after legal review. Document clearly whether Neura is open source or source-available, and how the optional commercial sync component remains separate.
 - [ ] Define install, update and uninstall behavior while preserving Brains.
+- [ ] Provide documented terminal installation for macOS, Linux and Windows.
 - [ ] Sign or checksum release artifacts.
 - [ ] Publish a first tagged pre-release with clear platform support.
 - [ ] Change repository visibility only after the release candidate passes review.
@@ -30,6 +32,7 @@ The private repository is a preparation and backup space. Complete this review b
 
 ## Communication
 
+- [ ] Replace the illustrative landing Brain with a faithful interactive demo of the real Neura Brain, using safe demonstration data and supporting pointer, touch and keyboard navigation.
 - [ ] Replace private-preview wording on the landing page and README.
 - [ ] State clearly what is local, what is optional and what is not included.
 - [ ] Publish a security contact, contribution guide and code of conduct.
