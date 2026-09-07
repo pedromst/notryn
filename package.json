@@ -1,10 +1,13 @@
 {
   "name": "notryn-local-editor",
-  "version": "0.2.0",
+  "version": "0.2.0-alpha.1",
   "description": "A local space to think, write and explore connections between Markdown notes. Open a folder you already use or create a new Brain. Your files stay yours, in an open format.",
   "scripts": {
     "build:editor": "node scripts/build-editor.mjs",
-    "test": "node --test tests/*.test.cjs tests/*.test.mjs"
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs",
+    "desktop:dev": "electron .",
+    "package:mac": "packaging/macos/build-alpha.sh",
+    "package:linux": "packaging/linux/build-alpha.sh"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -19,7 +22,11 @@
     "prosemirror-view": "1.42.3"
   },
   "devDependencies": {
+    "electron": "44.2.0",
+    "electron-builder": "26.15.3",
     "esbuild": "0.28.2"
   },
-  "private": true
+  "private": true,
+  "main": "desktop/main.cjs",
+  "author": "Notryn contributors"
 }

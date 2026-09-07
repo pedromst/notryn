@@ -10,6 +10,7 @@ import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+from notryn_version import VERSION
 
 HERE = Path(__file__).resolve().parent
 MAX_NOTE_BYTES = 1024 * 1024
@@ -124,7 +125,7 @@ class Store:
         return {**brain,'readOnly':not self.can_write(brain),'available':Path(brain['root']).is_dir()}
 
     def state(self):
-        return {'brains':[self.summary(b) for b in self.brains if not b.get('removedAt')], 'version':'0.2.0','agent':{'connected':False,'mode':'local-guide'}}
+        return {'brains':[self.summary(b) for b in self.brains if not b.get('removedAt')], 'version':VERSION,'agent':{'connected':False,'mode':'local-guide'}}
 
     def is_removed(self, brain, path, except_id=None):
         return any(r['id'] != except_id and r['brain'] == brain['id'] and r['kind'] != 'brain' and

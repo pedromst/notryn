@@ -1,0 +1,109 @@
+name: Private alpha packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Upload the verified packages to the private prerelease
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  VERSION: 0.2.0-alpha.1
+  TAG: v0.2.0-alpha.1
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: packaging/linux/build-alpha.sh
+      - name: Test isolated user installation
+        run: |
+          export HOME="$RUNNER_TEMP/notryn-home"
+          mkdir -p "$HOME"
+          sh dist/install-notryn-linux.sh "dist/Notryn-$VERSION-linux-x86_64.tar.gz" --no-open
+          "$HOME/.local/bin/notryn" version | grep -Fx "$VERSION"
+          "$HOME/.local/bin/notryn" start --port 4873
+          "$HOME/.local/bin/notryn" status
+          curl --fail --silent http://127.0.0.1:4873/api/runtime | grep -F '"app": "notryn"'
+          "$HOME/.local/bin/notryn" stop
+          "$HOME/.local/bin/notryn" uninstall
+          test -d "$HOME/.local/share/notryn"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notryn-linux-${{ env.VERSION }}
+          if-no-files-found: error
+          path: |
+            dist/Notryn-${{ env.VERSION }}-linux-x86_64.tar.gz
+            dist/Notryn-${{ env.VERSION }}-linux-x86_64.tar.gz.sha256
+            dist/install-notryn-linux.sh
+
+  macos:
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: packaging/macos/build-alpha.sh
+      - name: Test isolated user installation
+        run: |
+          export HOME="$RUNNER_TEMP/notryn-home"
+          mkdir -p "$HOME"
+          sh dist/install-notryn-macos.sh "dist/Notryn-$VERSION-macos-x86_64.zip" --no-open
+          "$HOME/.local/bin/notryn" version | grep -Fx "$VERSION"
+          "$HOME/.local/bin/notryn" start --port 4873
+          "$HOME/.local/bin/notryn" status
+          curl --fail --silent http://127.0.0.1:4873/api/runtime | grep -F '"app": "notryn"'
+          "$HOME/.local/bin/notryn" stop
+          "$HOME/.local/bin/notryn" uninstall
+          test -d "$HOME/Library/Application Support/Notryn"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notryn-macos-${{ env.VERSION }}
+          if-no-files-found: error
+          path: |
+            dist/Notryn-${{ env.VERSION }}-macos-x86_64.zip
+            dist/Notryn-${{ env.VERSION }}-macos-x86_64.zip.sha256
+            dist/install-notryn-macos.sh
+
+  release:
+    if: ${{ inputs.publish_release }}
+    needs: [linux, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: notryn-*
+          merge-multiple: true
+          path: release
+      - name: Create or refresh private prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" release/* --target "$GITHUB_SHA" --prerelease --title "Notryn $VERSION private alpha" --notes-file docs/PRIVATE-ALPHA.md
+          fi
