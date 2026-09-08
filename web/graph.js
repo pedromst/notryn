@@ -9,7 +9,7 @@ window.NotrynGraph=class{
   this.moving=!this.motionPreference.matches;
   try{if(localStorage.getItem('notryn-motion')==='paused')this.moving=false;}catch{}
   this.points=new Map();this.pointers=new Map();this.labelRects=[];this.filter=()=>true;
-  this.selected=null;this.hover=null;this.keyboardId=null;this.time=0;this.last=0;this.dirty=true;
+  this.selected=null;this.hover=null;this.keyboardId=null;this.focusWeights=new Map([[null,1]]);this.focusTarget=null;this.focusTransition=null;this.time=0;this.last=0;this.dirty=true;
   this.setTheme(window.NotrynThemes.build(window.NotrynThemes.current).graph);
   this.cortex=this.buildCortex();
   this.motionPreference.addEventListener('change',e=>{if(e.matches){this.moving=false;document.dispatchEvent(new Event('notryn-motionchange'));}this.dirty=true;});
@@ -26,7 +26,7 @@ window.NotrynGraph=class{
   this.nodes.forEach((n,i)=>{n.brain=this.brainPoint(i%2?1:-1,.3+(i+.5)/Math.max(1,this.nodes.length)*(Math.PI-.6),i*2.39996);});
   const ranked=[...this.nodes].sort((a,b)=>Number(b.kind==='folder')-Number(a.kind==='folder')||b.degree-a.degree||a.title.localeCompare(b.title));
   this.labelRank=new Map(ranked.map((n,i)=>[n.id,i]));
-  this.hover=null;if(!this.ids.has(this.keyboardId))this.keyboardId=null;this.fit(true);
+  this.hover=null;this.focusWeights=new Map([[null,1]]);this.focusTarget=null;this.focusTransition=null;if(!this.ids.has(this.keyboardId))this.keyboardId=null;this.fit(true);
  }
  brainPoint(side,lat,lon){
   const s=Math.sin(lat),fold=1+.045*Math.sin(lon*7+lat*8)+.023*Math.sin(lat*17-lon*3);
@@ -94,6 +94,53 @@ window.NotrynGraph=class{
   if(id)for(const edge of this.edges){if(edge.source===id)neighbors.add(edge.target);if(edge.target===id)neighbors.add(edge.source);}
   return{id,neighbors};
  }
+ advanceFocus(dt){
+  const target=this.focusState().id;
+  this.focusWeights ||= new Map([[null,1]]);
+  if(target!==this.focusTarget){
+   this.focusTarget=target;
+   // Retarget from the currently painted mix, even during a fast pointer sweep.
+   this.focusTransition={from:new Map(this.focusWeights),elapsed:0,duration:this.hover?280:340};
+  }
+  if(this.motionPreference.matches){
+   const changed=!!this.focusTransition;this.focusWeights=new Map([[target,1]]);this.focusTransition=null;return changed;
+  }
+  const transition=this.focusTransition;if(!transition)return false;
+  transition.elapsed+=dt;const t=Math.min(1,transition.elapsed/transition.duration),amount=t*t*(3-2*t);
+  if(t===1){this.focusWeights=new Map([[target,1]]);this.focusTransition=null;}
+  else{
+   this.focusWeights=new Map();
+   for(const id of new Set([...transition.from.keys(),target])){
+    const weight=(transition.from.get(id)||0)*(1-amount)+(id===target?amount:0);
+    if(weight>.00001)this.focusWeights.set(id,weight);
+   }
+  }
+  return true;
+ }
+ visualFocus(){
+  const focus=this.focusState();if(!this.focusWeights)return focus;
+  focus.layers=[...this.focusWeights].map(([id,weight])=>{
+   const neighbors=new Set(id?[id]:[]);
+   if(id)for(const edge of this.edges){if(edge.source===id)neighbors.add(edge.target);if(edge.target===id)neighbors.add(edge.source);}
+   return{id,neighbors,weight};
+  });
+  return focus;
+ }
+ emphasis(id,focus){
+  let selected=0,linked=0,dim=0;
+  for(const layer of focus.layers||[{...focus,weight:1}]){
+   if(layer.id===id)selected+=layer.weight;
+   else if(layer.neighbors.has(id))linked+=layer.weight;
+   else if(layer.id)dim+=layer.weight;
+  }
+  return{selected,linked,dim};
+ }
+ blendLabel(normal,selected,linked,weights){
+  const stops=[[normal,1-weights.selected-weights.linked],[selected,weights.selected],[linked,weights.linked]].filter(([,weight])=>weight>0);
+  if(stops.length===1)return stops[0][0];
+  const channels=[1,3,5,7].map(index=>Math.round(stops.reduce((sum,[color,weight])=>sum+parseInt(index===7&&color.length===7?'ff':color.slice(index,index+2),16)*weight,0)));
+  return'#'+channels.map(value=>Math.max(0,Math.min(255,value)).toString(16).padStart(2,'0')).join('');
+ }
  project(p){
   let{x,y,z}=p;
   const a=x*Math.cos(this.rotation)+z*Math.sin(this.rotation);z=-x*Math.sin(this.rotation)+z*Math.cos(this.rotation);x=a;
@@ -160,24 +207,28 @@ window.NotrynGraph=class{
   }
  }
  drawConnections(focus=this.focusState()){
-  const id=focus.id,c=this.ctx,density=Math.max(.045,Math.min(.22,.22/Math.sqrt(Math.max(1,this.edges.length/100))));
-  const activeCount=id?this.edges.filter(e=>e.source===id||e.target===id).length:0;
-  const pulseCount=id?Math.max(1,Math.min(3,Math.floor(96/Math.max(1,activeCount)))):2;
+  const c=this.ctx,layers=focus.layers||[{...focus,weight:1}],neutral=layers.filter(layer=>!layer.id).reduce((sum,layer)=>sum+layer.weight,0);
+  const density=Math.max(.045,Math.min(.22,.22/Math.sqrt(Math.max(1,this.edges.length/100))));
+  const weights=this.edges.map(edge=>layers.reduce((sum,layer)=>sum+(layer.id&&(layer.id===edge.source||layer.id===edge.target)?layer.weight:0),0));
+  const activeCount=weights.filter(weight=>weight>0).length,pulseCount=Math.max(1,Math.min(3,Math.floor(96/Math.max(1,activeCount))));
   let sparks=0;
   for(let i=0;i<this.edges.length;i++){
    const e=this.edges[i],a=this.ids.get(e.source),b=this.ids.get(e.target);if(!this.filter(a)||!this.filter(b))continue;
-   const p=this.points.get(a.id),q=this.points.get(b.id),active=id&&(a.id===id||b.id===id);
-   this.line(p,q,active?this.palette.accent+'b8':`rgba(${this.palette.rgb},${id?.028:density})`,active?1.4:.65);
-   if(active||!id&&i%Math.max(1,Math.ceil(this.edges.length/24))===0){
-    // Selected links always get pulses, regardless of their index in the graph.
-    // Space several along each line, with a bounded total cost for dense Brains.
-    const start=active&&b.id===id?q:p,end=start===p?q:p;
-    for(let j=0;j<pulseCount&&sparks<(id?96:48);j++,sparks++){
-    const t=(this.time*(.07+this.hash(e.source+e.target)*.035)+this.hash('pulse'+i)+j/pulseCount)%1,tail=Math.max(0,t-.065);
-    const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t,tx=start.x+(end.x-start.x)*tail,ty=start.y+(end.y-start.y)*tail;
-    const streak=c.createLinearGradient(tx,ty,x+.01,y+.01);streak.addColorStop(0,this.palette.pulse+'00');streak.addColorStop(1,this.palette.pulse+'aa');
-    this.line({x:tx,y:ty},{x,y},streak,active?1.7:1.2);this.glow(x,y,active?8:6,this.palette.rgb,active?.22:.12);
-    c.fillStyle=this.palette.pulse;c.beginPath();c.arc(x,y,active?1.7:1.25,0,Math.PI*2);c.fill();
+   const p=this.points.get(a.id),q=this.points.get(b.id),active=weights[i];
+   this.line(p,q,`rgba(${this.palette.rgb},${.028+(density-.028)*neutral})`,.65);
+   if(active){c.globalAlpha=active;this.line(p,q,this.palette.accent+'b8',1.4);c.globalAlpha=1;}
+   const ambient=i%Math.max(1,Math.ceil(this.edges.length/24))===0?neutral:0;
+   if(active||ambient){
+    // Both old and new neighborhoods fade continuously; particles share the
+    // same opacity transition and a bounded budget across the whole canvas.
+    const start=focus.id===b.id?q:p,end=start===p?q:p,count=active?pulseCount:2;
+    for(let j=0;j<count&&sparks<(activeCount?96:48);j++,sparks++){
+     c.globalAlpha=active+(1-active)*(j<2?ambient:0);
+     const t=(this.time*(.07+this.hash(e.source+e.target)*.035)+this.hash('pulse'+i)+j/count)%1,tail=Math.max(0,t-.065);
+     const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t,tx=start.x+(end.x-start.x)*tail,ty=start.y+(end.y-start.y)*tail;
+     const streak=c.createLinearGradient(tx,ty,x+.01,y+.01);streak.addColorStop(0,this.palette.pulse+'00');streak.addColorStop(1,this.palette.pulse+'aa');
+     this.line({x:tx,y:ty},{x,y},streak,1.2+.5*active);this.glow(x,y,6+2*active,this.palette.rgb,.12+.1*active);
+     c.fillStyle=this.palette.pulse;c.beginPath();c.arc(x,y,1.25+.45*active,0,Math.PI*2);c.fill();c.globalAlpha=1;
     }
    }
   }
@@ -228,42 +279,46 @@ window.NotrynGraph=class{
   const sorted=[...this.nodes].sort((a,b)=>this.points.get(b.id).z-this.points.get(a.id).z);
   for(const n of sorted){
    const p=this.points.get(n.id),color=this.color(n.group),visible=this.filter(n);
-   const focused=focus.id===n.id;
+   const appearance=this.emphasis(n.id,focus);
    const r=this.noteRadius(n,p);
-   c.globalAlpha=visible?(focus.id&&!focus.neighbors.has(n.id)?.16:1):.04;
+   const opacity=visible?1-.80*appearance.dim:.04;c.globalAlpha=opacity;
    const aura=c.createRadialGradient(p.x,p.y,0,p.x,p.y,r*5);aura.addColorStop(0,color+'55');aura.addColorStop(.3,color+'18');aura.addColorStop(1,color+'00');
    c.fillStyle=aura;c.fillRect(p.x-r*5,p.y-r*5,r*10,r*10);
    const pearl=c.createRadialGradient(p.x-r*.3,p.y-r*.4,.1,p.x,p.y,r);
    pearl.addColorStop(0,this.palette.pearl);pearl.addColorStop(.35,color);pearl.addColorStop(1,color+'8c');
    c.fillStyle=pearl;c.beginPath();c.arc(p.x,p.y,r,0,Math.PI*2);c.fill();
    if(n.kind==='folder'){c.strokeStyle=color+'99';c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,r+4,0,Math.PI*2);c.stroke();c.strokeStyle=color+'2d';c.beginPath();c.arc(p.x,p.y,r+8,0,Math.PI*2);c.stroke();}
-   if(focused){
-    c.strokeStyle=this.palette.accent+'dd';c.lineWidth=1.8;c.beginPath();c.arc(p.x,p.y,r+6,0,Math.PI*2);c.stroke();
+   if(appearance.selected){
+    c.globalAlpha=opacity*appearance.selected;c.strokeStyle=this.palette.accent+'dd';c.lineWidth=1.8;c.beginPath();c.arc(p.x,p.y,r+6,0,Math.PI*2);c.stroke();
     c.strokeStyle=color+'27';c.beginPath();c.arc(p.x,p.y,r+11,0,Math.PI*2);c.stroke();
    }
    c.globalAlpha=1;
   }
   this.labelRects=this.layoutLabels();
   for(const rect of this.labelRects){
-   const selected=rect.id===focus.id,linked=!!focus.id&&!selected&&focus.neighbors.has(rect.id);
-   c.globalAlpha=focus.id&&!focus.neighbors.has(rect.id)?.18:1;
-   c.font=rect.font;c.fillStyle=selected?this.palette.labelSelected:linked?this.palette.labelLinked:rect.focused?this.palette.labelActive:this.palette.label;c.beginPath();c.roundRect(rect.x,rect.y,rect.w,rect.h,5);c.fill();
-   c.strokeStyle=selected?this.palette.accent:linked?this.palette.accent+'99':rect.focused?this.palette.accent+'55':this.palette.line+'55';c.lineWidth=selected?1.4:linked?1:.6;c.stroke();c.fillStyle=selected?this.palette.labelSelectedText:linked?this.palette.labelLinkedText:rect.focused?this.palette.labelText:this.palette.labelMuted;c.fillText(rect.name,rect.x+6,rect.y+15);c.globalAlpha=1;
+   const appearance=this.emphasis(rect.id,focus),p=this.palette;
+   c.globalAlpha=1-.76*appearance.dim;c.font=rect.font;
+   c.fillStyle=this.blendLabel(rect.focused?p.labelActive:p.label,p.labelSelected,p.labelLinked,appearance);
+   c.beginPath();c.roundRect(rect.x,rect.y,rect.w,rect.h,5);c.fill();
+   c.strokeStyle=this.blendLabel(rect.focused?p.accent+'55':p.line+'55',p.accent,p.accent+'99',appearance);
+   c.lineWidth=.6+.8*appearance.selected+.4*appearance.linked;c.stroke();
+   c.fillStyle=this.blendLabel(rect.focused?p.labelText:p.labelMuted,p.labelSelectedText,p.labelLinkedText,appearance);
+   c.fillText(rect.name,rect.x+6,rect.y+15);c.globalAlpha=1;
   }
  }
  tick(now){
-  requestAnimationFrame(this.tick);if(document.hidden||now-this.last<(this.cameraTarget||this.drag?0:32))return;
+  requestAnimationFrame(this.tick);if(document.hidden||now-this.last<(this.cameraTarget||this.drag||this.focusTransition?0:32))return;
   const dt=Math.min(50,now-this.last);this.last=now;
   if(!this.width||!this.height||document.body.classList.contains('notes-only')||document.body.classList.contains('note-focus')||(this.mobile.matches&&document.body.dataset.mobile!=='map'))return;
-  const navigating=this.advanceCamera(dt);
-  if(!this.moving&&!this.dirty&&!navigating)return;
+  const navigating=this.advanceCamera(dt),focusing=this.advanceFocus(dt);
+  if(!this.moving&&!this.dirty&&!navigating&&!focusing)return;
   if(this.moving){this.time+=dt/1000;if(!navigating&&!this.drag&&!this.hover&&document.activeElement!==this.canvas)this.rotation+=dt*.000018;}
   this.draw();this.dirty=false;
  }
  draw(){
   const c=this.ctx,w=this.width,h=this.height;if(!w||!h)return;c.clearRect(0,0,w,h);this.atmosphere();
   if(!this.nodes.length){this.points.clear();this.labelRects=[];return;}
-  const focus=this.focusState();c.globalAlpha=focus.id ? .45 : 1;this.drawCortex();c.globalAlpha=1;this.points.clear();this.nodes.forEach(n=>this.points.set(n.id,this.project(n.brain)));
+  const focus=this.visualFocus(),strength=focus.layers?focus.layers.reduce((sum,layer)=>sum+(layer.id?layer.weight:0),0):Number(!!focus.id);c.globalAlpha=1-.55*strength;this.drawCortex();c.globalAlpha=1;this.points.clear();this.nodes.forEach(n=>this.points.set(n.id,this.project(n.brain)));
   this.drawConnections(focus);this.drawNotes(focus);
  }
  hit(x,y){for(const label of this.labelRects)if(x>=label.x&&x<=label.x+label.w&&y>=label.y&&y<=label.y+label.h)return this.ids.get(label.id);let best=null,min=18;for(const n of this.nodes){if(!this.filter(n))continue;const p=this.points.get(n.id);if(!p)continue;const d=Math.hypot(p.x-x,p.y-y);if(d<min){best=n;min=d;}}return best;}
