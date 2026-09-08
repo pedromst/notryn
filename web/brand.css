@@ -1,0 +1,4 @@
+/* Notryn's memory-fold mark. Kept separate so app and favicon share one geometry. */
+.logo,.welcome-symbol{fill:none;stroke:currentColor;stroke-width:2.65;stroke-linecap:round;stroke-linejoin:round}
+.logo circle,.welcome-symbol circle{fill:currentColor;stroke:none}
+.logo i,.welcome-symbol i{display:none}
