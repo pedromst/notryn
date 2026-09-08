@@ -30,5 +30,5 @@ cp "$ROOT/web/favicon.svg" "$STAGE/notryn.svg"
 ARCHIVE="$OUTPUT/Notryn-$VERSION-linux-x86_64.tar.gz"
 tar -C "$BUILD" -czf "$ARCHIVE" "Notryn-$VERSION"
 (cd "$OUTPUT" && sha256sum "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256")
-cp "$ROOT/packaging/linux/install-alpha.sh" "$OUTPUT/install-notryn-linux.sh"
+sh "$ROOT/packaging/build-setup.sh"
 echo "$ARCHIVE"

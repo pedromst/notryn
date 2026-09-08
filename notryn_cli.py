@@ -18,6 +18,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from notryn_version import VERSION
+from notryn_install import Installation
 from server import serve
 
 DEFAULT_PORT = 4783
@@ -93,6 +94,19 @@ def process_command(command, home, port, instance):
 def start(home, port=DEFAULT_PORT):
     home = Path(home)
     home.mkdir(parents=True, exist_ok=True, mode=0o700)
+    lock = home / 'installation.lock'
+    try:
+        lock.mkdir(mode=0o700)
+    except FileExistsError:
+        raise RuntimeError('An installation or startup is in progress. Open Notryn when it finishes.')
+    try:
+        return start_locked(home, port)
+    finally:
+        lock.rmdir()
+
+
+def start_locked(home, port):
+    home.mkdir(parents=True, exist_ok=True, mode=0o700)
     try:
         os.chmod(home, 0o700)
     except OSError:
@@ -136,6 +150,12 @@ def start(home, port=DEFAULT_PORT):
         time.sleep(0.1)
     runtime_path(home).unlink(missing_ok=True)
     detail = ""
+    if process.poll() is None:
+        process.terminate()
+        try:
+            process.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            process.kill()
     try:
         detail = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-1]
     except (OSError, IndexError):
@@ -207,41 +227,10 @@ def copy_state(source, destination):
             shutil.rmtree(temporary)
 
 
-def uninstall(home):
-    stop(home)
-    wrapper = Path.home() / ".local" / "bin" / "notryn"
-    app = Path(os.environ.get("NOTRYN_APP_PATH", Path.home() / "Applications" / "Notryn.app"))
-    removed = []
-    if wrapper.is_file() or wrapper.is_symlink():
-        wrapper.unlink()
-        removed.append(str(wrapper))
-    if app.is_dir() and app.name == "Notryn.app":
-        trash = Path.home() / ".Trash"
-        trash.mkdir(exist_ok=True)
-        target = trash / ("Notryn-" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".app")
-        shutil.move(str(app), str(target))
-        removed.append(str(app))
-    linux_install = Path(os.environ.get("NOTRYN_INSTALL_DIR", Path.home() / ".local" / "lib" / "notryn")).expanduser().resolve()
-    expected_linux = (Path.home() / ".local" / "lib" / "notryn").resolve()
-    if sys.platform.startswith("linux") and linux_install == expected_linux and linux_install.is_dir():
-        trash = Path.home() / ".local" / "share" / "Trash" / "files"
-        trash.mkdir(parents=True, exist_ok=True)
-        target = trash / ("Notryn-" + datetime.now().strftime("%Y%m%d-%H%M%S"))
-        shutil.move(str(linux_install), str(target))
-        removed.append(str(linux_install))
-        for desktop_item in [
-            Path.home() / ".local" / "share" / "applications" / "com.notryn.Notryn.desktop",
-            Path.home() / ".local" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "notryn.svg",
-        ]:
-            if desktop_item.is_file() or desktop_item.is_symlink():
-                desktop_item.unlink()
-    print("Notryn was removed. Brains and private state were kept at " + str(home) + ".")
-    return bool(removed)
-
-
 def parser():
     result = argparse.ArgumentParser(prog="notryn", description="Start and manage the local Notryn app.")
-    result.add_argument("command", nargs="?", default="open", choices=["open", "start", "stop", "status", "version", "serve", "migrate-state", "update", "uninstall"])
+    result.add_argument("command", nargs="?", default="open", choices=["open", "start", "stop", "status", "version", "serve", "migrate-state", "update", "rollback", "uninstall"])
+    result.add_argument('--version', dest='release_version', nargs='?', const='current', help='Show version, or select a release for update')
     result.add_argument("--port", type=int, default=DEFAULT_PORT)
     result.add_argument("--data-dir")
     result.add_argument("--instance")
@@ -251,6 +240,9 @@ def parser():
 
 def main(argv=None):
     args = parser().parse_args(argv)
+    if args.release_version == 'current':
+        print(VERSION)
+        return 0
     home = Path(args.data_dir).expanduser().resolve() if args.data_dir else data_home()
     try:
         if args.command == "serve":
@@ -277,17 +269,23 @@ def main(argv=None):
             print("Notryn stopped." if stop(home) else "Notryn was already stopped.")
             return 0
         if args.command == "uninstall":
-            uninstall(home)
+            Installation(data=home).uninstall()
             return 0
         if args.command == "update":
-            print("Private alpha updates are installed by running the verified installer for the newer package.")
-            return 2
+            Installation(data=home).update(args.release_version)
+            return 0
+        if args.command == "rollback":
+            Installation(data=home).rollback()
+            return 0
+        if args.command == 'open' and getattr(sys, 'frozen', False):
+            Installation(data=home).open()
+            return 0
         record, created = start(home, args.port)
         if args.command == "open":
             open_url(record["port"])
         print(("Notryn started" if created else "Notryn is already running") + f" at http://127.0.0.1:{record['port']}/.")
         return 0
-    except RuntimeError as exc:
+    except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 

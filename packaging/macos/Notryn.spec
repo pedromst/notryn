@@ -26,7 +26,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=True,
-    target_arch='x86_64',
+    target_arch=None,
 )
 coll = COLLECT(
     exe,
