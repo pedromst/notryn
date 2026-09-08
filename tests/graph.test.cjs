@@ -98,13 +98,13 @@ test('selection and hover isolate direct neighbors; moving away restores the sel
  assert.equal(fills.find(x=>x.text==='Project 1').color,g.palette.labelSelectedText);
  assert.equal(fills.find(x=>x.text==='Project 2').color,g.palette.labelLinkedText);
  assert.equal(fills.find(x=>x.text==='Project 2').alpha,1);
- assert.equal(fills.find(x=>x.text==='Project 3').alpha,.18);
+ assert.ok(Math.abs(fills.find(x=>x.text==='Project 3').alpha-.24)<1e-12);
  const positions=JSON.stringify(g.labelRects);
  g.hover='1';fills.length=0;g.drawNotes();
  assert.equal(JSON.stringify(g.labelRects),positions,'hover must not move labels');
  assert.equal(fills.find(x=>x.text==='Project 2').color,g.palette.labelSelectedText);
  for(const title of ['Project 1','Project 2','Project 3'])assert.equal(fills.find(x=>x.text===title).alpha,1);
- assert.equal(fills.find(x=>x.text==='Project 4').alpha,.18);
+ assert.ok(Math.abs(fills.find(x=>x.text==='Project 4').alpha-.24)<1e-12);
  g.hover='3';assert.deepEqual(Array.from(g.focusState().neighbors),['3']);
  g.hover=null;assert.equal(g.focusState().id,'0');
  g.select(null);fills.length=0;g.drawNotes();assert.ok(fills.every(x=>x.alpha===1));
@@ -117,6 +117,62 @@ test('keyboard focus uses the same direct neighborhood as hover',()=>{
  assert.equal(g.focusState().id,'1');assert.deepEqual(Array.from(g.focusState().neighbors).sort(),['0','1','2']);
  g.hover='0';assert.equal(g.focusState().id,'0');
  context.document.activeElement=null;g.hover=null;assert.equal(g.focusState().id,'3');
+});
+
+test('hover fades in and out without overshoot, independently of frame rate',()=>{
+ const a=labelsGraph(4),b=labelsGraph(4);
+ for(const g of [a,b]){g.edges=[{source:'0',target:'1'}];g.hover='0';}
+ for(let i=0;i<10;i++)a.advanceFocus(14);
+ for(let i=0;i<5;i++)b.advanceFocus(28);
+ assert.equal(a.emphasis('0',a.visualFocus()).selected,.5);
+ assert.equal(a.emphasis('1',a.visualFocus()).linked,.5);
+ assert.equal(a.emphasis('2',a.visualFocus()).dim,.5);
+ assert.equal(b.emphasis('2',b.visualFocus()).dim,.5);
+ a.advanceFocus(140);assert.equal(a.focusTransition,null);
+ assert.equal(a.emphasis('2',a.visualFocus()).dim,1);
+ a.hover=null;a.advanceFocus(170);
+ assert.equal(a.emphasis('2',a.visualFocus()).dim,.5);
+ a.advanceFocus(170);assert.equal(a.focusTransition,null);
+ assert.equal(a.emphasis('2',a.visualFocus()).dim,0);
+ assert.equal(a.advanceFocus(16),false);
+});
+
+test('rapid hover changes continue from the painted mix and restore the selected note',()=>{
+ const g=labelsGraph(4);g.edges=[{source:'0',target:'1'}];g.select('0');g.advanceFocus(340);
+ g.hover='2';g.advanceFocus(140);
+ const before=g.nodes.map(n=>g.emphasis(n.id,g.visualFocus()));
+ g.hover='3';g.advanceFocus(0);
+ assert.deepEqual(g.nodes.map(n=>g.emphasis(n.id,g.visualFocus())),before,'no jump on retarget');
+ g.advanceFocus(140);
+ assert.ok(g.emphasis('2',g.visualFocus()).selected>0,'previous hover also fades out');
+ g.hover=null;g.advanceFocus(0);
+ for(let i=0;i<34;i++){
+  g.advanceFocus(10);
+  for(const n of g.nodes){const v=g.emphasis(n.id,g.visualFocus());assert.ok(v.selected>=0&&v.linked>=0&&v.dim>=0&&v.selected+v.linked+v.dim<=1.000001);}
+ }
+ assert.equal(g.focusTransition,null);
+ assert.equal(g.emphasis('0',g.visualFocus()).selected,1);
+ assert.equal(g.emphasis('1',g.visualFocus()).linked,1);
+ assert.equal(g.emphasis('2',g.visualFocus()).dim,1);
+});
+
+test('focus transitions finish with animation paused, then stop drawing',()=>{
+ const g=labelsGraph(4);g.hover='0';
+ for(let i=1;i<30;i++)g.tick(i*16);
+ assert.equal(g.focusTransition,null);assert.equal(g.emphasis('0',g.visualFocus()).selected,1);
+ assert.equal(g.time,0);assert.equal(g.rotation,.32);
+ const draws=g.draws;for(let i=30;i<40;i++)g.tick(i*16);assert.equal(g.draws,draws);
+ g.hover=null;for(let i=40;i<70;i++)g.tick(i*16);
+ assert.equal(g.focusTransition,null);assert.equal(g.emphasis('1',g.visualFocus()).dim,0);
+});
+
+test('reduced motion immediately settles a running hover transition',()=>{
+ const g=labelsGraph(4);g.hover='0';g.advanceFocus(100);
+ assert.ok(g.emphasis('0',g.visualFocus()).selected<1);
+ g.motionPreference.matches=true;g.advanceFocus(1);
+ assert.equal(g.focusTransition,null);assert.equal(g.emphasis('0',g.visualFocus()).selected,1);
+ g.hover=null;g.advanceFocus(1);
+ assert.equal(g.focusTransition,null);assert.equal(g.emphasis('1',g.visualFocus()).dim,0);
 });
 
 test('selected connections get multiple travelling points even beyond the old edge sampling stride',()=>{
