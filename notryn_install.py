@@ -61,15 +61,19 @@ def run(args, **kwargs):
 
 
 class Releases:
-    def __init__(self, private=False):
+    def __init__(self, private=False, api_token=None):
         self.private = private
+        self.api_token = api_token
         if private and not shutil.which('gh'):
             raise RuntimeError('Private testing needs GitHub CLI. Install it from cli.github.com, then run gh auth login.')
 
     def json(self, endpoint):
         if self.private:
             return json.loads(run(['gh', 'api', '--hostname', 'github.com', 'repos/' + REPO + endpoint]))
-        request = Request(API + endpoint, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'Notryn installer'})
+        headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'Notryn installer'}
+        if self.api_token:
+            headers['Authorization'] = 'Bearer ' + self.api_token
+        request = Request(API + endpoint, headers=headers)
         with urlopen(request, timeout=30, context=https_context()) as response:
             return json.loads(response.read(4 * 1024 * 1024))
 
@@ -409,7 +413,7 @@ def main():
         if hasattr(os, 'geteuid') and os.geteuid() == 0:
             raise RuntimeError('Run as your normal user, without sudo.')
         if args.check_downloads:
-            release = Releases(args.private).release(args.version, prerelease=True)
+            release = Releases(args.private, api_token=os.environ.get('NOTRYN_TEST_API_TOKEN')).release(args.version, prerelease=True)
             print('Verified release connection: ' + release['tag_name'])
             return 0
         installation = Installation()

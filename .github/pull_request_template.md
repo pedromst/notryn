@@ -19,4 +19,4 @@
 
 ## Contribution rights
 
-- [ ] I have read and accept [the contributor agreement](../CONTRIBUTOR-AGREEMENT.md) for this PR, and have permission to submit its contents.
+- [ ] I have read and accept [the contributor agreement](https://github.com/pedromst/notryn/blob/main/CONTRIBUTOR-AGREEMENT.md) for this PR, and have permission to submit its contents.
