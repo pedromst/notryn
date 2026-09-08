@@ -11,3 +11,8 @@ docs/DIRECTION.md
 docs/VISUAL-REVIEW.md
 .build/
 dist/
+
+# Local planning and recovery notes are not publication artifacts.
+docs/LANDING-PREVIEW.md
+docs/LANDING-RESEARCH.md
+docs/LOCAL-LAUNCH-REVIEW.md

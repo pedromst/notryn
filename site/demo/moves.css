@@ -1,0 +1,28 @@
+/* Quiet file controls share the current glass material and theme. */
+.file-entry{display:flex;align-items:center;position:relative;min-width:0;border-radius:8px}
+.file-entry>.tree-row{flex:1;min-width:0;padding-right:32px}
+.file-options{position:absolute;right:1px;top:50%;transform:translateY(-50%);width:30px;height:30px;font-size:19px;line-height:1;color:var(--muted);border-radius:6px;opacity:0}
+.file-entry:hover .file-options,.file-entry:focus-within .file-options{opacity:1}
+.file-entry:focus-within>.tree-row{background:var(--theme-soft)}
+.file-options:focus-visible{outline:1px solid var(--accent);outline-offset:-2px}
+.brain-root{flex-shrink:0;justify-content:flex-start;gap:9px;width:100%;padding:7px 9px;margin:0 0 6px;text-align:left;font-size:10px;color:var(--muted);border:1px solid transparent;border-radius:7px;min-height:30px}
+.brain-root .icon{width:13px;height:13px}.brain-root .root-more{margin-left:auto;font-size:18px}
+.drop-target,.brain-root.drop-target{outline:1px solid var(--accent);outline-offset:-1px;background:var(--theme-soft);box-shadow:inset 0 0 25px var(--theme-tint)}
+.drop-target>.tree-row,.brain-root.drop-target{color:var(--accent)}
+.drag-source{opacity:.35}.is-dragging .file-options{pointer-events:none}
+.library-drop-hint{margin:8px 0;padding:9px 10px;border:1px solid var(--line);border-radius:7px;color:var(--accent);font-size:10px;line-height:1.6;background:var(--theme-soft);flex-shrink:0}
+#item-dialog{width:350px;padding:23px}#item-dialog .dialog-heading{margin-bottom:4px}
+#item-title{font-size:16px;overflow-wrap:anywhere}#item-location{font-size:10px;color:var(--muted);margin:0 0 18px;overflow-wrap:anywhere;line-height:1.7}
+.item-action{justify-content:flex-start;width:100%;padding:13px 10px;border-radius:7px;font-size:12px;text-align:left;gap:12px;min-height:43px}.item-action kbd{margin-left:auto;font:inherit;color:var(--muted);font-size:10px}
+#move-dialog{width:480px;padding:25px}#move-dialog .dialog-heading{margin-bottom:5px}#move-dialog h2{font-size:19px}
+#move-item-name{font-size:11px;color:var(--muted);overflow-wrap:anywhere;line-height:1.7;margin:0 0 20px}
+#move-dialog .local-search{margin:0 0 14px;flex-direction:row;align-items:center;gap:10px}#move-dialog .local-search input{padding:0;border:0;background:none;font-size:12px}
+#move-destinations{max-height:min(38dvh,300px);overflow:auto;min-height:45px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.move-destination{width:100%;text-align:left;justify-content:flex-start;gap:12px;min-height:43px;padding:11px 12px;font-size:12px;border:1px solid transparent;border-radius:7px}.move-destination span{overflow-wrap:anywhere;min-width:0}
+.move-destination[aria-selected=true]{background:var(--theme-soft);border-color:var(--theme-edge);color:var(--text)}.move-destination .icon{flex-shrink:0;color:var(--accent)}
+#move-dialog .dialog-actions{margin-top:18px}#move-dialog .form-help{margin:13px 0 0;font-size:10px}#move-progress{padding:23px 34px;font-size:13px;color:var(--text);border-color:var(--line)}
+html[data-single-keys=off] #item-move kbd{display:none}
+@media(hover:none),(max-width:900px){.file-options{opacity:1;width:40px;height:40px}.file-entry>.tree-row{padding-right:42px}.brain-root{font-size:12px;min-height:42px}.brain-root .icon{width:16px;height:16px}.item-action,.move-destination{min-height:48px}.move-destination{font-size:13px}#move-dialog{padding:22px}#move-dialog .local-search input{font-size:16px}}
+
+/* A folder stays one stable drop target while crossing its icon and label. */
+.file-dragging .file-entry:not(:has(.drag-source))>*,.file-dragging .brain-root>*{pointer-events:none}

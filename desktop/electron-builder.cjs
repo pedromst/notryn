@@ -7,10 +7,10 @@ if (!sidecar) throw new Error('NOTRYN_SIDECAR_DIR is required.');
 module.exports = {
   appId: 'com.notryn.app',
   productName: 'Notryn',
-  copyright: 'Copyright 2026 Notryn contributors',
+  copyright: 'Copyright 2026 Pedro Teixeira',
   directories: { output: process.env.NOTRYN_ELECTRON_OUTPUT || path.join(root, '.build', 'electron') },
   files: ['desktop/main.cjs'],
-  extraResources: [{ from: sidecar, to: 'notryn' }],
+  extraResources: [{ from: sidecar, to: 'notryn' }, { from: 'LICENSE', to: 'LICENSE' }, { from: 'THIRD_PARTY_NOTICES.md', to: 'THIRD_PARTY_NOTICES.md' }],
   npmRebuild: false,
   asar: true,
   publish: null,

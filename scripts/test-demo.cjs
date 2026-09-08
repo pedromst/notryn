@@ -1,0 +1,21 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+let networkCalls=0;
+const context={window:{fetch:()=>{networkCalls++;throw Error('Unexpected network request');}},Map,Set,URL,Response,TextEncoder,Date,JSON,Error,location:{href:'http://127.0.0.1:4794/demo/index.html',origin:'http://127.0.0.1:4794'}};
+vm.createContext(context);
+for(const file of ['site/demo-seed.js','web/links.js','site/demo-api.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
+const request=async(url,data)=>{const response=await context.window.fetch(url,data?{body:JSON.stringify(data)}:{});return {status:response.status,data:await response.json()};};
+(async()=>{
+let result=await request('/api/graph?brain=example-brain');assert.equal(result.data.nodes.length,12);assert.equal(result.data.edges.length,18);
+const before=await request('/api/note?brain=example-brain&path=Projects/A%20quieter%20workspace.md');
+const changed=before.data.content+'\nA demo edit.\n[[Knowledge/Working with AI]]\n';
+result=await request('/api/notes',{brain:'example-brain',path:before.data.path,revision:before.data.revision,content:changed});assert.equal(result.status,200);
+result=await request('/api/note?brain=example-brain&path=Projects/A%20quieter%20workspace.md');assert.equal(result.data.content,changed);
+result=await request('/api/notes',{brain:'example-brain',path:before.data.path,revision:before.data.revision,content:'overwrite'});assert.equal(result.status,409);
+result=await request('/api/graph?brain=example-brain');assert.equal(result.data.edges.length,19);
+assert.equal((await request('/api/folders',{brain:'example-brain',path:'Projects/New folder'})).status,200);
+assert.equal((await request('/api/notes',{brain:'example-brain',path:'Projects/New folder/New note.md',revision:null,content:'# A new sample'})).status,200);
+assert.equal((await request('/api/folders/browse',{path:'/Users'})).status,400);
+assert.equal((await request('/api/notes',{brain:'example-brain',path:'../private.md',revision:null,content:'x'})).status,400);
+assert.equal((await request('https://example.com/api/state')).status,403);
+assert.equal(networkCalls,0);console.log('PASS: sample graph and links, edit/read/conflict, new folder/note, rejected real folder access and zero API network requests.');
+})();

@@ -2,9 +2,9 @@
 
 ## First phase
 
-Free local desktop app, distributed through GitHub Releases. Linux x86_64 first, macOS x86_64/arm64 next. Windows is explicitly pending until there is a tested package. No cloud login is required by the app. Private alpha downloads require GitHub CLI authentication; public downloads will not.
+Free local desktop app, distributed through GitHub Releases. Linux x86_64 first, macOS x86_64/arm64 next. Windows is explicitly pending until there is a tested package. No cloud login is required by the app. Public downloads do not require authentication. Legacy private installations should run the public bootstrap once.
 
-The domain will host a small bootstrap at `/install.sh`. It detects the target, obtains a standalone setup executable for the selected release, checks SHA-256 and runs it. Setup validates the app archive against the release asset metadata and runs the new sidecar in disposable state before activation. Updating uses the same installation code bundled in the CLI.
+The domain hosts a small bootstrap at `/install.sh`. It detects the target, obtains a standalone setup executable for the selected release, checks SHA-256 and runs it. Setup validates the app archive against the release asset metadata and runs the new sidecar in disposable state before activation. Updating uses the same installation code bundled in the CLI.
 
 GitHub publishes SHA-256 digests in [release asset metadata](https://docs.github.com/en/rest/releases/assets). The private bootstrap checks its setup binary against this digest; the public bootstrap retrieves its checksum from the same tagged HTTPS release. The setup program verifies the app against the API digest in both modes. These checks detect corrupted or substituted downloads relative to the trusted release; they do not protect against a compromised release maintainer or replace independent publisher signatures.
 
@@ -25,14 +25,12 @@ GitHub publishes SHA-256 digests in [release asset metadata](https://docs.github
 
 `packaging/linux/build-alpha.sh` and `packaging/macos/build-alpha.sh` build the app and standalone setup. PyInstaller, Electron and editor dependencies are pinned. `scripts/test-package.py` exercises native archives using disposable homes with spaces, start/status/stop, refusal while running, rollback twice and uninstall/data preservation.
 
-The private packaging workflow runs on Linux, macOS Intel and macOS ARM64. All package checks must pass before a private prerelease is created. Existing release tags/assets are never replaced by this workflow. Bump versions in `notryn_version.py`, `package.json`, `package-lock.json`, bootstrap and documentation for another release.
+The packaging workflow runs on Linux, macOS Intel and macOS ARM64. All package checks must pass before a beta prerelease is created. Existing release tags/assets are never replaced by this workflow. Bump versions in `notryn_version.py`, `package.json`, `package-lock.json`, bootstrap and documentation for another release.
 
-## Public launch gates
+## Release policy
 
-- Confirm license, contributor terms and repository history hygiene.
-- Require owner review and passing checks for releases.
-- Obtain Apple Developer ID and notarize the Mac app and setup; validate fresh downloads on physical Macs.
-- Test Linux in a clean Omarchy session, including native desktop launch/update.
-- Define Windows packaging/signing before claiming Windows support.
-- Deploy approved static site and bootstrap to HTTPS, configure `notryn.com`, verify downloads from a separate machine.
-- Publish only after Pedro approves the site and first release.
+Public beta authorized by the project owner on 8 September 2026. The project uses PolyForm Shield 1.0.0 with explicit contributor terms. Build jobs test Linux x86_64 and macOS Intel/ARM64 independently before creating an immutable prerelease.
+
+macOS packages remain experimental and are not Apple-notarized. No security-protection bypass is part of installation. Windows and Linux ARM are not advertised as supported. Physical-device testing across more distributions remains ongoing. Stable macOS release requires Developer ID signing, notarization and fresh-download tests.
+
+Release asset download counts are aggregate requests, not installations or unique users. There is no app telemetry. See `scripts/download-stats.py`.

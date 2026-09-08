@@ -1,0 +1,37 @@
+/* Ordinary writing first. Formatting stays close to a selection. */
+.editor-label{display:flex;align-items:center;gap:12px;padding:12px 22px;border-bottom:1px solid var(--line);flex-shrink:0}
+.editor-modes{display:flex;gap:4px}.editor-modes button{font-size:10px;color:var(--muted);padding:5px 8px;border-radius:6px}
+.editor-modes button[aria-pressed=true]{color:var(--text);background:var(--theme-soft)}
+#format-note{color:var(--muted);font-size:10px;padding:5px 8px;border:1px solid var(--line)}
+#save-status{margin-left:auto;font-size:9px;white-space:nowrap}
+.rich-editor{flex:1;min-height:0;overflow:auto;scrollbar-gutter:stable;cursor:text}
+.ProseMirror{position:relative;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;font-size:14px;line-height:1.85;padding:29px 32px 80px;min-height:100%;outline:none;color:var(--theme-ink);font-variant-ligatures:none}
+.ProseMirror p{margin:0 0 16px}.ProseMirror h1,.ProseMirror h2,.ProseMirror h3,.ProseMirror h4,.ProseMirror h5,.ProseMirror h6{color:var(--text);font-weight:500;line-height:1.45;letter-spacing:-.5px;margin:24px 0 14px}
+.ProseMirror h1{font-size:29px}.ProseMirror h2{font-size:23px}.ProseMirror h3{font-size:18px}.ProseMirror h4{font-size:16px}.ProseMirror h5,.ProseMirror h6{font-size:14px}.ProseMirror>:first-child{margin-top:0}
+.ProseMirror ul,.ProseMirror ol{padding-left:24px;margin:10px 0 20px}.ProseMirror li{margin:4px 0}.ProseMirror li>p{margin:0 0 6px}
+.ProseMirror blockquote{border-left:2px solid var(--accent);margin:18px 0;padding:2px 0 2px 18px;color:var(--muted)}
+.ProseMirror pre{background:var(--theme-field);border:1px solid var(--line);border-radius:8px;padding:15px;white-space:pre-wrap;font-size:12px;line-height:1.6}
+.ProseMirror code{color:var(--amber);font-family:inherit;font-size:.9em}.ProseMirror pre code{font-size:inherit}
+.ProseMirror a,.note-link{color:var(--accent);text-decoration:underline;text-underline-offset:4px;cursor:pointer}.ProseMirror a{cursor:text}
+.ProseMirror .note-link{background:var(--theme-soft);border-radius:4px;padding:1px 4px;box-decoration-break:clone}
+.ProseMirror .ProseMirror-selectednode{outline:2px solid var(--accent)}.ProseMirror-hideselection *::selection{background:transparent;color:var(--theme-ink)}.ProseMirror-hideselection *::-moz-selection{background:transparent;color:var(--theme-ink)}.ProseMirror-hideselection{caret-color:transparent}
+.ProseMirror li.ProseMirror-selectednode{outline:none}.ProseMirror li.ProseMirror-selectednode:after{content:'';position:absolute;left:-32px;right:-2px;top:-2px;bottom:-2px;border:2px solid var(--accent);pointer-events:none}
+.ProseMirror-gapcursor{display:none;pointer-events:none;position:absolute;margin:0}.ProseMirror [draggable][contenteditable=false]{user-select:text}
+.note-image-placeholder{display:inline-block;font-size:11px;border:1px solid var(--line);padding:5px 8px;color:var(--muted);border-radius:5px;max-width:100%;overflow-wrap:anywhere}
+.preserved-block{background:var(--theme-tint);border:1px solid var(--line);border-radius:8px;padding:12px;margin:16px 0;cursor:default}
+.ProseMirror .preserved-block{cursor:pointer}.preserved-label{font-size:9px;color:var(--muted);display:block;margin-bottom:8px}
+.preserved-block pre{margin:0!important;border:0!important;padding:0!important;background:none!important;font-size:11px!important;max-height:180px;overflow:auto}
+.format-toolbar{position:fixed;z-index:35;display:flex;align-items:center;gap:2px;padding:6px;border:1px solid var(--theme-edge);border-radius:10px;background:var(--glass);box-shadow:0 8px 30px var(--theme-shadow),var(--glass-edge);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);max-width:calc(100vw - 16px)}
+.format-toolbar select{width:98px;font-size:10px;background:var(--panel);border:0;color:var(--text);padding:6px;min-height:30px;border-radius:5px}
+.format-toolbar button{font-size:12px;min-width:27px;height:30px;color:var(--text);gap:0;padding:0 4px;border-radius:5px}
+.format-toolbar button[aria-pressed=true]{background:var(--theme-soft);color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+.format-toolbar button:disabled{opacity:.28}.format-divider{height:18px;width:1px;background:var(--line);margin:0 3px}
+.link-notes{max-height:180px;overflow:auto;display:flex;flex-direction:column;border-top:1px solid var(--line);padding-top:8px;margin-top:5px}
+.link-note{justify-content:flex-start;text-align:left;padding:10px;border-radius:5px;font-size:12px;min-height:38px}
+#link-dialog{width:480px}#link-dialog .dialog-heading{margin-bottom:15px}#link-dialog label{margin:13px 0}#link-dialog .dialog-actions{margin-top:18px}
+.markdown h1{font-size:27px;font-weight:500}.markdown h4,.markdown h5,.markdown h6{color:var(--text);font-weight:500}
+@media(min-width:901px){body.note-focus .ProseMirror{max-width:850px;margin-inline:auto;padding:40px 45px 100px}}
+@media(max-width:900px){.editor-label{padding:10px 15px;gap:8px}.editor-modes button{font-size:11px;padding:7px 8px}#format-note{font-size:11px;padding:7px 9px}.ProseMirror{font-size:16px;padding:24px 23px 70px}.ProseMirror h1{font-size:28px}.ProseMirror h2{font-size:23px}.format-toolbar{gap:1px;padding:5px}.format-toolbar select{width:87px;font-size:10px}.format-toolbar button{min-width:26px;height:34px;padding:0 3px}.format-divider{margin:0 1px}#link-dialog{max-height:90dvh}.link-notes{max-height:22dvh}}
+@media(max-width:360px){.format-toolbar select{width:77px}.format-toolbar button{min-width:24px}.format-toolbar [data-format=strike]{display:none}}
+@media(prefers-reduced-transparency:reduce){.format-toolbar{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media(prefers-contrast:more){.format-toolbar{background:var(--panel);border-color:var(--text)}}

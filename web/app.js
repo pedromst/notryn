@@ -92,17 +92,23 @@ function renderTree(){
  $('#library-back').hidden=!state.folderPath;$('#library-back').title='Back to '+(NotrynHierarchy.parent(state.folderPath)||'Brain root')+' (U)';
  const box=$('#file-tree'),focused=box.contains(document.activeElement)?document.activeElement.dataset.key:null;
  const preferred=focused||state.libraryKey;box.replaceChildren();
+ const markRow=(row,folder)=>{
+  row.dataset.colorGroup=NotrynHierarchy.folderId(folder);
+  row.style.setProperty('--color',graph.color(row.dataset.colorGroup));
+  const marker=el('span','tree-marker');marker.setAttribute('aria-hidden','true');row.append(marker);
+ };
  $('#all-notes').classList.toggle('active',!state.recent);$('#recent-notes').classList.toggle('active',state.recent);
  const nodes=state.data.nodes.filter(visible),noteRow=n=>{
-  const b=el('button','tree-row'+(n.id===state.selected?' active':''));b.append(icon('note'),el('span','',NotrynHierarchy.filename(n)));
+  const b=el('button','tree-row'+(n.id===state.selected?' active':''));markRow(b,n.folder);b.append(el('span','',NotrynHierarchy.filename(n)));b.setAttribute('aria-label',NotrynHierarchy.filename(n)+', note');
   b.title=n.path+' · '+n.title;b.dataset.key='note:'+n.id;b.dataset.parent=n.folder;b.setAttribute('aria-current',String(n.id===state.selected));b.onclick=()=>openNote(n.id);return b;
  };
  if(state.recent||state.query){(state.query?NotrynHierarchy.searchNotes(state.data,state.query):nodes.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))).forEach(n=>box.append(noteRow(n)));}
  else{
   for(const f of NotrynHierarchy.directFolders(state.data,state.folderPath)){
    const item=state.graphView?.nodes.find(node=>node.id===NotrynHierarchy.folderId(f)),b=el('button','tree-row folder-row');
-   b.dataset.key='folder:'+f;b.dataset.parent=state.folderPath;b.title=f;b.setAttribute('aria-label','Open '+f);
-   b.append(icon('folder'),el('span','',NotrynHierarchy.name(f)),el('small','',String(item?.count||0)));const chevron=icon('chevron');chevron.classList.add('folder-toggle');b.append(chevron);
+   const count=item?.count||0;
+   b.dataset.key='folder:'+f;b.dataset.parent=state.folderPath;b.title=f+' · '+count+(count===1?' item':' items');b.setAttribute('aria-label','Open folder '+f+', '+count+(count===1?' item':' items'));
+   markRow(b,f);b.append(el('span','',NotrynHierarchy.name(f)));
    b.onclick=()=>navigateBrainFolder(f);box.append(b);
   }
   nodes.filter(n=>n.folder===state.folderPath).sort((a,b)=>a.path.localeCompare(b.path)).forEach(n=>box.append(noteRow(n)));

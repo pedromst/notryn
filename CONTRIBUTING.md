@@ -1,56 +1,34 @@
 # Contributing to Notryn
 
-Thank you for helping make local-first note taking simpler, safer and more accessible.
+Bug reports, documentation improvements and pull requests are welcome. Please discuss large changes in an issue first. Keep each PR focused on a concrete problem, with reproduction steps and relevant checks.
 
-Notryn is preparing for a public release. Every change arrives through a pull request and is reviewed before it reaches the default branch. A pull request is a proposal, not automatic permission to change the product.
+## Rights and review
 
-## Before you start
+Notryn is source-available under [PolyForm Shield 1.0.0](LICENSE). It is free to use, including in a business, for purposes permitted by that license. Competing products are restricted. It is not MIT or an OSI open-source license.
 
-- Search existing issues and pull requests first.
-- Open an issue before a large feature or architectural change.
-- Never include real Brains, notes, paths, backups, tokens, `.notryn/` data or legacy `.neura/` data.
-- Keep the interface, commands, accessibility labels and documentation in English.
-- Preserve normal Markdown files as the source of truth.
-- Do not add a required account, cloud service, AI provider or telemetry.
+Before submitting code, read the [contributor agreement](CONTRIBUTOR-AGREEMENT.md) and confirm acceptance in your PR. You retain ownership of your contribution. The agreement allows the project owner to maintain, distribute and commercially license the combined project. Contributions from an employer require their permission where applicable.
 
-## Local setup
+The owner reviews PRs before merging. Passing checks are required but do not guarantee a change is safe or will be accepted. Do not upload real notes, Brain state, credentials, personal paths or recovery files. Use fictional fixtures only. Report security concerns [privately](SECURITY.md).
 
-Notryn requires Python 3.10 or later to run. Node.js is needed only for frontend development and rebuilding the visual editor.
+## Development
 
-```sh
-git clone https://github.com/pedromst/notryn.git
-cd notryn
-python3 server.py
-```
-
-For frontend development:
+Python 3.10+ and Node.js 20+ are required for source development. They are not prerequisites for the packaged app.
 
 ```sh
 npm ci
-npm run build:editor
-npm test
-python3 -m unittest discover -s tests -v
+python3 server.py
 ```
 
-All tests that write files must use temporary fixture folders. Never connect a test to a personal Brain.
+Open http://127.0.0.1:4783. Run relevant checks before submitting:
 
-## Pull requests
+```sh
+npm test
+python3 -m unittest discover -s tests -v
+node scripts/build-site.mjs --check
+node scripts/build-demo.mjs --check
+node scripts/test-demo.cjs
+```
 
-Keep each pull request focused. Explain:
+For UI changes, include desktop and mobile screenshots. Demo UI is built from the app; refresh it with `node scripts/build-site.mjs` and `node scripts/build-demo.mjs`. Interface text and project documentation are in English.
 
-1. The concrete problem.
-2. The resulting behavior.
-3. How you tested it.
-4. Any effect on local files, permissions, privacy or keyboard access.
-
-Screenshots help for visual changes. Include desktop and mobile views when layout changes. Test keyboard focus, reduced motion and readable contrast.
-
-The repository owner reviews every pull request. Automated checks must pass, but passing checks does not guarantee acceptance.
-
-## Security
-
-Do not open a public issue for a vulnerability. Follow [SECURITY.md](SECURITY.md) and use GitHub's private vulnerability reporting route.
-
-## Licensing
-
-The public code license and contributor terms are still under review. Contributions are not being accepted until those terms are published. This private preparation repository remains unlicensed.
+Be respectful, specific and constructive. Harassment, discriminatory abuse and disclosure of private information are not welcome. The maintainer may remove disruptive content and decline contributions.
