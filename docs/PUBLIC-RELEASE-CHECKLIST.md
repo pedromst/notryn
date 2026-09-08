@@ -24,10 +24,12 @@ The private repository is a preparation and backup space. Complete this review b
 ## Distribution
 
 - [ ] Choose the public license and contributor terms after legal review. Document clearly whether Notryn is open source or source-available, and how the optional commercial sync component remains separate.
-- [ ] Define install, update and uninstall behavior while preserving Brains.
-- [ ] Provide documented terminal installation for macOS, Linux and Windows.
-- [ ] Sign or checksum release artifacts.
-- [ ] Publish a first tagged pre-release with clear platform support.
+- [x] Define and test install, update, rollback and uninstall while preserving Brains (alpha.3).
+- [x] Document tested Linux x86_64 and macOS Intel/ARM64 terminal installation, update and uninstall.
+- [ ] Add and test Windows packaging before advertising support.
+- [x] Verify SHA-256 release digests and native package lifecycle on Linux and both Mac architectures.
+- [ ] Complete public publisher signing/notarization.
+- [x] Publish private tagged alpha.3 with explicit platform support; public release remains gated.
 - [ ] Change repository visibility only after the release candidate passes review.
 - [ ] Enable GitHub Pages and verify the public landing page on desktop and mobile.
 
