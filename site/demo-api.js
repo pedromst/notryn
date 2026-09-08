@@ -15,6 +15,38 @@
   };
   const parent=path=>path.split('/').slice(0,-1).join('/');
   function workspace(id){const brain=brains.find(b=>b.id===id);if(!brain)fail('This demo Brain is not connected.',404);return {brain,...workspaces.get(id)};}
+  const relocatePath=(path,source,target,kind)=>path===source||kind==='folder'&&path.startsWith(source+'/')?target+path.slice(source.length):path;
+  function rewriteWikiLinks(content,source,nextSource,paths,relocate){
+    return content.replace(/\[\[([^\]\n]+)\]\]/g,(whole,inner)=>{
+      const split=inner.indexOf('|'),target=(split<0?inner:inner.slice(0,split)).trim(),alias=split<0?'':inner.slice(split);
+      const hash=target.indexOf('#'),base=hash<0?target:target.slice(0,hash),anchor=hash<0?'':target.slice(hash);
+      const resolved=window.NotrynLinks.resolve(target,source,paths,'wiki');if(!resolved)return whole;
+      let next=relocate(resolved);if(!/\.md$/i.test(base))next=next.replace(/\.md$/i,'');
+      const candidate='[['+next+anchor+alias+']]';
+      return window.NotrynLinks.resolve(target,nextSource,paths.map(relocate),'wiki')===relocate(resolved)?whole:candidate;
+    });
+  }
+  function changePath(data,operation){
+    const holder=workspaces.get(data.brain),{brain,notes,folders}=workspace(data.brain),source=pathOf(data.source),kind=data.kind;
+    if(brain.readOnly)fail('This Brain is read-only.',403);
+    if(!['note','folder'].includes(kind)||kind==='note'&&!notes.has(source)||kind==='folder'&&!folders.has(source))fail('This sample item no longer exists.',404);
+    const oldName=source.split('/').pop(),oldParent=parent(source);let target;
+    if(operation==='rename'){
+      let name=String(data.name||'').trim();if(kind==='note'&&/\.md$/i.test(name))name=name.slice(0,-3).trim();
+      if(!name||name.length>120||name.startsWith('.')||/[\\/\x00-\x1f]/.test(name))fail('Use a name between 1 and 120 characters, without slashes or a leading dot.');
+      target=(oldParent?oldParent+'/':'')+name+(kind==='note'?'.md':'');
+    }else{
+      const destination=String(data.destination??'');if(destination&&!folders.has(destination))fail('This sample folder no longer exists.',404);
+      if(kind==='folder'&&(destination===source||destination.startsWith(source+'/')))fail('A folder cannot be moved inside itself.');
+      target=(destination?destination+'/':'')+oldName;
+    }
+    if(target===source)return {source,path:source,changed:false,updatedLinks:0};
+    if(notes.has(target)||folders.has(target))fail('An item with this name already exists in that folder. Nothing was replaced.',409);
+    const relocate=path=>relocatePath(path,source,target,kind),paths=[...notes.keys()],nextNotes=new Map();let updatedLinks=0;
+    for(const [path,note] of notes){const nextPath=relocate(path),content=rewriteWikiLinks(note.content,path,nextPath,paths,relocate);if(content!==note.content)updatedLinks++;nextNotes.set(nextPath,{...note,path:nextPath,content,revision:content===note.content?note.revision:'demo-'+(++serial)});}
+    holder.notes=nextNotes;holder.folders=new Set([...folders].map(relocate));
+    return {source,path:target,changed:true,updatedLinks};
+  }
   function graph(id){
     const {brain,notes,folders}=workspace(id),paths=[...notes.keys()].sort(),nodes=[],edges=new Map();
     for(const path of paths){
@@ -29,8 +61,8 @@
   }
   function request(url,data){
     const route=url.pathname;
-    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-alpha.3',agent:{connected:false,mode:'local-guide'}};
-    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-alpha.3'};
+    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.3'};
+    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.3'};
     if(route==='/api/theme')return {available:false};
     if(route==='/api/graph')return graph(url.searchParams.get('brain'));
     if(route==='/api/note'){
@@ -53,6 +85,8 @@
       if(parent(path)&&!folders.has(parent(path)))fail('Create the parent folder first.');
       folders.add(path);return {path};
     }
+    if(route==='/api/move')return changePath(data,'move');
+    if(route==='/api/rename')return changePath(data,'rename');
     if(route==='/api/brains'){
       if(data.action==='access'){const {brain}=workspace(data.brain);brain.readOnly=!data.writable;return {brain};}
       if(data.action==='create'){
@@ -64,7 +98,7 @@
     }
     if(route==='/api/removals/list')return {items:[]};
     if(route==='/api/notes/reveal'||route==='/api/folders/browse')fail('Computer folders are available in the installed app. These sample notes live only in this browser tab.');
-    if(route.startsWith('/api/removals')||route==='/api/move')fail('Moving and removing files can be tried in the installed app. In this demo you can browse, write, create notes and folders, and follow connections.');
+    if(route.startsWith('/api/removals'))fail('Removing files can be tried in the installed app. This demo keeps its sample notes in memory.');
     fail('This device action is available in the installed app.',403);
   }
   window.fetch=async(input,options={})=>{

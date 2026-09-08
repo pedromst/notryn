@@ -23,8 +23,9 @@ test('all actual bindings leave every system modifier combination alone',()=>{
   }
  }
 });
-test('browser help, toolbar, refresh and developer keys are not bound',()=>{
- for(let i=1;i<=12;i++)for(const shiftKey of [false,true])assert.equal(match('F'+i,{shiftKey}),null);
+test('browser help, toolbar, refresh and developer keys are not bound except conventional rename F2',()=>{
+ for(let i=1;i<=12;i++)for(const shiftKey of [false,true])if(i!==2||shiftKey)assert.equal(match('F'+i,{shiftKey}),null);
+ assert.equal(match('F2'),'Rename note or folder');
  assert.equal(match('Escape',{shiftKey:true}),null,'Shift Esc belongs to the browser');
  for(const key of ['/',"'"])assert.equal(match(key),null,'Firefox quick find stays native');
 });
@@ -89,7 +90,7 @@ test('key searches distinguish exact letters and Shift variants',()=>{
  assert.deepEqual(find('ArrowUp'),['Rotate brain']);
 });
 test('less frequent and visual actions are available by searchable command name',()=>{
- for(const title of ['Manage Brain access','Remove this Brain from Notryn','Expand all folders','Collapse all folders','Show note in folder','Configure keyboard shortcuts','Heading 1','Heading 2','Heading 3','Bullet list','Numbered list','Blockquote','Code block','Inline code','Insert or edit link','Undo','Redo']){
+ for(const title of ['Manage Brain access','Remove this Brain from Notryn','Expand all folders','Collapse all folders','Show note in folder','Rename note or folder','Configure keyboard shortcuts','Heading 1','Heading 2','Heading 3','Bullet list','Numbered list','Blockquote','Code block','Inline code','Insert or edit link','Undo','Redo']){
   const action=actions.find(a=>a.title===title);assert.ok(action,title);assert.equal(typeof action.run,'function');assert.ok(context.matchesCommand(action,title),title);
  }
 });

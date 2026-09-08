@@ -122,12 +122,30 @@ def rewrite_links(text, source, new_source, paths, new_paths, relocate):
     return text
 
 
-def move_item(store, brain_id, source, destination, kind, guard=None):
+def rename_item(store, brain_id, source, name, kind, guard=None):
+    if not isinstance(source, str):
+        raise Problem('Choose a note or folder to rename.')
+    return move_item(store, brain_id, source, posixpath.dirname(source), kind, guard, name)
+
+
+def move_item(store, brain_id, source, destination, kind, guard=None, new_name=None):
     brain = store.get(brain_id)
     if not store.can_write(brain):
         raise Problem('This Brain is protected and read-only.', 403)
     if kind not in {'note', 'folder'} or not isinstance(destination, str):
         raise Problem('Choose a note or folder and its destination.')
+    operation = 'rename' if new_name is not None else 'move'
+    if new_name is not None:
+        if not isinstance(new_name, str):
+            raise Problem('Enter a new name.')
+        new_name = new_name.strip()
+        if kind == 'note' and new_name.lower().endswith('.md'):
+            new_name = new_name[:-3].rstrip()
+        if (not new_name or len(new_name) > 120 or new_name.startswith('.') or
+                new_name in {'.', '..'} or '/' in new_name or '\\' in new_name or
+                any(ord(character) < 32 for character in new_name)):
+            raise Problem('Use a name between 1 and 120 characters, without slashes or a leading dot.')
+        new_name += '.md' if kind == 'note' else ''
     with store.lock:
         base = store.base(brain).resolve()
         src = store.safe_path(brain, source, folder=kind == 'folder')
@@ -138,10 +156,17 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
             raise Problem('This item no longer exists at its original location. Refresh and try again.', 404)
         if kind == 'folder' and (parent == src or parent.is_relative_to(src)):
             raise Problem('A folder cannot be moved inside itself or one of its subfolders.')
-        target = parent / src.name
+        target = parent / (new_name or src.name)
         if target == src:
             return {'path': source, 'source': source, 'changed': False, 'updatedLinks': 0}
-        if os.path.lexists(target):
+        def occupied():
+            if not os.path.lexists(target):
+                return False
+            try:
+                return not os.path.samefile(src, target)
+            except OSError:
+                return True
+        if occupied():
             raise Problem('An item with this name already exists in that folder. Nothing was replaced.', 409)
         new_source = target.relative_to(base).as_posix()
         def relocate(path):
@@ -152,7 +177,7 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
                 raise Problem('Invalid open-note revision.')
             opened = store.read(brain_id, guard.get('path'))
             if opened['revision'] != guard.get('revision'):
-                raise Problem('Your open note changed elsewhere. Reopen it before moving files.', 409)
+                raise Problem('Your open note changed elsewhere. Reopen it before changing files.', 409)
 
         paths, originals = set(), {}
         # Include attachments in a folder move and in relative-link resolution.
@@ -172,7 +197,7 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
                 paths.add(path)
                 if p.suffix.lower() == '.md':
                     if p.stat().st_size > MAX_NOTE_BYTES or len(originals) >= MAX_NODES:
-                        raise Problem('This Brain exceeds the safe link-update limit (2,000 notes, 1 MB per note). Nothing was moved.', 413)
+                        raise Problem('This Brain exceeds the safe link-update limit (2,000 notes, 1 MB per note). Nothing changed.', 413)
                     originals[path] = p.read_bytes()
         # Hidden subfolders travel intact; reject symlinks even inside them.
         if kind == 'folder':
@@ -190,13 +215,13 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
             rewritten = rewrite_links(content, path, relocate(path), paths, new_paths, relocate).encode('utf-8')
             if rewritten != raw:
                 if len(rewritten) > MAX_NOTE_BYTES:
-                    raise Problem('Updating links would exceed the note size limit. Nothing was moved.', 413)
+                    raise Problem('Updating links would exceed the note size limit. Nothing changed.', 413)
                 updates[path] = rewritten
 
         # Store originals before the first mutation, with a recovery manifest.
         backup = store.home / 'backups' / brain_id / ('move-' + secrets.token_hex(8))
         backup.mkdir(parents=True)
-        manifest = {'source': source, 'destination': new_source, 'state': 'prepared', 'notes': {}}
+        manifest = {'operation': operation, 'source': source, 'destination': new_source, 'state': 'prepared', 'notes': {}}
         for index, path in enumerate(updates):
             name = str(index) + '.md'
             (backup / name).write_bytes(originals[path])
@@ -205,11 +230,11 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
         for path, raw in originals.items():
             if path in updates or relocate(path) != path or (guard and path == guard.get('path')):
                 if (base / path).read_bytes() != raw:
-                    raise Problem('A note changed while preparing the move. Nothing was moved. Try again.', 409)
+                    raise Problem('A note changed while preparing the change. Nothing changed. Try again.', 409)
         # Recheck destination and symlink boundaries after reading the notes.
         store.safe_path(brain, source, folder=kind == 'folder')
         store.safe_path(brain, new_source, folder=kind == 'folder')
-        if os.path.lexists(target):
+        if occupied():
             raise Problem('An item with this name already exists in that folder. Nothing was replaced.', 409)
         moved, written = False, []
         old_removals = copy.deepcopy(store.removals)
@@ -237,7 +262,11 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
                     atomic(base / relocate(path), originals[path])
                 if moved:
                     if os.path.lexists(src):
-                        raise OSError('Original path is occupied')
+                        try:
+                            if not os.path.samefile(src, target):
+                                raise OSError('Original path is occupied')
+                        except FileNotFoundError:
+                            pass
                     target.rename(src)
                 store.removals = old_removals
                 if metadata_changed:
@@ -245,6 +274,6 @@ def move_item(store, brain_id, source, destination, kind, guard=None):
                 manifest['state'] = 'rolled-back'
                 atomic(backup / 'move.json', json.dumps(manifest, ensure_ascii=False).encode())
             except OSError:
-                raise Problem('The move was interrupted. Recovery copies were kept. Stop editing and check the local backup before continuing.', 500)
-            raise Problem('Could not finish the move. The original location and notes were restored.', 500)
+                raise Problem('The '+operation+' was interrupted. Recovery copies were kept. Stop editing and check the local backup before continuing.', 500)
+            raise Problem('Could not finish the '+operation+'. The original location and notes were restored.', 500)
         return {'source': source, 'path': new_source, 'changed': True, 'updatedLinks': len(updates)}

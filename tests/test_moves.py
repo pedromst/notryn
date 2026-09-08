@@ -59,6 +59,67 @@ class MoveTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot())
         self.assertEqual(len(self.store.graph(self.bid)['edges']), 1)
 
+    def test_rename_note_and_folder_keeps_content_and_updates_links(self):
+        self.note('Start.md', '# Start\n[[Ideas/Old name|Open it]]\n')
+        self.note('Ideas/Old name.md', '# Old name\n[[Start]]\n')
+        result = self.store.rename(self.bid, 'Ideas/Old name.md', 'New name.md', 'note')
+        self.assertEqual(result['path'], 'Ideas/New name.md')
+        self.assertFalse((self.root / 'Ideas/Old name.md').exists())
+        self.assertEqual((self.root / 'Ideas/New name.md').read_text(), '# Old name\n[[Start]]\n')
+        self.assertIn('[[Ideas/New name|Open it]]', (self.root / 'Start.md').read_text())
+        result = self.store.rename(self.bid, 'Ideas', 'Knowledge', 'folder')
+        self.assertEqual(result['path'], 'Knowledge')
+        self.assertTrue((self.root / 'Knowledge/New name.md').is_file())
+        self.assertIn('[[Knowledge/New name|Open it]]', (self.root / 'Start.md').read_text())
+        self.assertEqual(len(self.store.graph(self.bid)['edges']), 1)
+
+    def test_rename_rejects_unsafe_names_collisions_and_stale_open_notes(self):
+        self.note('A.md', 'first')
+        self.note('B.md', 'second')
+        before = self.snapshot()
+        for name in ['', '.hidden', '../outside', 'folder/name', 'x\\name']:
+            with self.assertRaises(Problem):
+                self.store.rename(self.bid, 'A.md', name, 'note')
+            self.assertEqual(self.snapshot(), before)
+        with self.assertRaises(Problem) as error:
+            self.store.rename(self.bid, 'A.md', 'B', 'note')
+        self.assertEqual(error.exception.status, 409)
+        opened = self.store.read(self.bid, 'A.md')
+        (self.root / 'A.md').write_text('external edit')
+        with self.assertRaises(Problem) as error:
+            self.store.rename(self.bid, 'A.md', 'Renamed', 'note', opened)
+        self.assertEqual(error.exception.status, 409)
+        self.assertFalse((self.root / 'Renamed.md').exists())
+
+    def test_rename_to_the_same_name_is_a_safe_noop(self):
+        self.note('A.md', 'content')
+        result = self.store.rename(self.bid, 'A.md', 'A.md', 'note')
+        self.assertFalse(result['changed'])
+        self.assertEqual((self.root / 'A.md').read_text(), 'content')
+
+    def test_rename_can_change_filename_case(self):
+        self.note('Case.md', 'content')
+        result = self.store.rename(self.bid, 'Case.md', 'case', 'note')
+        self.assertTrue(result['changed'])
+        self.assertEqual(result['path'], 'case.md')
+        self.assertIn('case.md', {path.name for path in self.root.iterdir()})
+        self.assertEqual((self.root / 'case.md').read_text(), 'content')
+
+    def test_case_only_rename_rolls_back_after_a_link_write_failure(self):
+        self.note('Case.md', 'content')
+        self.note('Link.md', '[Case](Case.md)')
+        before = self.snapshot()
+        def fail_link(path, data):
+            if Path(path).name == 'Link.md':
+                raise OSError('Simulated disk failure')
+            return atomic(path, data)
+        with patch('filemoves.atomic', side_effect=fail_link):
+            with self.assertRaises(Problem) as error:
+                self.store.rename(self.bid, 'Case.md', 'case', 'note')
+        self.assertEqual(error.exception.status, 500)
+        self.assertEqual(self.snapshot(), before)
+        self.assertIn('Case.md', {path.name for path in self.root.iterdir()})
+
     def test_nested_folder_moves_every_file_and_preserves_internal_and_external_links(self):
         self.note('Ideas/One.md', '# One\n[[Projects/Nested/Two|Two]]\n[Two](../Projects/Nested/Two.md)\n')
         self.note('Projects/Nested/Two.md', '# Two\n[One](../../Ideas/One.md)\n![Picture](pic.png)')

@@ -70,6 +70,20 @@ class HttpTests(unittest.TestCase):
         self.http.store.brains[0]['readOnly']=True
         body.update(source='Ideas/One.md',destination='')
         self.assertEqual(self.request('/api/move',body,{'Origin':self.origin,'X-Notryn-Token':self.http.token})[0],403)
+
+    def test_rename_requires_local_origin_token_and_write_access(self):
+        brain=self.http.store.add('Renames');bid=brain['id']
+        self.http.store.write(bid,'Old.md','# Old',None)
+        body={'brain':bid,'source':'Old.md','name':'New','kind':'note'}
+        for headers in [{},{'Origin':'https://other.example','X-Notryn-Token':self.http.token},{'Origin':self.origin,'X-Notryn-Token':'wrong'}]:
+            self.assertEqual(self.request('/api/rename',body,headers)[0],403)
+        headers={'Origin':self.origin,'X-Notryn-Token':self.http.token}
+        code,result=self.request('/api/rename',body,headers)
+        self.assertEqual(code,200);self.assertEqual(result['path'],'New.md')
+        self.assertEqual(self.http.store.read(bid,'New.md')['content'],'# Old')
+        self.http.store.brains[-1]['readOnly']=True
+        body.update(source='New.md',name='Again')
+        self.assertEqual(self.request('/api/rename',body,headers)[0],403)
     def test_folder_browsing_requires_local_origin_and_token(self):
         folder=Path(self.temp.name)/'Browse here';folder.mkdir();(folder/'Child').mkdir()
         body={'path':str(folder)}
@@ -95,7 +109,7 @@ class HttpTests(unittest.TestCase):
         code,data=self.request('/api/brains',payload,headers);self.assertEqual(code,200);self.assertFalse(data['brain']['readOnly'])
         self.assertEqual(self.request('/api/brains',{**payload,'writable':'yes'},headers)[0],400)
     def test_state_has_no_personal_defaults(self):
-        code,data=self.request('/api/state');self.assertEqual(code,200);self.assertEqual(data['brains'],[])
+        code,data=self.request('/api/state');self.assertEqual(code,200);self.assertEqual(data['brains'],[]);self.assertNotIn('agent',data)
 
     def test_reveal_requires_local_session_before_native_dispatch(self):
         body={'brain':'fixture','path':'projects/A note.md'}

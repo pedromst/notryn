@@ -67,6 +67,7 @@ class PreviewTests(unittest.TestCase):
         self.assertEqual(note['content'], '# One')
         self.assertEqual(self.request('/api/notes', {'content': 'overwrite'})[0], 405)
         self.assertEqual(self.request('/api/move', {'source': 'One.md', 'destination': 'Folder', 'kind': 'note'})[0], 405)
+        self.assertEqual(self.request('/api/rename', {'source': 'One.md', 'name': 'Other', 'kind': 'note'})[0], 405)
         for path in ['/api/removals/preview','/api/removals','/api/removals/list','/api/removals/restore']:
             self.assertEqual(self.request(path, {})[0], 405)
         self.assertEqual(self.local.store.read(self.brain['id'], 'One.md')['content'], '# One')

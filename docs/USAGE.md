@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.2. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.3. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -17,7 +17,7 @@ Workspace reference for 0.2.0-beta.2. See [installation](INSTALL.md) for package
 - Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
 - Mobile navigation for the brain, notes and creation.
 
-Version `0.2.0-beta.2` includes connection focus, shortened-path fixes and removes the unfinished Iris guide. The A and Shift A shortcuts are unassigned.
+Version `0.2.0-beta.3` adds safe renaming for notes and folders, visible action-menu shortcuts and automatic link updates after a rename. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 
@@ -37,6 +37,7 @@ Shortcuts use the same letters on macOS, Windows and Linux. They work outside te
 | Open an existing folder | O |
 | New folder | Shift N |
 | New note | N |
+| Rename the focused note or folder | F2 |
 | Move the focused note or folder | M |
 | Open its actions menu | Shift M |
 | Show the open note in its computer folder | Shift O |
@@ -59,7 +60,7 @@ Shortcuts use the same letters on macOS, Windows and Linux. They work outside te
 
 Swapping panes preserves unsaved text, the cursor and the reading position. Esc inside a text field leaves it while keeping the draft; outside fields it leaves focus mode or closes the current panel, asking before discarding unsaved writing. On mobile, the note already uses the full width and the layout controls are hidden.
 
-Global NOTRYN commands do not bind Ctrl, Cmd, Alt, AltGr or Super combinations, or function keys. Browser and window-manager commands keep their native bindings outside the editor. Inside an editable note, **Ctrl/Cmd+S saves without leaving writing** and **Ctrl/Cmd+Enter toggles Preview**. The Save button and Shift S save and return to reading; Done returns when there are no changes. A failed save or newer unsaved edits keep the editor open. No autosave is enabled. Ctrl/Cmd plus scrolling keeps browser zoom; ordinary scrolling over the brain zooms the brain. Tab and Shift Tab keep native focus navigation, including in Markdown.
+Global NOTRYN commands do not bind Ctrl, Cmd, Alt, AltGr or Super combinations. F2 uses the familiar file-manager action to rename the focused note or folder; other function keys stay native. Browser and window-manager commands keep their native bindings outside the editor. Inside an editable note, **Ctrl/Cmd+S saves without leaving writing** and **Ctrl/Cmd+Enter toggles Preview**. The Save button and Shift S save and return to reading; Done returns when there are no changes. A failed save or newer unsaved edits keep the editor open. No autosave is enabled. Ctrl/Cmd plus scrolling keeps browser zoom; ordinary scrolling over the brain zooms the brain. Tab and Shift Tab keep native focus navigation, including in Markdown.
 
 Tab/Shift Tab follow the visible control order, including buttons on mobile WebKit. Modal dialogs keep focus inside; at workspace edges, browser navigation remains available. Escape closes a search dialog even when its search field contains text, while respecting any operation that temporarily blocks cancellation.
 
@@ -112,11 +113,11 @@ Less frequent flows share that same route: **Manage Brain access**, **Remove thi
 
 Drag a note onto a folder to move it. Drag a folder onto another folder to move its entire contents, including subfolders and attachments. Drop onto **Brain root** above the library to return an item to the top level. A highlighted folder shows the drop destination; open a collapsed folder first to reach its children.
 
-For keyboard or touch, use the item's **⋯** menu and **Move to…**. With a library row focused, **M** opens the same destination picker: type to filter folders, use ↑/↓ to choose and **Enter** to move. **Esc** cancels. The command palette and **?** reference include the move action. The menu also has **New note here** and **New folder here**; N/Shift N default to the focused folder or the current note's folder.
+For keyboard or touch, use the item's **⋯** menu. It shows **N** for a new note, **Shift N** for a new folder, **F2** for rename, **M** for move and **D** for removal. With a library row focused, press **F2** to rename it; `.md` stays attached automatically. Press **M** to open the destination picker, type to filter folders, use ↑/↓ to choose and **Enter** to move. **Esc** cancels. The command palette and **?** reference include both actions. N/Shift N default to the focused folder or the current note's folder.
 
-Save an open draft before moving files. The open note follows its new path and revision. A move cannot replace an existing item, leave the current Brain, place a folder inside itself or its descendants, or change a read-only Brain. Folders containing symbolic links or app data cannot be moved through this feature.
+Save an open draft before renaming or moving files. The open note follows its new path and revision. Neither action can replace an existing item or change a read-only Brain. A move also cannot leave the current Brain or place a folder inside itself or its descendants. Folders containing symbolic links or app data cannot be moved or renamed through this feature.
 
-Ordinary wiki links, Markdown inline/reference links and local attachment links are updated when their resolved targets change location. Labels, anchors, titles and unrelated source bytes are retained. Frontmatter, code examples, comments and custom HTML/plugin syntax are not rewritten. Relative Markdown links resolve from the containing note. Moves save recovery manifests and copies of changed notes under the private state's `backups/` directory and restore the original location if a link update fails. A process or disk interruption can require manual recovery from those copies. The link update limit is 2,000 notes of at most 1 MB each.
+Ordinary wiki links, Markdown inline/reference links and local attachment links are updated when their resolved targets change name or location. Labels, anchors, titles and unrelated source bytes are retained. Frontmatter, code examples, comments and custom HTML/plugin syntax are not rewritten. Relative Markdown links resolve from the containing note. Renames and moves save recovery manifests and copies of changed notes under the private state's `backups/` directory and restore the original location if a link update fails. A process or disk interruption can require manual recovery from those copies. The link update limit is 2,000 notes of at most 1 MB each.
 
 ### Removing and restoring
 

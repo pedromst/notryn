@@ -21,8 +21,9 @@
 .move-destination{width:100%;text-align:left;justify-content:flex-start;gap:12px;min-height:43px;padding:11px 12px;font-size:12px;border:1px solid transparent;border-radius:7px}.move-destination span{overflow-wrap:anywhere;min-width:0}
 .move-destination[aria-selected=true]{background:var(--theme-soft);border-color:var(--theme-edge);color:var(--text)}.move-destination .icon{flex-shrink:0;color:var(--accent)}
 #move-dialog .dialog-actions{margin-top:18px}#move-dialog .form-help{margin:13px 0 0;font-size:10px}#move-progress{padding:23px 34px;font-size:13px;color:var(--text);border-color:var(--line)}
-html[data-single-keys=off] #item-move kbd{display:none}
-@media(hover:none),(max-width:900px){.file-options{opacity:1;width:40px;height:40px}.file-entry>.tree-row{padding-right:42px}.brain-root{font-size:12px;min-height:42px}.brain-root .icon{width:16px;height:16px}.item-action,.move-destination{min-height:48px}.move-destination{font-size:13px}#move-dialog{padding:22px}#move-dialog .local-search input{font-size:16px}}
+#rename-dialog{width:430px;padding:25px}#rename-dialog .dialog-heading{margin-bottom:5px}#rename-item-path{font-size:10px;color:var(--muted);overflow-wrap:anywhere;line-height:1.7;margin:0 0 18px}#rename-dialog .form-help{margin:12px 0 0}#rename-dialog .dialog-actions{margin-top:20px}
+html[data-single-keys=off] :is(#item-new-note,#item-new-folder,#item-move) kbd{display:none}
+@media(hover:none),(max-width:900px){.file-options{opacity:1;width:40px;height:40px}.file-entry>.tree-row{padding-right:42px}.brain-root{font-size:12px;min-height:42px}.brain-root .icon{width:16px;height:16px}.item-action,.move-destination{min-height:48px}.move-destination{font-size:13px}#move-dialog,#rename-dialog{padding:22px}#move-dialog .local-search input{font-size:16px}}
 
 /* A folder stays one stable drop target while crossing its icon and label. */
 .file-dragging .file-entry:not(:has(.drag-source))>*,.file-dragging .brain-root>*{pointer-events:none}
