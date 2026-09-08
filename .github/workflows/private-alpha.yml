@@ -44,6 +44,8 @@ jobs:
       - name: Build native package and standalone installer
         run: sh packaging/${{ matrix.platform }}/build-alpha.sh
       - name: Exercise package lifecycle with disposable notes
+        env:
+          NOTRYN_TEST_API_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(python -c 'from notryn_version import VERSION; print(VERSION)')
           EXT=zip

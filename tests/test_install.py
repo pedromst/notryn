@@ -116,6 +116,15 @@ class InstallerTests(unittest.TestCase):
             self.install.install(FixtureReleases(self.root))
         self.assert_data_preserved()
 
+    def test_optional_ci_metadata_token_is_not_required_by_public_installer(self):
+        for token in (None, 'synthetic-ci-token'):
+            response = io.BytesIO(b'[]')
+            with patch('notryn_install.urlopen', return_value=response) as fetch:
+                Releases(False, api_token=token).json('/releases')
+                request = fetch.call_args.args[0]
+                self.assertEqual(request.get_header('Authorization'), 'Bearer ' + token if token else None)
+                self.assertEqual(request.full_url, 'https://api.github.com/repos/pedromst/notryn/releases')
+
     def test_https_context_requires_trusted_certificates_and_hostname(self):
         context = https_context()
         self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
