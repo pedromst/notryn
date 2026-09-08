@@ -11,6 +11,6 @@ Private desktop testing release. Do not announce as a public launch.
 - Includes the approved memory-fold logo, Brain connection fixes and softened focus transitions.
 - Publication workflow creates a new prerelease; it refuses to overwrite an existing version.
 
-See [Install, update and uninstall](INSTALL.md) for commands and troubleshooting.
+See [Install, update and uninstall](https://github.com/pedromst/notryn/blob/main/docs/INSTALL.md) for commands and troubleshooting.
 
 Windows is pending. macOS is ad-hoc signed for private testing; Apple Developer ID signing and notarization are required before the public Mac launch. Integrity checks trust GitHub and HTTPS; they are not an independent publisher signature. License and public website approval remain outstanding.
