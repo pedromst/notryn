@@ -36,14 +36,16 @@ test('typing, text selections, IME, AltGraph and consumed events are respected',
  }
 });
 test('new keyboard routes are unambiguous and retain deliberate Shift variants',()=>{
- for(const [key,title] of Object.entries({h:'Show / hide brain',q:'Filter notes',p:'Notes and commands',t:'Choose theme',a:'Toggle Iris',n:'New note',b:'Switch Brain',l:'Toggle library',s:'Save note',e:'Edit or finish editing',v:'Preview note',f:'Focus note / exit focus',w:'Switch pane','?':'Commands and shortcuts'}))assert.equal(match(key),title);
+ for(const [key,title] of Object.entries({h:'Show / hide brain',q:'Filter notes',p:'Notes and commands',t:'Choose theme',n:'New note',b:'Switch Brain',l:'Toggle library',s:'Save note',e:'Edit or finish editing',v:'Preview note',f:'Focus note / exit focus',w:'Switch pane','?':'Commands and shortcuts'}))assert.equal(match(key),title);
+ assert.equal(match('a'),null);
  assert.equal(match('H',{shiftKey:true}),'Show full Brain');
  assert.equal(match('N',{shiftKey:true}),'New folder');
  assert.equal(match('B',{shiftKey:true}),'Create a Brain');
  assert.equal(match('L',{shiftKey:true}),'Swap note and brain');
  assert.equal(match('W',{shiftKey:true}),'Switch pane');
  assert.equal(match('?',{shiftKey:true}),'Commands and shortcuts');
- for(const [key,title] of Object.entries({t:'Hide interface hints',r:'Recent notes',q:'Show Brain root',e:'Switch Write / Markdown',f:'Format text',d:'Removed items',m:'Note or folder actions',o:'Show note in folder',s:'Save and finish editing',a:'Toggle voice'}))assert.equal(match(key,{shiftKey:true}),title);
+ for(const [key,title] of Object.entries({t:'Hide interface hints',r:'Recent notes',q:'Show Brain root',e:'Switch Write / Markdown',f:'Format text',d:'Removed items',m:'Note or folder actions',o:'Show note in folder',s:'Save and finish editing'}))assert.equal(match(key,{shiftKey:true}),title);
+ assert.equal(match('a',{shiftKey:true}),null);
  assert.equal(match('c'),'Choose a folder');assert.equal(match('u'),'Back one folder');
  const seen=new Set();
  for(const action of actions)for(const key of (Array.isArray(action.plain)?action.plain:[action.plain]).filter(Boolean)){
@@ -69,7 +71,7 @@ test('turning off character shortcuts retains standard navigation keys',()=>{
 test('command search finds topics and aliases in the real catalog',()=>{
  const find=q=>Array.from(actions.filter(a=>context.matchesCommand(a,q)),a=>a.title);
  for(const q of ['theme','tema','TEMAS','appearance colors','omarchy'])assert.deepEqual(find(q),['Choose theme']);
- assert.deepEqual(find('assistente'),['Toggle Iris']);
+ assert.deepEqual(find('assistente'),[]);
  for(const q of ['back','voltar','pasta anterior','u'])assert.deepEqual(find(q),['Back one folder']);
  assert.ok(find('Brain view').includes('Rotate brain'));
  assert.deepEqual(find('nonexistent-command-xyz'),[]);

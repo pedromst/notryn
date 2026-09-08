@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-alpha.3. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.2. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -15,10 +15,9 @@ Workspace reference for 0.2.0-alpha.3. See [installation](INSTALL.md) for packag
 - Hover a label or browse with the keyboard to highlight its direct connections and gently fade unrelated items. Emphasis transitions smoothly in both directions, including quick moves between labels; dimmed names remain faintly readable. Moving the pointer away restores the open note's emphasis. Translucent highlights replace hover summaries; opening a note also brings its linked notes from other folders into the map, while the Library keeps the current folder's contents.
 - Search covers every indexed note, regardless of the open folder. It matches words in filenames, paths and document titles across spaces, hyphens and accents, with exact filenames first. Search results are no longer capped at 30; the reader retains the original document title.
 - Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
-- Iris on a floating glass surface, with a large voice circle, conversation and writing below. English speech when a local voice is available. Local commands, search, excerpts and drafts; no generative AI model is connected yet.
-- Mobile navigation for the brain, notes, creation and Iris.
+- Mobile navigation for the brain, notes and creation.
 
-Version `0.2.0-alpha.3` includes connection focus and shortened-path fixes. Earlier `0.2.0-alpha.2` packages do not include them.
+Version `0.2.0-beta.2` includes connection focus, shortened-path fixes and removes the unfinished Iris guide. The A and Shift A shortcuts are unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 
@@ -33,8 +32,6 @@ Shortcuts use the same letters on macOS, Windows and Linux. They work outside te
 | Swap note and brain | Shift L |
 | Focus note / exit focus | F |
 | Immersive brain / return | Shift G |
-| Toggle Iris | A |
-| Toggle Iris voice | Shift A |
 | Create a Brain | Shift B |
 | Switch Brain | B |
 | Open an existing folder | O |
@@ -109,7 +106,7 @@ W cycles through visible panes and Shift W reverses direction outside text field
 
 All actions remain in the P command palette, including actions without a dedicated key. Type an action name, navigate with arrows and press Enter. Typed characters in the palette, theme picker and forms are handled locally and do not trigger workspace commands.
 
-Less frequent flows share that same route: **Manage Brain access**, **Remove this Brain from Notryn**, **Expand all folders**, **Collapse all folders**, **Read an excerpt of this note**, **Start a draft**, and **Configure keyboard shortcuts**. Permissions, restoration and removal still require choosing an item and confirming in their dialogs with Tab/Enter. Open the folder browser with **O**, Tab to **Browse folders**, Enter; arrows/Enter browse directories and Tab reaches **Choose folder**. The Brain picker uses the same **Shift B** and **O** bindings as the workspace. Themes use T, arrows and Enter; Iris uses A, type the request, Enter.
+Less frequent flows share that same route: **Manage Brain access**, **Remove this Brain from Notryn**, **Expand all folders**, **Collapse all folders**, and **Configure keyboard shortcuts**. Permissions, restoration and removal still require choosing an item and confirming in their dialogs with Tab/Enter. Open the folder browser with **O**, Tab to **Browse folders**, Enter; arrows/Enter browse directories and Tab reaches **Choose folder**. The Brain picker uses the same **Shift B** and **O** bindings as the workspace. Themes use T, arrows and Enter.
 
 ### Organizing files
 
@@ -143,14 +140,6 @@ The text-style menu keeps the selected range and stays in place until a choice i
 
 Use **Markdown** for direct source editing. Switching views does not save automatically. **Save** is explicit and retains the existing revision/conflict and backup protections. Frontmatter and unchanged blocks keep their source. Tables, task lists, callouts, HTML and other unsupported extensions remain preserved blocks; use Markdown to change those blocks. The reader displays simple tables. Images stay as inert placeholders, and embedded HTML is never executed. The editor does not send note content to another service.
 
-Open Iris with **A** outside text fields. Its central line stays still when idle and becomes a wave during local speech. The wave illustrates speech state, rather than measured audio amplitude; there is no microphone input. The voice button enables or stops speech. Reduced-motion preferences keep the line still with a visible speaking status. All five themes and Omarchy colors apply to this surface; on shorter screens the circle moves beside the conversation to keep writing accessible. Closing and reopening Iris preserves your unsent question.
-
-### Ask Iris
-
-Try `Find my project`, `Read this note`, `Show connections` or `Create a draft about a new idea`. Iris searches note names and paths, reads excerpts and opens a draft for you to write. It does not generate summaries or write content autonomously.
-
-Speech is off by default. When enabled, it uses a local English browser voice or Samantha on macOS, if installed. No voice is downloaded automatically. Quoted note content is read as written, without translation.
-
 ### Appearance and Omarchy
 
 Use the appearance icon or **T** outside text fields. While writing, press **Esc**, then **T**. **↑/↓** choose a theme, **Enter** applies it and **Esc** cancels. Home/End jump to the first/last option; typing a theme name selects it. The command palette and shortcut reference include **Choose theme**. Your preference is saved in this browser, including after restarting NOTRYN. Changing themes preserves unsaved writing, the cursor, scroll and brain position.
@@ -164,7 +153,6 @@ Use the appearance icon or **T** outside text fields. While writing, press **Esc
 | Dusk | Warm dark surfaces and rose light |
 | Follow Omarchy | Live colors from the local Linux desktop |
 
-Iris also understands `Switch to Matrix`, `Use light theme`, `Change theme to Dusk`, `Follow Omarchy` and `Show themes`. These are local commands; no AI connection is required.
 
 Omarchy does not automatically color arbitrary web applications. NOTRYN includes a read-only bridge to its active `colors.toml`, covering the newer `~/.local/state/omarchy/current/theme/` location and the older `~/.config/omarchy/current/theme/` location. XDG state/config locations and legacy theme symlinks are also supported. Light mode is read from `mode = "light"` or the older `light.mode` marker. Background, foreground, accent and palette colors style both the interface and the brain, with text adjusted for legibility.
 

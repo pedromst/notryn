@@ -1,6 +1,6 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const state={brains:[],brain:null,token:'',data:{nodes:[],edges:[],folders:[]},graphView:null,folderPath:'',selected:null,note:null,editing:false,dirty:false,newNote:false,query:'',group:null,recent:false,closed:new Set(),voice:false,nativeVoice:false,noteSerial:0,loadSerial:0};
+const state={brains:[],brain:null,token:'',data:{nodes:[],edges:[],folders:[]},graphView:null,folderPath:'',selected:null,note:null,editing:false,dirty:false,newNote:false,query:'',group:null,recent:false,closed:new Set(),noteSerial:0,loadSerial:0};
 state.saving=false;
 let singleKeys=true;
 try{singleKeys=localStorage.getItem('notryn-single-keys')!=='off';}catch{}
@@ -165,7 +165,7 @@ function setNotebookView(enabled,{focus=true,remember=true}={}){
  const mobile=matchMedia('(max-width:900px)').matches;
  document.body.classList.toggle('brain-peek',mobile&&!enabled);
  if(mobile){
-  document.body.dataset.mobile=enabled?'notes':'map';$('#agent').hidden=true;
+  document.body.dataset.mobile=enabled?'notes':'map';
   $$('button[data-mobile]').forEach(b=>b.classList.toggle('active',b.dataset.mobile===document.body.dataset.mobile));
  }
  updateBrainToggle();
@@ -192,7 +192,7 @@ async function showFullBrain(){
   // Nothing changes until the user decides what to do with an unsaved draft.
   if(!await canLeave())return false;
   setNotebookView(false,{focus:false});closeDocumentUnsafe();clearBrainFilters();graph.fit();
-  $('#agent').hidden=true;document.body.dataset.mobile='map';
+  document.body.dataset.mobile='map';
   $$('button[data-mobile]').forEach(b=>b.classList.toggle('active',b.dataset.mobile==='map'));
   $('#graph').focus({preventScroll:true});graphStatus('Brain root · '+graph.nodes.length+' items');
   toast('Brain root restored.');return true;
@@ -333,21 +333,13 @@ async function mobileView(view,{focusInput=true}={}){
  if(!$('#document').hidden){if(!await canLeave())return false;closeDocumentUnsafe();}
  if(view==='map'||view==='notes')setNotebookView(view==='notes',{focus:false});
  document.body.classList.remove('brain-peek');
- document.body.dataset.mobile=view;$('#agent').hidden=view!=='agent';
+ document.body.dataset.mobile=view;
  $$('button[data-mobile]').forEach(b=>b.classList.toggle('active',b.dataset.mobile===view));
  // A tap changes panes without opening the keyboard or triggering iOS input zoom.
  // Keyboard navigation and explicit search commands still reach the input directly.
- if(focusInput&&view==='notes')$('#search').focus({preventScroll:true});if(focusInput&&view==='agent')$('#question').focus({preventScroll:true});return true;
+ if(focusInput&&view==='notes')$('#search').focus({preventScroll:true});return true;
 }
 $$('button[data-mobile]').forEach(b=>b.onclick=e=>mobileView(b.dataset.mobile,{focusInput:e.detail===0}));
-let agentReturnFocus=null;
-async function toggleAgent(){
- if(matchMedia('(max-width:900px)').matches){await mobileView(document.body.dataset.mobile==='agent'?'map':'agent');return;}
- if($('#agent').hidden){agentReturnFocus=document.activeElement;$('#agent').hidden=false;$('#question').focus();}
- else{$('#agent').hidden=true;if(agentReturnFocus?.isConnected&&agentReturnFocus.getClientRects().length)agentReturnFocus.focus({preventScroll:true});}
-}
-$('#agent-toggle').onclick=toggleAgent;$('#agent-close').onclick=toggleAgent;
-$('#agent-toggle').title='Toggle Iris (A)';
 $('#brain-picker').title='Switch Brain (B)';$('#new-folder').title='New folder (Shift N)';$('#add-new-brain').title='Create Brain (Shift B)';$('#add-existing-brain').title='Open folder (O)';
 
 // Keep the editor node, content, selection and scroll position when swapping panes.
@@ -385,7 +377,7 @@ function toggleNoteFocus(){
  setNoteFocus(!document.body.classList.contains('note-focus'));
 }
 function filterNotes(){if(matchMedia('(max-width:900px)').matches)return mobileView('notes');setBrainFocus(false);setNoteFocus(false);document.body.classList.remove('library-hidden');$('#search').focus();}
-function closePanel(){if(!$('#agent').hidden){toggleAgent();}else if(document.body.classList.contains('brain-focus'))setBrainFocus(false);else if(document.body.classList.contains('note-focus'))setNoteFocus(false);else if(!$('#document').hidden)closeDocument();}
+function closePanel(){if(document.body.classList.contains('brain-focus'))setBrainFocus(false);else if(document.body.classList.contains('note-focus'))setNoteFocus(false);else if(!$('#document').hidden)closeDocument();}
 $('#swap-layout').onclick=swapLayout;$('#focus-note').onclick=toggleNoteFocus;
 applyNoteSide();setNoteFocus(false);
 
@@ -449,9 +441,9 @@ async function openGraphNote(){
  if(!id.startsWith('@folder:')&&state.selected===id&&state.note)$('#document-read').focus({preventScroll:true});
 }
 function cycleWorkspace(direction=1){
- const panels=$$('.library,#document,.universe,#agent').filter(p=>p.getClientRects().length);
+ const panels=$$('.library,#document,.universe').filter(p=>p.getClientRects().length);
  const index=panels.findIndex(p=>p.contains(document.activeElement)),panel=panels[(index+direction+panels.length)%panels.length];if(!panel)return;
- const target=panel.id==='library'?($('#file-tree .tree-row[tabindex="0"]')||$('#search')):panel.id==='document'?(!$('#editor-wrap').hidden?(!$('#rich-editor').hidden?rich.dom:!$('#editor').hidden?$('#editor'):$('#editor-preview')):$('#document-read')):panel.id==='agent'?$('#question'):$('#graph');
+ const target=panel.id==='library'?($('#file-tree .tree-row[tabindex="0"]')||$('#search')):panel.id==='document'?(!$('#editor-wrap').hidden?(!$('#rich-editor').hidden?rich.dom:!$('#editor').hidden?$('#editor'):$('#editor-preview')):$('#document-read')):$('#graph');
  target.focus({preventScroll:true});
 }
 // Arrow navigation supplements normal Tab/Shift Tab in dialog action lists.
@@ -512,17 +504,12 @@ const actionItems=()=>[
  {title:'Pause / resume motion',group:'Brain view',key:'Space',plain:' ',context:'graph',icon:'pause',run:()=>controlBrain('motion')},
  {title:'Next note in brain',group:'Brain view',key:'J / Page Down',plain:['j','PageDown'],context:'graph',repeat:true,icon:'note',run:()=>stepGraphNote(1)},
  {title:'Previous note in brain',group:'Brain view',key:'K / Page Up',plain:['k','PageUp'],context:'graph',repeat:true,icon:'note',run:()=>stepGraphNote(-1)},
- {title:'Open highlighted item',group:'Brain view',key:'Enter',plain:'Enter',context:'graph',icon:'note',run:openGraphNote},
- {title:'Toggle Iris',group:'Iris',key:'A',plain:'a',icon:'spark',run:toggleAgent},
- {title:'Toggle voice',group:'Iris',key:'Shift A',plain:'a',plainShift:true,icon:'sound',run:()=>$('#voice').click()},
- {title:'Read an excerpt of this note',group:'Iris',icon:'note',run:()=>{ask('Read this note');if($('#agent').hidden)toggleAgent();}},
- {title:'Start a draft',group:'Iris',icon:'edit',run:()=>ask('Create a draft')}
+ {title:'Open highlighted item',group:'Brain view',key:'Enter',plain:'Enter',context:'graph',icon:'note',run:openGraphNote}
 ];
 const commandSearchAliases={
  'Choose theme':'theme themes tema temas appearance colors colours cor cores glass matrix daylight omarchy',
  'Show / hide brain':'hide show brain notes workspace esconder mostrar cerebro notas',
  'Show full Brain':'reset restore all notes clear filters categories finance full brain completo repor tudo todas notas limpar filtros categorias',
- 'Toggle Iris':'assistant agent chat assistente agente iris',
  'Create a Brain':'new brain criar novo cerebro',
  'Open a folder':'connect directory vault abrir ligar pasta',
  'New note':'create criar nova nota',
@@ -551,7 +538,7 @@ function renderShortcuts(){
  const catalog=$('#shortcut-catalog'),query=$('#shortcut-search').value.trim();catalog.replaceChildren();
  const actions=actionItems().filter(a=>matchesCommand(a,query));
  $('#shortcut-results-status').textContent=actions.length+' '+(actions.length===1?'command':'commands')+(singleKeys?'':' · Single-key shortcuts are off; choose a command to run it.');
- for(const group of ['Appearance','Layout','Navigation','Writing','Formatting','Brains','Brain view','Iris']){
+ for(const group of ['Appearance','Layout','Navigation','Writing','Formatting','Brains','Brain view']){
   const grouped=actions.filter(a=>a.group===group);if(!grouped.length)continue;
   const section=el('section','shortcut-section');section.append(el('h3','',group));
   if(!query&&group==='Navigation')section.append(el('p','shortcut-context','Tab moves between controls; Shift Tab goes back. Arrows browse lists; Enter chooses; Esc returns. P → search an action → Enter works for every command. While writing, press Esc first.'));
@@ -614,7 +601,7 @@ $('#interface-hints-toggle').onchange=e=>setInterfaceHints(e.target.checked);
 updateInterfaceHints();
 function leaveTextField(){
  const active=document.activeElement;
- const target=active.closest('#document')?$(state.editing&&!state.saving?'#save-note':'#doc-close'):active.closest('#agent')?$('#question-exit'):$('#open-command');
+ const target=active.closest('#document')?$(state.editing&&!state.saving?'#save-note':'#doc-close'):$('#open-command');
  target.focus({preventScroll:true});
  if($('#rich-editor').contains(active))window.getSelection()?.removeAllRanges();
  if(singleKeys&&interfaceHints)toast('H show/hide brain · Shift H full Brain · P commands · S save');
@@ -637,57 +624,4 @@ $('#document').addEventListener('keydown',e=>{
 },true);
 window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
 
-let speechSerial=0,speechUtterance=null;
-function localVoice(){return 'speechSynthesis'in window?speechSynthesis.getVoices().filter(v=>v.localService).sort((a,b)=>Number(b.lang==='en-US')-Number(a.lang==='en-US')).find(v=>v.lang.toLowerCase().startsWith('en')):null;}
-function setVoice(){ $('#voice').setAttribute('aria-pressed',String(state.voice));$('#voice').setAttribute('aria-label',state.voice?'Disable voice':'Enable voice');$('#voice').title=state.voice?'Disable local voice':'Enable local voice';}
-async function speak(text){
- const serial=++speechSerial,v=localVoice();
- IrisPresence.set('preparing',state.voice);
- const start=()=>{if(serial===speechSerial)IrisPresence.set('speaking',true);};
- const finish=()=>{if(serial===speechSerial){speechUtterance=null;IrisPresence.set('idle',state.voice);}};
- const fail=()=>{if(serial===speechSerial){speechUtterance=null;state.voice=false;setVoice();IrisPresence.set('idle');toast('No local English voice is available on this device.');}};
- if(v){
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);speechUtterance=u;u.voice=v;u.lang=v.lang;
-  u.onstart=start;u.onend=finish;u.onerror=fail;u.onpause=()=>{if(serial===speechSerial)IrisPresence.set('idle',state.voice);};u.onresume=start;
-  u.onboundary=()=>{if(serial===speechSerial)IrisPresence.pulse();};speechSynthesis.speak(u);
- }else if(state.nativeVoice){start();try{await api('/api/speech',{text:text.slice(0,2000)});finish();}catch{fail();}}else fail();
-}
-function stopSpeech(){speechSerial++;speechUtterance=null;if('speechSynthesis'in window)speechSynthesis.cancel();IrisPresence.set('idle',state.voice);if(state.nativeVoice)api('/api/speech',{text:''}).catch(()=>{});}
-$('#voice').onclick=()=>{state.voice=!state.voice;setVoice();if(state.voice)speak('Hello. I am Iris. Let us explore your ideas.');else stopSpeech();};
-function say(text){const box=$('#conversation');box.append(el('p','reply',text));while(box.children.length>18)box.firstChild.remove();box.scrollTop=box.scrollHeight;if(state.voice)speak(text);}
-function excerpt(text){return text.replace(/^---\s*\n[\s\S]*?\n---\s*\n/,'').split('\n').filter(l=>l.trim()&&!/^#|^```|^\|/.test(l)).slice(0,3).join(' ').replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,(_,a,b)=>b||a).replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/[*`]/g,'').slice(0,600);}
-async function ask(question){
- question=question.trim();if(!question)return;
- $('#conversation').append(el('p','user-message',question));
- if(window.askTheme&&await window.askTheme(question))return;
- const q=clean(question),draft=/^(?:please\s+)?(?:(?:create|start|write)\s+(?:a\s+)?(?:draft|note)|new\s+note|draft)(?:\s+|$)/i;
- if(draft.test(question)){
-  if(!writable())return say('Choose a writable Brain to start a draft. Read-only folders stay protected.');
-  const title=question.replace(draft,'').replace(/^(?:about|called|named)\s+/i,'').trim();
-  await openCreate('note',title);
-  return say($('#create-dialog').open?'Choose a title. I will open a draft for you to write and review before saving.':'Your current edit is still open.');
- }
- if(/^(?:please\s+)?(?:explain|summari[sz]e|read)\b/.test(q)){
-  if(!state.note)return say('Open a note first. I can read an excerpt and show its connections.');
-  const text=excerpt(state.editing?$('#editor').value:state.note.content);
-  return say(text?'Excerpt from the note: '+text+' Read the open note for the full context.':'This note has no text to excerpt yet.');
- }
- if(/\b(?:connections?|links?)\b/.test(q)){
-  if(!state.selected)return say('Open a saved note first to explore its connections.');
-  const near=neighbors(state.selected);
-  return say(near.length?'This note connects to: '+near.map(n=>n.title).join(', ')+'.':'This note has no explicit connections yet. Use [[note-name]] in your writing to create a connection.');
- }
- const stopwords=new Set(['where','find','search','show','open','want','about','note','notes','please','the','for','this','that','can','you','could','would']);
- const words=q.split(/\W+/).filter(w=>w.length>2&&!stopwords.has(w));
- const found=state.data.nodes.map(n=>({n,score:words.reduce((s,w)=>s+Number(clean(n.title+' '+n.path).includes(w)),0)})).filter(x=>x.score).sort((a,b)=>b.score-a.score);
- if(found.length){
-  if(!await canLeave())return say('Your current edit is still open.');
-  await openNote(found[0].n.id);
-  if(state.selected!==found[0].n.id||!state.note)return say('I could not open that note. Check the note panel for details.');
-  return say('Opened “'+found[0].n.title+'”.'+(found.length>1?' Also found: '+found.slice(1,4).map(x=>x.n.title).join(', ')+'.':''));
- }
- say('I can find notes by name, read an excerpt, show connections, change themes or open a draft. Use P outside text fields for all actions. Generative chat requires an AI model, which is not connected yet.');
-}
-
-$('#ask-form').onsubmit=e=>{e.preventDefault();const q=$('#question').value;$('#question').value='';ask(q);};$$('[data-question]').forEach(b=>b.onclick=()=>ask(b.dataset.question));window.addEventListener('pagehide',stopSpeech);
-(async()=>{try{await loadBrains();const saved=localStorage.getItem('notryn-brain');state.brain=state.brains.some(b=>b.id===saved)?saved:state.brains[0]?.id||null;await loadGraph();if(current()&&localStorage.getItem('notryn-workspace')==='notes')setNotebookView(true,{focus:false,remember:false});const voice=await api('/api/voice');state.nativeVoice=voice.available;}catch(e){toast(e.message);}})();
+(async()=>{try{await loadBrains();const saved=localStorage.getItem('notryn-brain');state.brain=state.brains.some(b=>b.id===saved)?saved:state.brains[0]?.id||null;await loadGraph();if(current()&&localStorage.getItem('notryn-workspace')==='notes')setNotebookView(true,{focus:false,remember:false});}catch(e){toast(e.message);}})();
