@@ -34,7 +34,7 @@ window.NotrynHierarchy=(()=>{
  function navigation(data,path=''){
   path=normalize(path);return[...(path?[path]:[]),...directFolders(data,path)];
  }
- function view(data,path='',query=''){
+ function view(data,path='',query='',selectedId=null){
   path=normalize(path);query=clean(query.trim());const allNodes=data.nodes||[],allEdges=data.edges||[];
   // Keep folder colors consistent across layers, search and theme changes.
   const foldersByPath=[...new Set([...(data.folders||[]),...allNodes.map(node=>normalize(node.folder))])].filter(Boolean).sort((a,b)=>a.localeCompare(b));
@@ -50,7 +50,18 @@ window.NotrynHierarchy=(()=>{
    const totalNotes=allNodes.filter(node=>normalize(node.folder)===folder||normalize(node.folder).startsWith(folder+'/')).length;
    return{id:folderId(folder),title:name(folder),path:folder,folder:path,kind:'folder',group:folderId(folder),count:directNoteCount+directFolderCount,totalNotes};
   });
-  const nodes=[...folderNodes,...notes],byId=new Map(allNodes.map(node=>[node.id,node]));
+  const nodes=[...folderNodes,...notes],byId=new Map(allNodes.map(node=>[node.id,node])),contextIds=new Set();
+  // An open note can link beyond this folder. Show those exact neighbors on
+  // the map without adding them to the folder's contents or navigation.
+  if(notes.some(node=>node.id===selectedId)){
+   const visibleIds=new Set(nodes.map(node=>node.id));
+   for(const edge of allEdges){
+    const id=edge.source===selectedId?edge.target:edge.target===selectedId?edge.source:null;
+    if(id&&!visibleIds.has(id)&&byId.has(id)){
+     contextIds.add(id);visibleIds.add(id);nodes.push({...asNote(byId.get(id)),connectionContext:true});
+    }
+   }
+  }
   function bucket(node){
    if(!node)return null;const nodeFolder=normalize(node.folder);if(nodeFolder===path)return node.id;
    const prefix=path?path+'/':'';if(!nodeFolder.startsWith(prefix))return null;
@@ -59,10 +70,11 @@ window.NotrynHierarchy=(()=>{
   }
   const seen=new Set(),edges=[];
   for(const edge of allEdges){
-   const source=bucket(byId.get(edge.source)),target=bucket(byId.get(edge.target));if(!source||!target||source===target)continue;
+   const incident=edge.source===selectedId||edge.target===selectedId;
+   const source=incident&&contextIds.has(edge.source)?edge.source:bucket(byId.get(edge.source)),target=incident&&contextIds.has(edge.target)?edge.target:bucket(byId.get(edge.target));if(!source||!target||source===target)continue;
    const key=[source,target].sort().join('\n');if(seen.has(key))continue;seen.add(key);edges.push({source,target});
   }
-  return{path,nodes,colorGroups,edges,folderCount:folderNodes.length,noteCount:notes.length,search:false};
+  return{path,nodes,colorGroups,edges,folderCount:folderNodes.length,noteCount:notes.length,connectionCount:contextIds.size,search:false};
  }
  return{normalize,parent,name,filename,matchesNote,searchNotes,folderId,ancestors,directFolders,navigation,view};
 })();

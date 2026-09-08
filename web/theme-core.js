@@ -37,9 +37,13 @@ window.NotrynThemes=(()=>{
    'glass-edge':`inset 0 1px 0 ${text}0e,0 12px 40px ${light?'#2137390a':'#00000022'}`,
    'theme-radius':theme.id==='command'?'7px':'17px'};
   const mesh=light?mix(accent,text,.25):mix(secondary,theme.accent,.45);
-  const linkedLabel=mix(panel,primary,.28);
+  const selectedLabel=primary+'d6',linkedLabel=mix(panel,primary,.28)+'cc';
+  // Translucent fills show the cortex underneath. Choose ink against the
+  // composited color, rather than the opaque accent swatch.
+  const selectedBase=mix(bg,primary,214/255),linkedBase=mix(bg,linkedLabel,.8);
+  const selectedInk=contrast(selectedBase,'#000000')>contrast(selectedBase,'#ffffff')?'#000000':'#ffffff';
   const graph={colors:theme.colors,mesh,light,accent:theme.accent,secondary,rgb:rgb(mesh).join(','),pulse:light?accent:mix(theme.accent,'#ffffff',.6),
-   labelSelected:primary,labelSelectedText:onAccent,labelLinked:linkedLabel,labelLinkedText:readable(text,linkedLabel,7),
+   labelSelected:selectedLabel,labelSelectedText:selectedInk,labelLinked:linkedLabel,labelLinkedText:readable(text,linkedBase,7),
    label:panel+(light?'f5':'e8'),labelActive:soft+'f5',labelText:text,labelMuted:mix(text,panel,.14),line,pearl:light?mix(theme.accent,'#ffffff',.5):'#f0ffff'};
   return {vars,graph,light};
  }

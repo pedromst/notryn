@@ -100,3 +100,15 @@ test('folder colors match their notes and remain stable when navigating, searchi
  }
  assert.equal(JSON.stringify(data),original);
 });
+
+ test('an open note exposes exact cross-folder neighbors without changing folder contents',()=>{
+ const view=hierarchy.view(data,'projects','','projects/alpha');
+ assert.equal(view.folderCount,2);assert.equal(view.noteCount,1);assert.equal(view.connectionCount,2);
+ assert.deepEqual(Array.from(view.nodes.filter(n=>n.connectionContext),n=>n.id).sort(),['home','projects/live/new']);
+ assert.deepEqual(Array.from(view.edges.filter(e=>e.source==='projects/alpha'||e.target==='projects/alpha'),e=>[e.source,e.target]),[
+  ['home','projects/alpha'],['projects/alpha','projects/live/new']
+ ]);
+ assert.equal(hierarchy.view(data,'core','','projects/alpha').connectionCount,0);
+ assert.equal(hierarchy.view(data,'projects').connectionCount,0);
+ assert.equal(hierarchy.view(data,'projects','','projects/alpha').nodes.filter(n=>n.id==='projects/alpha').length,1);
+ });
