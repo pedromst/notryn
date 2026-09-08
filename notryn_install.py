@@ -10,6 +10,7 @@ import re
 import secrets
 import shutil
 import socket
+import ssl
 import stat
 import subprocess
 import sys
@@ -24,6 +25,16 @@ API = 'https://api.github.com/repos/' + REPO
 VERSION_RE = re.compile(r'^v?(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$')
 MAX_DOWNLOAD = 700 * 1024 * 1024
 MAX_EXPANDED = 3 * 1024 * 1024 * 1024
+
+
+def https_context():
+    """Use OS certificate roots even when bundled Python retains its build-machine paths."""
+    context = ssl.create_default_context()
+    for filename in ('/etc/ssl/cert.pem', '/etc/ssl/certs/ca-certificates.crt', '/etc/pki/tls/certs/ca-bundle.crt', '/etc/ssl/ca-bundle.pem'):
+        if Path(filename).is_file():
+            context.load_verify_locations(cafile=filename)
+            break
+    return context
 
 
 def version_key(value):
@@ -59,7 +70,7 @@ class Releases:
         if self.private:
             return json.loads(run(['gh', 'api', '--hostname', 'github.com', 'repos/' + REPO + endpoint]))
         request = Request(API + endpoint, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'Notryn installer'})
-        with urlopen(request, timeout=30) as response:
+        with urlopen(request, timeout=30, context=https_context()) as response:
             return json.loads(response.read(4 * 1024 * 1024))
 
     def release(self, version=None, prerelease=False):
@@ -91,7 +102,7 @@ class Releases:
         else:
             # Construct the trusted GitHub URL; never execute URLs from a manifest.
             url = 'https://github.com/' + REPO + '/releases/download/' + release['tag_name'] + '/' + name
-            with urlopen(Request(url, headers={'User-Agent': 'Notryn installer'}), timeout=60) as response, target.open('wb') as output:
+            with urlopen(Request(url, headers={'User-Agent': 'Notryn installer'}), timeout=60, context=https_context()) as response, target.open('wb') as output:
                 if not response.url.startswith('https://'):
                     raise RuntimeError('Insecure download redirect refused.')
                 count = 0
@@ -392,10 +403,15 @@ def main():
     parser.add_argument('--private', action='store_true', help='Use GitHub CLI authentication for the private alpha')
     parser.add_argument('--version')
     parser.add_argument('--no-open', action='store_true')
+    parser.add_argument('--check-downloads', action='store_true', help='Check the release connection without installing or changing files')
     args = parser.parse_args()
     try:
         if hasattr(os, 'geteuid') and os.geteuid() == 0:
             raise RuntimeError('Run as your normal user, without sudo.')
+        if args.check_downloads:
+            release = Releases(args.private).release(args.version, prerelease=True)
+            print('Verified release connection: ' + release['tag_name'])
+            return 0
         installation = Installation()
         installation.install(Releases(args.private), args.version)
         if not args.no_open:

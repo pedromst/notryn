@@ -3,6 +3,7 @@ import io
 import json
 import os
 import stat
+import ssl
 import tarfile
 import tempfile
 import unittest
@@ -10,7 +11,7 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
-from notryn_install import Installation, Releases, safe_extract, version_key
+from notryn_install import Installation, Releases, safe_extract, version_key, https_context
 
 
 class FixtureReleases:
@@ -114,6 +115,12 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.install.install(FixtureReleases(self.root))
         self.assert_data_preserved()
+
+    def test_https_context_requires_trusted_certificates_and_hostname(self):
+        context = https_context()
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(context.check_hostname)
+        self.assertGreater(len(context.get_ca_certs()), 0)
 
     def test_hash_mismatch_refuses_download(self):
         client = Releases(False)
