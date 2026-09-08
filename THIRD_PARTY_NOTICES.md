@@ -1302,7 +1302,7 @@ PERFORMANCE OF THIS SOFTWARE.
 ================================
  The PyInstaller licensing terms
 ================================
- 
+
 
 Copyright (c) 2010-2023, PyInstaller Development Team
 Copyright (c) 2005-2009, Giovanni Bajo
@@ -1324,8 +1324,8 @@ those combinations without any restriction coming from the use of those
 files. (The General Public License restrictions do apply in other respects;
 for example, they cover modification of the files, and distribution when
 not linked into a combined executable.)
- 
- 
+
+
 Bootloader and Related Files
 ----------------------------
 

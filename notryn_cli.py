@@ -85,7 +85,7 @@ def probe(record, timeout=0.5):
 
 
 def process_command(command, home, port, instance):
-    arguments = ["serve", "--data-dir", str(home), "--port", str(port), "--instance", instance]
+    arguments = ["serve", "--data-dir", str(home), "--port", str(port), "--instance=" + instance]
     if getattr(sys, "frozen", False):
         return [sys.executable, *arguments]
     return [sys.executable, str(Path(__file__).resolve()), *arguments]
