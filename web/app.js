@@ -18,7 +18,7 @@ function writable(){return !!current()&&!current().readOnly;}
 function visible(n){return NotrynHierarchy.matchesNote(n,state.query);}
 function neighbors(id){return state.data.edges.filter(e=>e.source===id||e.target===id).map(e=>state.data.nodes.find(n=>n.id===(e.source===id?e.target:e.source))).filter(Boolean);}
 function renderGraphView(){
- state.graphView=NotrynHierarchy.view(state.data,state.folderPath,state.query);graph.setData(state.graphView);graph.filter=()=>true;
+ state.graphView=NotrynHierarchy.view(state.data,state.folderPath,state.query,state.selected);graph.setData(state.graphView);graph.filter=()=>true;
  graph.select(graph.ids.has(state.selected)?state.selected:null);updateBrainScope();
 }
 function openGraphItem(id){return id.startsWith('@folder:')?navigateBrainFolder(id.slice(8)):openNote(id);}
@@ -57,7 +57,7 @@ $$('input[required],#brain-form-path').forEach(input=>{
  input.addEventListener('input',()=>input.setCustomValidity(''));
 });
 function canLeave(){if(state.saving){toast('Saving to disk. Please wait a moment.');return Promise.resolve(false);}if(!state.dirty)return Promise.resolve(true);return new Promise(resolve=>{const d=showDialog('#discard-dialog');$('#keep-editing').onclick=()=>{d.close();resolve(false);};$('#discard-editing').onclick=()=>{d.close();state.dirty=false;resolve(true);};d.oncancel=e=>{e.preventDefault();d.close();resolve(false);};});}
-function closeDocumentUnsafe(){setNoteFocus(false);state.noteSerial++;state.selected=null;state.note=null;state.editing=false;state.dirty=false;$('#document').hidden=true;$('#document-error').hidden=true;graph.select(null);rich.setVisible(false);renderTree();}
+function closeDocumentUnsafe(){setNoteFocus(false);state.noteSerial++;state.selected=null;state.note=null;state.editing=false;state.dirty=false;$('#document').hidden=true;$('#document-error').hidden=true;graph.select(null);if(state.graphView?.connectionCount)renderGraphView();rich.setVisible(false);renderTree();}
 async function closeDocument(){if(await canLeave())closeDocumentUnsafe();}
 async function loadBrains(){const result=await api('/api/state');state.token=result.token;state.brains=result.brains;state.remotePreview=!!result.remotePreview;['#welcome-create','#welcome-open','#open-removed','#brains-removed'].forEach(id=>$(id).hidden=state.remotePreview);$('#brain-actions').hidden=false;['#add-new-brain','#add-existing-brain'].forEach(id=>$(id).disabled=state.remotePreview);$('#brains-preview-note').hidden=!state.remotePreview;$('#brain-count').textContent=state.brains.length+(state.brains.length===1?' Brain':' Brains');return result;}
 function rememberBrain(brain){const existing=state.brains.find(item=>item.id===brain.id);state.brains=[...state.brains.filter(item=>item.id!==brain.id),{...existing,...brain}];$('#brain-count').textContent=state.brains.length+(state.brains.length===1?' Brain':' Brains');}
@@ -126,7 +126,7 @@ $('#file-tree').onkeydown=e=>{
 };
 $('#search').addEventListener('keydown',e=>{if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowDown','Enter'].includes(e.key))return;const first=$('#file-tree .tree-row');if(first){e.preventDefault();first.focus();if(e.key==='Enter')first.click();}});
 $('#library-back').onclick=()=>upBrainFolder({library:true});
-$('#search').oninput=e=>{state.query=clean(e.target.value.trim());renderGraphView();renderLegend();renderTree();};$('#all-notes').onclick=clearBrainFilters;$('#recent-notes').onclick=()=>{state.recent=true;renderTree();};$('#refresh').onclick=loadGraph;
+$('#search').oninput=e=>{state.query=clean(e.target.value.trim());renderGraphView();renderLegend();renderTree();};$('#all-notes').onclick=clearBrainFilters;$('#recent-notes').onclick=()=>{state.recent=true;renderTree();};$('#refresh').onclick=()=>loadGraph();
 
 function updateBrainScope(){
  const total=state.data.nodes.length,view=state.graphView||{nodes:[],folderCount:0,noteCount:0},limited=!!(state.query||state.folderPath||graph.selected);
@@ -135,13 +135,14 @@ function updateBrainScope(){
  $('#full-brain').classList.toggle('is-filtered',limited);
  if(!current())return;
  const parts=[];if(view.folderCount)parts.push(view.folderCount+(view.folderCount===1?' folder':' folders'));if(view.noteCount||!view.folderCount)parts.push(view.noteCount+(view.noteCount===1?' note':' notes'));
- $('#note-total').textContent=view.nodes.length;
+ $('#note-total').textContent=view.folderCount+view.noteCount;
+ if(view.connectionCount)parts.push(view.connectionCount+(view.connectionCount===1?' linked note':' linked notes'));
  $('#graph-summary').textContent=state.query?view.nodes.length+(view.nodes.length===1?' result':' results')+' across Brain':parts.join(' · ')+' · '+(state.folderPath||'Brain root');
  $('#graph-summary').title=state.query?'Search across every folder':state.folderPath?'Contents of '+state.folderPath:'Direct contents of the Brain root';
 }
 function clearBrainFilters(){
  state.query='';state.group=null;state.folderPath='';state.recent=false;$('#search').value='';
- graph.select(null);graph.keyboardId=null;graph.hover=null;$('#graph-tooltip').hidden=true;
+ graph.select(null);graph.keyboardId=null;graph.hover=null;
  renderGraphView();renderLegend();renderTree();graph.dirty=true;
 }
 let fullBrainPending=false;
@@ -194,14 +195,9 @@ async function showFullBrain(){
 $('#full-brain').onclick=showFullBrain;
 
 function resolveNote(link,kind='wiki'){
- let target;try{target=decodeURIComponent(link.split('#')[0].split('?')[0]);}catch{return;}
- target=target.replace(/\.md$/i,'');if(current()?.scope==='wiki')target=target.replace(/^wiki\//,'');
- const relative=(state.note?.path.split('/').slice(0,-1)||[]).concat(target.split('/')),parts=[];
- for(const part of relative){if(part==='..')parts.pop();else if(part!=='.'&&part)parts.push(part);}
- const ids=target.startsWith('/')?[target.slice(1)]:kind==='wiki'?[target,parts.join('/')]:[parts.join('/')];
- const known=(state.data.linkPaths||state.data.nodes.map(n=>n.path)).map(path=>path.slice(0,-3));
- for(const id of ids){if(known.includes(id))return state.data.nodes.find(n=>n.id===id);}
- if(kind==='wiki'){const matches=known.filter(id=>id.split('/').pop()===target);if(matches.length===1)return state.data.nodes.find(n=>n.id===matches[0]);}
+ if(current()?.scope==='wiki')link=link.replace(/^wiki\//,'');
+ const path=NotrynLinks.resolve(link,state.note?.path||'',state.data.linkPaths||state.data.nodes.map(n=>n.path),kind);
+ return state.data.nodes.find(n=>n.path===path);
 }
 function markdown(text,stripTitle=false){
  const root=NotrynRichText.render(text,stripTitle);

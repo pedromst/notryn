@@ -67,13 +67,16 @@ Open the Brain name in the top bar, or press **B**, to reach **Your Brains**. **
 - Visual note writing with selection-based formatting, an optional Markdown view, preview and explicit saving.
 - Note on the left by default, a saved preference for swapping sides, and a full-width focus mode.
 - Searchable command palette and a keyboard reference with clickable actions.
-- Connections from `[[note-name]]` links and Markdown links to `.md` files.
+- Connections from `[[note-name]]`, shortest unique wikilink paths such as `[[topics/Guide]]`, and Markdown links to `.md` files. Ambiguous shortened paths are never guessed.
 - A glass brain with translucent hemispheres, layered filaments, luminous notes and pulses along real note connections.
 - Each opened folder lists its direct subfolders and Markdown filenames, matching the files on disk. The Brain uses the same filenames; opening a note keeps sibling dots and labels visible. Dense layers use compact, non-overlapping labels where space permits.
+- Hover a label or browse with the keyboard to highlight its direct connections and fade unrelated items. Moving the pointer away restores the open note's emphasis. Translucent highlights replace hover summaries; opening a note also brings its linked notes from other folders into the map, while the Library keeps the current folder's contents.
 - Search covers every indexed note, regardless of the open folder. It matches words in filenames, paths and document titles across spaces, hyphens and accents, with exact filenames first. Search results are no longer capped at 30; the reader retains the original document title.
 - Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
 - Iris on a floating glass surface, with a large voice circle, conversation and writing below. English speech when a local voice is available. Local commands, search, excerpts and drafts; no generative AI model is connected yet.
 - Mobile navigation for the brain, notes, creation and Iris.
+
+Connection focus and shortened-path fixes are currently in the source preview. The downloadable `v0.2.0-alpha.2` packages do not yet include these changes.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 

@@ -1,0 +1,230 @@
+[
+  {
+    "name": "short folder path from full Brain",
+    "target": "topics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": "wiki/topics/projetos-codigo.md"
+  },
+  {
+    "name": "basename",
+    "target": "projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": "wiki/topics/projetos-codigo.md"
+  },
+  {
+    "name": "relative markdown",
+    "target": "projetos-codigo.md#heading",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "markdown",
+    "expected": "wiki/topics/projetos-codigo.md"
+  },
+  {
+    "name": "markdown does not guess shortened path",
+    "target": "topics/projetos-codigo.md",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "markdown",
+    "expected": null
+  },
+  {
+    "name": "ambiguous suffix",
+    "target": "topics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md",
+      "backup/topics/projetos-codigo.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "full path beats suffix",
+    "target": "wiki/topics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md",
+      "backup/wiki/topics/projetos-codigo.md"
+    ],
+    "kind": "wiki",
+    "expected": "wiki/topics/projetos-codigo.md"
+  },
+  {
+    "name": "root path beats suffix",
+    "target": "topics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md",
+      "topics/projetos-codigo.md"
+    ],
+    "kind": "wiki",
+    "expected": "topics/projetos-codigo.md"
+  },
+  {
+    "name": "sibling beats basename ambiguity",
+    "target": "projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md",
+      "backup/projetos-codigo.md"
+    ],
+    "kind": "wiki",
+    "expected": "wiki/topics/projetos-codigo.md"
+  },
+  {
+    "name": "suffix respects folder boundary",
+    "target": "opics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "absolute missing path does not guess",
+    "target": "/topics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "explicit relative missing path does not guess",
+    "target": "../topics/projetos-codigo",
+    "source": "elsewhere/reader.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "relative cannot escape root",
+    "target": "../../wiki/topics/projetos-codigo",
+    "source": "reader.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "encoded names and heading",
+    "target": "topics/Ol%C3%A1%20mundo.md#Section",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/Olá mundo.md"
+    ],
+    "kind": "wiki",
+    "expected": "wiki/topics/Olá mundo.md"
+  },
+  {
+    "name": "escaped spaces",
+    "target": "topics/Olá\\ mundo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/Olá mundo.md"
+    ],
+    "kind": "wiki",
+    "expected": "wiki/topics/Olá mundo.md"
+  },
+  {
+    "name": "non note https://example.com/topics/projetos-codigo",
+    "target": "https://example.com/topics/projetos-codigo",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "non note //example.com/a",
+    "target": "//example.com/a",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "non note mailto:hello@example.com",
+    "target": "mailto:hello@example.com",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "non note #heading",
+    "target": "#heading",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  },
+  {
+    "name": "non note ",
+    "target": "",
+    "source": "wiki/topics/migracao-pc-novo.md",
+    "paths": [
+      "wiki/topics/migracao-pc-novo.md",
+      "wiki/topics/projetos-codigo.md",
+      "wiki/topics/rotinas-automaticas.md"
+    ],
+    "kind": "wiki",
+    "expected": null
+  }
+]

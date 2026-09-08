@@ -86,8 +86,12 @@ def resolve_link(target, source, paths, kind):
             return candidate
         if kind == 'wiki' and candidate + '.md' in paths:
             return candidate + '.md'
-    if kind == 'wiki' and '/' not in target:
-        matches = [p for p in paths if posixpath.basename(p) in {target, target + '.md'}]
+    # Obsidian also writes shortest unique paths, e.g. topics/Note for
+    # wiki/topics/Note.md. Never guess when two suffixes match, or reinterpret
+    # an explicitly absolute/relative path as a shortened vault path.
+    if kind == 'wiki' and not target.startswith('/') and not {'.', '..'} & set(target.split('/')):
+        suffixes = ('/' + target, '/' + target + '.md')
+        matches = [p for p in paths if p.endswith(suffixes)]
         if len(matches) == 1:
             return matches[0]
     return None

@@ -27,6 +27,25 @@ class MoveTests(unittest.TestCase):
     def snapshot(self):
         return {p.relative_to(self.root).as_posix(): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
 
+    def test_graph_and_reader_share_shortest_unique_path_resolution(self):
+        cases = json.loads((Path(__file__).parent / 'link-resolution.json').read_text())
+        for item in cases:
+            with self.subTest(item['name']):
+                self.assertEqual(resolve_link(item['target'], item['source'], set(item['paths']), item['kind']), item['expected'])
+
+    def test_shortened_wikilinks_produce_edges_from_full_brain_and_survive_move(self):
+        self.store.folder(self.bid, 'wiki')
+        self.store.folder(self.bid, 'wiki/topics')
+        self.note('wiki/topics/migration.md', '# Migration\n[[topics/code|Code]] and [[topics/routines#Setup]]')
+        self.note('wiki/topics/code.md', '# Code')
+        self.note('wiki/topics/routines.md', '# Routines')
+        graph = self.store.graph(self.bid)
+        adjacent = {edge['target'] if edge['source'] == 'wiki/topics/migration' else edge['source'] for edge in graph['edges']}
+        self.assertEqual(adjacent, {'wiki/topics/code', 'wiki/topics/routines'})
+        self.store.move(self.bid, 'wiki/topics/code.md', 'Projects', 'note')
+        self.assertIn('[[Projects/code|Code]]', (self.root / 'wiki/topics/migration.md').read_text())
+        self.assertEqual(len(self.store.graph(self.bid)['edges']), 2)
+
     def test_move_note_and_return_to_root_keeps_identity_content_and_links(self):
         self.note('One.md', '# One\n[Next](Ideas/Two.md#section)\n')
         self.note('Ideas/Two.md', '# Two\n[[One|Start]] and [Start](../One.md)\n')
@@ -64,7 +83,9 @@ class MoveTests(unittest.TestCase):
         content = (self.root / 'Start.md').read_text()
         self.assertIn('<Projects/Ideas/Ol%C3%A1%20mundo.md#Olá> "A title"', content)
         self.assertIn('[ref]: Projects/Ideas/Ol%C3%A1%20mundo.md#part "Title"', content)
-        self.assertIn('[[Projects/Ideas/Olá mundo#Heading|Alias]]', content)
+        # The shortened wikilink remains unique after the folder move.
+        self.assertIn('[[Ideas/Olá mundo#Heading|Alias]]', content)
+        self.assertEqual(resolve_link('Ideas/Olá mundo', 'Start.md', {'Projects/Ideas/Olá mundo.md'}, 'wiki'), 'Projects/Ideas/Olá mundo.md')
         self.assertIn('(https://example.com/Ideas/Olá.md)', content)
         self.assertIn('![Map](Projects/Ideas/map.png)', content)
 

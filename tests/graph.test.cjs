@@ -88,20 +88,35 @@ test('opening an unconnected note keeps every sibling label and its filename vis
  assert.equal(labels.find(label=>label.id===g.nodes[0].id).name,'log.md');
 });
 
-test('selection and direct connections have distinct labels; hover does not imitate selection',()=>{
+test('selection and hover isolate direct neighbors; moving away restores the selection',()=>{
  const g=labelsGraph(4),fills=[];
- g.edges=[{source:'0',target:'1'},{source:'1',target:'2'}];g.select('0');g.hover='3';
+ g.edges=[{source:'0',target:'1'},{source:'1',target:'2'}];g.select('0');
  g.colors=['#aeeed8'];g.groups=['projects'];
- g.palette={labelSelected:'#b4ebd9',labelSelectedText:'#111111',labelLinked:'#3e585b',labelLinkedText:'#e3eff0',label:'#101e2ae8',labelActive:'#1b2b35f5',labelText:'#e3eff0',labelMuted:'#c0cdd0',accent:'#b4ebd9',line:'#33444b',pearl:'#ffffff'};
- g.ctx={measureText:text=>({width:text.length*6.6}),createRadialGradient:()=>({addColorStop(){}}),fillRect(){},beginPath(){},arc(){},fill(){},stroke(){},roundRect(){},fillText(text){fills.push({text,color:this.fillStyle});}};
- const backgrounds=[];g.ctx.fill=function(){backgrounds.push(this.fillStyle);};
+ g.palette={labelSelected:'#b4ebd9d6',labelSelectedText:'#000000',labelLinked:'#3e585bcc',labelLinkedText:'#e3eff0',label:'#101e2ae8',labelActive:'#1b2b35f5',labelText:'#e3eff0',labelMuted:'#c0cdd0',accent:'#b4ebd9',line:'#33444b',pearl:'#ffffff'};
+ g.ctx={measureText:text=>({width:text.length*6.6}),createRadialGradient:()=>({addColorStop(){}}),fillRect(){},beginPath(){},arc(){},fill(){},stroke(){},roundRect(){},fillText(text){fills.push({text,color:this.fillStyle,alpha:this.globalAlpha});}};
  g.drawNotes();
  assert.equal(fills.find(x=>x.text==='Project 1').color,g.palette.labelSelectedText);
  assert.equal(fills.find(x=>x.text==='Project 2').color,g.palette.labelLinkedText);
- assert.equal(fills.find(x=>x.text==='Project 3').color,g.palette.labelMuted);
- for(const key of ['labelSelected','labelLinked','labelActive','label'])assert.ok(backgrounds.includes(g.palette[key]));
- g.select(null);backgrounds.length=0;g.drawNotes();
- assert.ok(!backgrounds.includes(g.palette.labelSelected));assert.ok(!backgrounds.includes(g.palette.labelLinked));
+ assert.equal(fills.find(x=>x.text==='Project 2').alpha,1);
+ assert.equal(fills.find(x=>x.text==='Project 3').alpha,.18);
+ const positions=JSON.stringify(g.labelRects);
+ g.hover='1';fills.length=0;g.drawNotes();
+ assert.equal(JSON.stringify(g.labelRects),positions,'hover must not move labels');
+ assert.equal(fills.find(x=>x.text==='Project 2').color,g.palette.labelSelectedText);
+ for(const title of ['Project 1','Project 2','Project 3'])assert.equal(fills.find(x=>x.text===title).alpha,1);
+ assert.equal(fills.find(x=>x.text==='Project 4').alpha,.18);
+ g.hover='3';assert.deepEqual(Array.from(g.focusState().neighbors),['3']);
+ g.hover=null;assert.equal(g.focusState().id,'0');
+ g.select(null);fills.length=0;g.drawNotes();assert.ok(fills.every(x=>x.alpha===1));
+ assert.equal(g.ctx.globalAlpha,1);
+});
+
+test('keyboard focus uses the same direct neighborhood as hover',()=>{
+ const g=labelsGraph(4);g.edges=[{source:'0',target:'1'},{source:'1',target:'2'}];g.select('3');g.keyboardId='1';
+ context.document.activeElement=g.canvas;
+ assert.equal(g.focusState().id,'1');assert.deepEqual(Array.from(g.focusState().neighbors).sort(),['0','1','2']);
+ g.hover='0';assert.equal(g.focusState().id,'0');
+ context.document.activeElement=null;g.hover=null;assert.equal(g.focusState().id,'3');
 });
 
 test('selected connections get multiple travelling points even beyond the old edge sampling stride',()=>{
@@ -125,8 +140,12 @@ test('selection label text stays readable in every preset and custom Omarchy pal
  const custom=['#111111','#ffffff','#808080','#ff00ff'].map(accent=>({...themes.presets[0],id:'omarchy',accent}));
  for(const theme of [...themes.presets,...custom]){
   const p=themes.build(theme).graph;
-  assert.ok(contrast(p.labelSelected,p.labelSelectedText)>=4.5,theme.id+' selected');
-  assert.ok(contrast(p.labelLinked,p.labelLinkedText)>=4.5,theme.id+' linked');
+  const composite=(fill,bg)=>'#'+[1,3,5].map(i=>Math.round(parseInt(bg.slice(i,i+2),16)*(1-parseInt(fill.slice(7),16)/255)+parseInt(fill.slice(i,i+2),16)*parseInt(fill.slice(7),16)/255).toString(16).padStart(2,'0')).join('');
+  for(const background of [theme.bg,theme.panel]){
+   assert.ok(contrast(composite(p.labelSelected,background),p.labelSelectedText)>=4.5,theme.id+' selected');
+   assert.ok(contrast(composite(p.labelLinked,background),p.labelLinkedText)>=4.5,theme.id+' linked');
+  }
+  for(const fill of [p.labelSelected,p.labelLinked])assert.ok(parseInt(fill.slice(7),16)<255);
   assert.notEqual(p.labelSelected,p.labelLinked);
  }
 });

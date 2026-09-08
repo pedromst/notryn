@@ -26,7 +26,7 @@ window.NotrynGraph=class{
   this.nodes.forEach((n,i)=>{n.brain=this.brainPoint(i%2?1:-1,.3+(i+.5)/Math.max(1,this.nodes.length)*(Math.PI-.6),i*2.39996);});
   const ranked=[...this.nodes].sort((a,b)=>Number(b.kind==='folder')-Number(a.kind==='folder')||b.degree-a.degree||a.title.localeCompare(b.title));
   this.labelRank=new Map(ranked.map((n,i)=>[n.id,i]));
-  if(!this.ids.has(this.keyboardId))this.keyboardId=null;this.fit(true);
+  this.hover=null;if(!this.ids.has(this.keyboardId))this.keyboardId=null;this.fit(true);
  }
  brainPoint(side,lat,lon){
   const s=Math.sin(lat),fold=1+.045*Math.sin(lon*7+lat*8)+.023*Math.sin(lat*17-lon*3);
@@ -88,6 +88,12 @@ window.NotrynGraph=class{
   this.cameraTo({zoom:1,rotation:.32,tilt:-.12},immediate);
  }
  select(id){this.selected=id;if(this.ids?.has(id))this.keyboardId=id;this.neighbors=new Set([id]);this.edges.forEach(e=>{if(e.source===id)this.neighbors.add(e.target);if(e.target===id)this.neighbors.add(e.source);});this.dirty=true;}
+ focusState(){
+  const keyboard=document.activeElement===this.canvas?this.keyboardId:null;
+  const id=[this.hover,keyboard,this.selected].find(id=>id&&this.ids?.has(id))||null,neighbors=new Set(id?[id]:[]);
+  if(id)for(const edge of this.edges){if(edge.source===id)neighbors.add(edge.target);if(edge.target===id)neighbors.add(edge.source);}
+  return{id,neighbors};
+ }
  project(p){
   let{x,y,z}=p;
   const a=x*Math.cos(this.rotation)+z*Math.sin(this.rotation);z=-x*Math.sin(this.rotation)+z*Math.cos(this.rotation);x=a;
@@ -153,20 +159,20 @@ window.NotrynGraph=class{
    }
   }
  }
- drawConnections(){
-  const c=this.ctx,density=Math.max(.045,Math.min(.22,.22/Math.sqrt(Math.max(1,this.edges.length/100))));
-  const activeCount=this.selected?this.edges.filter(e=>e.source===this.selected||e.target===this.selected).length:0;
-  const pulseCount=this.selected?Math.max(1,Math.min(3,Math.floor(96/Math.max(1,activeCount)))):2;
+ drawConnections(focus=this.focusState()){
+  const id=focus.id,c=this.ctx,density=Math.max(.045,Math.min(.22,.22/Math.sqrt(Math.max(1,this.edges.length/100))));
+  const activeCount=id?this.edges.filter(e=>e.source===id||e.target===id).length:0;
+  const pulseCount=id?Math.max(1,Math.min(3,Math.floor(96/Math.max(1,activeCount)))):2;
   let sparks=0;
   for(let i=0;i<this.edges.length;i++){
    const e=this.edges[i],a=this.ids.get(e.source),b=this.ids.get(e.target);if(!this.filter(a)||!this.filter(b))continue;
-   const p=this.points.get(a.id),q=this.points.get(b.id),active=this.selected&&(a.id===this.selected||b.id===this.selected);
-   this.line(p,q,active?this.palette.accent+'b8':`rgba(${this.palette.rgb},${this.selected?.028:density})`,active?1.4:.65);
-   if(active||!this.selected&&i%Math.max(1,Math.ceil(this.edges.length/24))===0){
+   const p=this.points.get(a.id),q=this.points.get(b.id),active=id&&(a.id===id||b.id===id);
+   this.line(p,q,active?this.palette.accent+'b8':`rgba(${this.palette.rgb},${id?.028:density})`,active?1.4:.65);
+   if(active||!id&&i%Math.max(1,Math.ceil(this.edges.length/24))===0){
     // Selected links always get pulses, regardless of their index in the graph.
     // Space several along each line, with a bounded total cost for dense Brains.
-    const start=active&&b.id===this.selected?q:p,end=start===p?q:p;
-    for(let j=0;j<pulseCount&&sparks<(this.selected?96:48);j++,sparks++){
+    const start=active&&b.id===id?q:p,end=start===p?q:p;
+    for(let j=0;j<pulseCount&&sparks<(id?96:48);j++,sparks++){
     const t=(this.time*(.07+this.hash(e.source+e.target)*.035)+this.hash('pulse'+i)+j/pulseCount)%1,tail=Math.max(0,t-.065);
     const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t,tx=start.x+(end.x-start.x)*tail,ty=start.y+(end.y-start.y)*tail;
     const streak=c.createLinearGradient(tx,ty,x+.01,y+.01);streak.addColorStop(0,this.palette.pulse+'00');streak.addColorStop(1,this.palette.pulse+'aa');
@@ -179,7 +185,8 @@ window.NotrynGraph=class{
  noteRadius(n,p){return((n.kind==='folder'?5.6:3.4)+Math.min(3.6,Math.sqrt(n.degree)*.62))*p.s;}
  layoutLabels(){
   const c=this.ctx,w=this.width,h=this.height,keyboard=document.activeElement===this.canvas,labels=[],cells=new Map(),cellSize=64;
-  const focused=n=>this.selected===n.id||this.hover===n.id||(keyboard&&this.keyboardId===n.id);
+  // Hover changes appearance only: labels must not jump away from the pointer.
+  const focused=n=>this.selected===n.id||(keyboard&&this.keyboardId===n.id);
   const buckets=rect=>{const keys=[];for(let x=Math.floor(rect.x/cellSize);x<=Math.floor((rect.x+rect.w)/cellSize);x++)for(let y=Math.floor(rect.y/cellSize);y<=Math.floor((rect.y+rect.h)/cellSize);y++)keys.push(x+':'+y);return keys;};
   const occupy=rect=>{for(const key of buckets(rect)){if(!cells.has(key))cells.set(key,[]);cells.get(key).push(rect);}};
   const overlaps=rect=>buckets(rect).some(key=>(cells.get(key)||[]).some(b=>rect.x<b.x+b.w+3&&rect.x+rect.w+3>b.x&&rect.y<b.y+b.h+3&&rect.y+rect.h+3>b.y));
@@ -216,14 +223,14 @@ window.NotrynGraph=class{
   }
   return labels;
  }
- drawNotes(){
-  const c=this.ctx,keyboard=document.activeElement===this.canvas;
+ drawNotes(focus=this.focusState()){
+  const c=this.ctx;
   const sorted=[...this.nodes].sort((a,b)=>this.points.get(b.id).z-this.points.get(a.id).z);
   for(const n of sorted){
    const p=this.points.get(n.id),color=this.color(n.group),visible=this.filter(n);
-   const focused=this.selected===n.id||this.hover===n.id||(keyboard&&this.keyboardId===n.id);
+   const focused=focus.id===n.id;
    const r=this.noteRadius(n,p);
-   c.globalAlpha=visible?1:.04;
+   c.globalAlpha=visible?(focus.id&&!focus.neighbors.has(n.id)?.16:1):.04;
    const aura=c.createRadialGradient(p.x,p.y,0,p.x,p.y,r*5);aura.addColorStop(0,color+'55');aura.addColorStop(.3,color+'18');aura.addColorStop(1,color+'00');
    c.fillStyle=aura;c.fillRect(p.x-r*5,p.y-r*5,r*10,r*10);
    const pearl=c.createRadialGradient(p.x-r*.3,p.y-r*.4,.1,p.x,p.y,r);
@@ -231,16 +238,17 @@ window.NotrynGraph=class{
    c.fillStyle=pearl;c.beginPath();c.arc(p.x,p.y,r,0,Math.PI*2);c.fill();
    if(n.kind==='folder'){c.strokeStyle=color+'99';c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,r+4,0,Math.PI*2);c.stroke();c.strokeStyle=color+'2d';c.beginPath();c.arc(p.x,p.y,r+8,0,Math.PI*2);c.stroke();}
    if(focused){
-    c.strokeStyle=(this.selected===n.id?this.palette.accent:color)+'dd';c.lineWidth=this.selected===n.id?1.8:1;c.beginPath();c.arc(p.x,p.y,r+6,0,Math.PI*2);c.stroke();
+    c.strokeStyle=this.palette.accent+'dd';c.lineWidth=1.8;c.beginPath();c.arc(p.x,p.y,r+6,0,Math.PI*2);c.stroke();
     c.strokeStyle=color+'27';c.beginPath();c.arc(p.x,p.y,r+11,0,Math.PI*2);c.stroke();
    }
    c.globalAlpha=1;
   }
   this.labelRects=this.layoutLabels();
   for(const rect of this.labelRects){
-   const selected=rect.id===this.selected,linked=!!this.selected&&!selected&&this.neighbors?.has(rect.id);
+   const selected=rect.id===focus.id,linked=!!focus.id&&!selected&&focus.neighbors.has(rect.id);
+   c.globalAlpha=focus.id&&!focus.neighbors.has(rect.id)?.18:1;
    c.font=rect.font;c.fillStyle=selected?this.palette.labelSelected:linked?this.palette.labelLinked:rect.focused?this.palette.labelActive:this.palette.label;c.beginPath();c.roundRect(rect.x,rect.y,rect.w,rect.h,5);c.fill();
-   c.strokeStyle=selected?this.palette.accent:linked?this.palette.accent+'99':rect.focused?this.palette.accent+'55':this.palette.line+'55';c.lineWidth=selected?1.4:linked?1:.6;c.stroke();c.fillStyle=selected?this.palette.labelSelectedText:linked?this.palette.labelLinkedText:rect.focused?this.palette.labelText:this.palette.labelMuted;c.fillText(rect.name,rect.x+6,rect.y+15);
+   c.strokeStyle=selected?this.palette.accent:linked?this.palette.accent+'99':rect.focused?this.palette.accent+'55':this.palette.line+'55';c.lineWidth=selected?1.4:linked?1:.6;c.stroke();c.fillStyle=selected?this.palette.labelSelectedText:linked?this.palette.labelLinkedText:rect.focused?this.palette.labelText:this.palette.labelMuted;c.fillText(rect.name,rect.x+6,rect.y+15);c.globalAlpha=1;
   }
  }
  tick(now){
@@ -249,15 +257,50 @@ window.NotrynGraph=class{
   if(!this.width||!this.height||document.body.classList.contains('notes-only')||document.body.classList.contains('note-focus')||(this.mobile.matches&&document.body.dataset.mobile!=='map'))return;
   const navigating=this.advanceCamera(dt);
   if(!this.moving&&!this.dirty&&!navigating)return;
-  if(this.moving){this.time+=dt/1000;if(!navigating&&!this.drag&&document.activeElement!==this.canvas)this.rotation+=dt*.000018;}
+  if(this.moving){this.time+=dt/1000;if(!navigating&&!this.drag&&!this.hover&&document.activeElement!==this.canvas)this.rotation+=dt*.000018;}
   this.draw();this.dirty=false;
  }
  draw(){
   const c=this.ctx,w=this.width,h=this.height;if(!w||!h)return;c.clearRect(0,0,w,h);this.atmosphere();
   if(!this.nodes.length){this.points.clear();this.labelRects=[];return;}
-  c.globalAlpha=this.selected ? .65 : 1;this.drawCortex();c.globalAlpha=1;this.points.clear();this.nodes.forEach(n=>this.points.set(n.id,this.project(n.brain)));
-  this.drawConnections();this.drawNotes();
+  const focus=this.focusState();c.globalAlpha=focus.id ? .45 : 1;this.drawCortex();c.globalAlpha=1;this.points.clear();this.nodes.forEach(n=>this.points.set(n.id,this.project(n.brain)));
+  this.drawConnections(focus);this.drawNotes(focus);
  }
  hit(x,y){for(const label of this.labelRects)if(x>=label.x&&x<=label.x+label.w&&y>=label.y&&y<=label.y+label.h)return this.ids.get(label.id);let best=null,min=18;for(const n of this.nodes){if(!this.filter(n))continue;const p=this.points.get(n.id);if(!p)continue;const d=Math.hypot(p.x-x,p.y-y);if(d<min){best=n;min=d;}}return best;}
- events(){const c=this.canvas,tip=document.querySelector('#graph-tooltip'),pos=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};c.onpointerdown=e=>{this.cameraTarget=null;const p=pos(e);this.pointers.set(e.pointerId,p);c.setPointerCapture(e.pointerId);this.drag={...p,startX:p.x,startY:p.y,moved:false};if(this.pointers.size>1){this.pinching=true;const[a,b]=[...this.pointers.values()];this.distance=Math.hypot(a.x-b.x,a.y-b.y);}tip.hidden=true;};c.onpointermove=e=>{const p=pos(e);if(this.pointers.has(e.pointerId))this.pointers.set(e.pointerId,p);if(this.pointers.size>1){const[a,b]=[...this.pointers.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(this.distance)this.zoom=Math.max(.4,Math.min(3,this.zoom*d/this.distance));this.distance=d;this.dirty=true;return;}if(this.drag){const dx=p.x-this.drag.x,dy=p.y-this.drag.y;if(Math.hypot(p.x-this.drag.startX,p.y-this.drag.startY)>5)this.drag.moved=true;this.rotation+=dx*.006;this.tilt=Math.max(-1,Math.min(1,this.tilt+dy*.006));this.drag.x=p.x;this.drag.y=p.y;this.dirty=true;return;}const n=this.hit(p.x,p.y);this.hover=n?.id||null;c.style.cursor=n?'pointer':'grab';tip.hidden=!n;if(n){tip.textContent=n.kind==='folder'?n.title+' · Folder · '+n.count+(n.count===1?' item':' items'):(n.path||n.title)+' · '+n.title+' · '+n.degree+(n.degree===1?' connection':' connections');tip.style.left=Math.max(10,Math.min(p.x+17,this.width-240))+'px';tip.style.top=Math.max(75,p.y-35)+'px';}this.dirty=true;};const release=e=>{const p=pos(e);if(this.drag&&!this.drag.moved&&!this.pinching){const n=this.hit(p.x,p.y);if(n)this.onSelect(n.id);}this.pointers.delete(e.pointerId);this.drag=null;this.distance=null;if(!this.pointers.size)this.pinching=false;};c.onpointerup=release;c.onpointercancel=e=>{this.pointers.delete(e.pointerId);this.drag=null;this.pinching=false;};c.onpointerleave=()=>{tip.hidden=true;this.hover=null;this.dirty=true;};c.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;e.preventDefault();const units=e.deltaMode===1?16:e.deltaMode===2?this.height:1;this.zoomBy(Math.exp(-Math.max(-240,Math.min(240,e.deltaY*units))*.001));},{passive:false});}
+ events(){
+  const c=this.canvas,pos=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
+  c.onpointerdown=e=>{
+   this.cameraTarget=null;const p=pos(e);this.pointers.set(e.pointerId,p);c.setPointerCapture(e.pointerId);
+   this.drag={...p,startX:p.x,startY:p.y,moved:false};
+   if(this.pointers.size>1){this.pinching=true;const[a,b]=[...this.pointers.values()];this.distance=Math.hypot(a.x-b.x,a.y-b.y);}
+  };
+  c.onpointermove=e=>{
+   const p=pos(e);if(this.pointers.has(e.pointerId))this.pointers.set(e.pointerId,p);
+   if(this.pointers.size>1){
+    const[a,b]=[...this.pointers.values()],d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(this.distance)this.zoom=Math.max(.4,Math.min(3,this.zoom*d/this.distance));
+    this.distance=d;this.hover=null;this.dirty=true;return;
+   }
+   if(this.drag){
+    const dx=p.x-this.drag.x,dy=p.y-this.drag.y;
+    if(Math.hypot(p.x-this.drag.startX,p.y-this.drag.startY)>5)this.drag.moved=true;
+    this.rotation+=dx*.006;this.tilt=Math.max(-1,Math.min(1,this.tilt+dy*.006));
+    this.drag.x=p.x;this.drag.y=p.y;this.hover=null;this.dirty=true;return;
+   }
+   const n=this.hit(p.x,p.y);this.hover=n?.id||null;c.style.cursor=n?'pointer':'grab';this.dirty=true;
+  };
+  c.onpointerup=e=>{
+   const p=pos(e);if(this.drag&&!this.drag.moved&&!this.pinching){const n=this.hit(p.x,p.y);if(n)this.onSelect(n.id);}
+   this.pointers.delete(e.pointerId);this.drag=null;this.distance=null;
+   if(e.pointerType!=='mouse')this.hover=null;
+   if(!this.pointers.size)this.pinching=false;
+  };
+  c.onpointercancel=e=>{this.pointers.delete(e.pointerId);this.drag=null;this.pinching=false;this.hover=null;this.dirty=true;};
+  c.onpointerleave=()=>{this.hover=null;this.dirty=true;};
+  c.addEventListener('wheel',e=>{
+   if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;e.preventDefault();
+   const units=e.deltaMode===1?16:e.deltaMode===2?this.height:1;
+   this.zoomBy(Math.exp(-Math.max(-240,Math.min(240,e.deltaY*units))*.001));
+  },{passive:false});
+ }
 };
