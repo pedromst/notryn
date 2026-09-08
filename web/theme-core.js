@@ -37,7 +37,9 @@ window.NotrynThemes=(()=>{
    'glass-edge':`inset 0 1px 0 ${text}0e,0 12px 40px ${light?'#2137390a':'#00000022'}`,
    'theme-radius':theme.id==='command'?'7px':'17px'};
   const mesh=light?mix(accent,text,.25):mix(secondary,theme.accent,.45);
+  const linkedLabel=mix(panel,primary,.28);
   const graph={colors:theme.colors,mesh,light,accent:theme.accent,secondary,rgb:rgb(mesh).join(','),pulse:light?accent:mix(theme.accent,'#ffffff',.6),
+   labelSelected:primary,labelSelectedText:onAccent,labelLinked:linkedLabel,labelLinkedText:readable(text,linkedLabel,7),
    label:panel+(light?'f5':'e8'),labelActive:soft+'f5',labelText:text,labelMuted:mix(text,panel,.14),line,pearl:light?mix(theme.accent,'#ffffff',.5):'#f0ffff'};
   return {vars,graph,light};
  }

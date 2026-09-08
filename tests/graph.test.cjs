@@ -87,3 +87,46 @@ test('opening an unconnected note keeps every sibling label and its filename vis
  const labels=g.layoutLabels();assert.equal(labels.length,16);assertLegible(g,labels);
  assert.equal(labels.find(label=>label.id===g.nodes[0].id).name,'log.md');
 });
+
+test('selection and direct connections have distinct labels; hover does not imitate selection',()=>{
+ const g=labelsGraph(4),fills=[];
+ g.edges=[{source:'0',target:'1'},{source:'1',target:'2'}];g.select('0');g.hover='3';
+ g.colors=['#aeeed8'];g.groups=['projects'];
+ g.palette={labelSelected:'#b4ebd9',labelSelectedText:'#111111',labelLinked:'#3e585b',labelLinkedText:'#e3eff0',label:'#101e2ae8',labelActive:'#1b2b35f5',labelText:'#e3eff0',labelMuted:'#c0cdd0',accent:'#b4ebd9',line:'#33444b',pearl:'#ffffff'};
+ g.ctx={measureText:text=>({width:text.length*6.6}),createRadialGradient:()=>({addColorStop(){}}),fillRect(){},beginPath(){},arc(){},fill(){},stroke(){},roundRect(){},fillText(text){fills.push({text,color:this.fillStyle});}};
+ const backgrounds=[];g.ctx.fill=function(){backgrounds.push(this.fillStyle);};
+ g.drawNotes();
+ assert.equal(fills.find(x=>x.text==='Project 1').color,g.palette.labelSelectedText);
+ assert.equal(fills.find(x=>x.text==='Project 2').color,g.palette.labelLinkedText);
+ assert.equal(fills.find(x=>x.text==='Project 3').color,g.palette.labelMuted);
+ for(const key of ['labelSelected','labelLinked','labelActive','label'])assert.ok(backgrounds.includes(g.palette[key]));
+ g.select(null);backgrounds.length=0;g.drawNotes();
+ assert.ok(!backgrounds.includes(g.palette.labelSelected));assert.ok(!backgrounds.includes(g.palette.labelLinked));
+});
+
+test('selected connections get multiple travelling points even beyond the old edge sampling stride',()=>{
+ const g=labelsGraph(4),dots=[];
+ g.edges=Array.from({length:80},()=>({source:'2',target:'3'}));g.edges[1]={source:'1',target:'0'};g.select('0');
+ g.palette={rgb:'170,220,200',accent:'#b4ebd9',pulse:'#ecfff7'};
+ g.ctx={createLinearGradient:()=>({addColorStop(){}}),beginPath(){},arc(x,y,r){dots.push({x,y,r});},fill(){}};g.line=()=>{};g.glow=()=>{};
+ g.drawConnections();assert.equal(dots.length,3);
+ const start=g.points.get('0'),end=g.points.get('1');
+ for(const dot of dots)assert.ok(dot.x>=start.x&&dot.x<=end.x&&dot.r>1.1);
+ const previous=dots.map(d=>d.x);dots.length=0;g.time+=.5;g.drawConnections();assert.notDeepEqual(dots.map(d=>d.x),previous);
+ g.edges=Array.from({length:120},()=>({source:'0',target:'1'}));dots.length=0;g.drawConnections();assert.ok(dots.length<=96);
+});
+
+test('selection label text stays readable in every preset and custom Omarchy palettes',()=>{
+ const sandbox={window:{},localStorage:{getItem:()=>null},CustomEvent:class{},document:{documentElement:{dataset:{},style:{setProperty(){}}},querySelector:()=>null,dispatchEvent(){}}};
+ vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../web/theme-core.js'),'utf8'),sandbox);
+ const themes=sandbox.window.NotrynThemes;
+ const luminance=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);
+ const contrast=(a,b)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);
+ const custom=['#111111','#ffffff','#808080','#ff00ff'].map(accent=>({...themes.presets[0],id:'omarchy',accent}));
+ for(const theme of [...themes.presets,...custom]){
+  const p=themes.build(theme).graph;
+  assert.ok(contrast(p.labelSelected,p.labelSelectedText)>=4.5,theme.id+' selected');
+  assert.ok(contrast(p.labelLinked,p.labelLinkedText)>=4.5,theme.id+' linked');
+  assert.notEqual(p.labelSelected,p.labelLinked);
+ }
+});

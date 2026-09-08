@@ -154,6 +154,8 @@ Press **G** outside text fields to focus the brain. While it has focus:
 
 Use **Shift G** outside text fields, or **Immersive brain / return** in the command palette, to hide the library and note pane without closing your draft. **Esc** restores the previous layout and writing focus. Opening a note from the immersive brain brings its pane back. On mobile, this command opens the brain view.
 
+Selecting a note gives its label a solid theme accent. Directly connected notes use a softer shade of the same color; other labels and folder colors remain visible. Selected connections carry up to three brighter travelling points per line, with a bounded particle count for dense Brains.
+
 Pausing freezes rotation, pulses and ambient effects. The pause preference is saved in the browser, and reduced-motion preferences are respected. Automatic rotation is suspended while the brain has focus to make selection easier. J/K navigation respects the current filter and orders notes alphabetically.
 
 In the library, ↑/↓ move between rows, ←/→ collapse or expand folders, Home/End move to the first/last row, and Enter opens a note. After filtering with Q, use ↓ or Enter to reach the results. The Brain picker also supports arrows and Enter. Forms use Tab, Shift Tab and Enter; confirm a selection with Enter before moving on with Tab.
