@@ -50,6 +50,7 @@ jobs:
           if test '${{ matrix.platform }}' = linux; then EXT=tar.gz; fi
           python scripts/test-package.py "dist/Notryn-$VERSION-${{ matrix.platform }}-${{ matrix.arch }}.$EXT"
           "dist/notryn-setup-${{ matrix.platform }}-${{ matrix.arch }}" --help
+          "dist/notryn-setup-${{ matrix.platform }}-${{ matrix.arch }}" --check-downloads
       - uses: actions/upload-artifact@v4
         with:
           name: notryn-${{ matrix.platform }}-${{ matrix.arch }}
