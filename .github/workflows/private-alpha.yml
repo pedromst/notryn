@@ -1,16 +1,16 @@
-name: Private alpha packages
+name: Release packages
 on:
   workflow_dispatch:
     inputs:
       publish_release:
-        description: Create a new private prerelease after all package checks pass
+        description: Create a new beta prerelease after all package checks pass
         required: true
         default: true
         type: boolean
 permissions:
   contents: read
 concurrency:
-  group: private-alpha-packages
+  group: release-packages
   cancel-in-progress: false
 jobs:
   package:
@@ -68,15 +68,14 @@ jobs:
           pattern: notryn-*
           merge-multiple: true
           path: release
-      - name: Publish new private prerelease without replacing old assets
+      - name: Publish new beta prerelease without replacing old assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh repo view --json visibility --jq .visibility)" = PRIVATE
           VERSION=$(python3 -c 'from notryn_version import VERSION; print(VERSION)')
           TAG="v$VERSION"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo 'This version already exists. Bump the version; releases must not be overwritten.' >&2
             exit 1
           fi
-          gh release create "$TAG" release/* --target "$GITHUB_SHA" --prerelease --title "Notryn $VERSION private alpha" --notes-file docs/PRIVATE-ALPHA.md
+          gh release create "$TAG" release/* --target "$GITHUB_SHA" --prerelease --title "Notryn $VERSION beta" --notes-file docs/RELEASE-NOTES.md

@@ -283,11 +283,12 @@ class Installation:
 
     def install(self, client, version=None):
         with self.locked():
-            release = client.release(version, prerelease=client.private)
+            existing = self.manifest() if self.app.exists() and self.manifest_path().is_file() else None
+            # Beta installations follow preview releases; stable installations stay stable.
+            preview = client.private or bool(existing and '-' in existing['version'])
+            release = client.release(version, prerelease=preview)
             version = release['tag_name'].removeprefix('v')
-            existing = None
-            if self.app.exists() and self.manifest_path().is_file():
-                existing = self.manifest()
+            if existing:
                 if version_key(version) <= version_key(existing['version']):
                     print('Already installed: ' + existing['version'] + '. Use notryn rollback to return to a saved version.')
                     return existing['version']

@@ -8,3 +8,6 @@ NAME="notryn-setup-$OS-$ARCH"
 if test "$OS" = macos; then codesign --force --sign - "$ROOT/dist/$NAME"; fi
 (cd "$ROOT/dist" && if command -v sha256sum >/dev/null 2>&1; then sha256sum "$NAME"; else shasum -a 256 "$NAME"; fi) > "$ROOT/dist/$NAME.sha256"
 cp "$ROOT/packaging/install.sh" "$ROOT/dist/install.sh"
+
+cp "$ROOT/LICENSE" "$ROOT/dist/LICENSE.txt"
+cp "$ROOT/THIRD_PARTY_NOTICES.md" "$ROOT/dist/THIRD_PARTY_NOTICES.md"

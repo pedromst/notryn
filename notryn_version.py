@@ -1,3 +1,3 @@
-"""Single source for the private alpha version."""
+"""Single source for the application release version."""
 
-VERSION = "0.2.0-alpha.3"
+VERSION = "0.2.0-beta.1"

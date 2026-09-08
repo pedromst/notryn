@@ -136,6 +136,30 @@ class InstallerTests(unittest.TestCase):
             self.install.install(FixtureReleases(self.root,'0.2.0-alpha.3'))
         self.assertEqual(self.install.manifest()['version'],'0.2.0-alpha.4')
 
+    def test_public_update_channel_follows_installed_version(self):
+        for installed, expected in [('0.2.0-beta.1', True), ('0.2.0', False)]:
+            with self.subTest(installed=installed):
+                client = FixtureReleases(self.root, installed)
+                client.private = False
+                with patch.object(self.install, 'verify_app'):
+                    self.install.install(client, installed)
+                    with patch.object(client, 'release', wraps=client.release) as fetch:
+                        self.install.install(client)
+                        fetch.assert_called_once_with(None, prerelease=expected)
+                self.install.uninstall()
+        self.assert_data_preserved()
+
+    def test_public_release_selection_filters_drafts_and_preview(self):
+        client = Releases(False)
+        releases = [
+            {'tag_name': 'v0.2.0', 'prerelease': False},
+            {'tag_name': 'v0.3.0-beta.1', 'prerelease': True},
+            {'tag_name': 'v0.4.0', 'draft': True},
+        ]
+        with patch.object(client, 'json', return_value=releases):
+            self.assertEqual(client.release()['tag_name'], 'v0.2.0')
+            self.assertEqual(client.release(prerelease=True)['tag_name'], 'v0.3.0-beta.1')
+
     def test_archive_paths_links_special_files_and_duplicates(self):
         for name, target in [('../outside',None),('/outside',None),('Notryn/escape','../../outside'),('Notryn/device',None),('Notryn/file',None)]:
             with self.subTest(name=name):

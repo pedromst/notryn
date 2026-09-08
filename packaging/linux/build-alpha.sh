@@ -26,6 +26,7 @@ PY
 cp -R "$BUILD/sidecar/notryn" "$STAGE/sidecar"
 cp "$BUILD/electron/Notryn-$VERSION-linux-x86_64.AppImage" "$STAGE/Notryn.AppImage"
 chmod 755 "$STAGE/Notryn.AppImage"
+cp "$ROOT/LICENSE" "$ROOT/THIRD_PARTY_NOTICES.md" "$STAGE/"
 cp "$ROOT/web/favicon.svg" "$STAGE/notryn.svg"
 ARCHIVE="$OUTPUT/Notryn-$VERSION-linux-x86_64.tar.gz"
 tar -C "$BUILD" -czf "$ARCHIVE" "Notryn-$VERSION"

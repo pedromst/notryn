@@ -46,7 +46,7 @@ function stopServer() {
 
 function createWindow() {
   window = new BrowserWindow({
-    title: 'Notryn',
+    title: 'notryn',
     width: 1500,
     height: 940,
     minWidth: 920,
