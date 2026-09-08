@@ -31,7 +31,6 @@
     const route=url.pathname;
     if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-alpha.3',agent:{connected:false,mode:'local-guide'}};
     if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-alpha.3'};
-    if(route==='/api/voice')return {available:false,local:true};
     if(route==='/api/theme')return {available:false};
     if(route==='/api/graph')return graph(url.searchParams.get('brain'));
     if(route==='/api/note'){

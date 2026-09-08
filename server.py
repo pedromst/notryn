@@ -5,7 +5,6 @@ import hmac
 import json
 import mimetypes
 import secrets
-import subprocess
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -19,18 +18,6 @@ from notryn_version import VERSION
 HERE=Path(__file__).resolve().parent
 RESOURCE_ROOT=Path(getattr(sys,'_MEIPASS',HERE))
 WEB=RESOURCE_ROOT/'web'
-SPEECH_LOCK=threading.Lock()
-SPEECH_PROCESS=None
-
-def has_voice():
-    if not Path('/usr/bin/say').is_file():
-        return False
-    try:
-        result=subprocess.run(['/usr/bin/say','-v','?'],capture_output=True,text=True,timeout=5)
-        return any(line.startswith('Samantha ') and 'en_US' in line for line in result.stdout.splitlines())
-    except (OSError,subprocess.TimeoutExpired):
-        return False
-
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,format,*args):
         pass
@@ -70,8 +57,6 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,self.server.store.graph(param('brain',default)))
             if parsed.path=='/api/note':
                 return self.send(200,self.server.store.read(param('brain'),param('path')))
-            if parsed.path=='/api/voice':
-                return self.send(200,{'available':self.server.voice,'name':'Samantha','language':'en-US','local':True})
             if parsed.path=='/api/theme':
                 return self.send(200,omarchy_theme())
             target=(WEB/('index.html' if parsed.path=='/' else unquote(parsed.path).lstrip('/'))).resolve()
@@ -136,33 +121,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(201,self.server.store.folder(body.get('brain'),body.get('path')))
             if self.path=='/api/move':
                 return self.send(200,self.server.store.move(body.get('brain'),body.get('source'),body.get('destination'),body.get('kind'),body.get('guard')))
-            if self.path=='/api/speech':
-                return self.speech(body.get('text'))
             self.send(404,{'error':'Unknown action.'})
         except Problem as exc:
             self.send(exc.status,{'error':exc.message})
         except OSError:
             self.send(500,{'error':'Could not save. Your edit is still open.'})
-
-    def speech(self,text):
-        global SPEECH_PROCESS
-        if not self.server.voice:
-            return self.send(503,{'error':'No local English voice is available.'})
-        if not isinstance(text,str) or len(text)>2000:
-            raise Problem('Invalid text for speech.')
-        with SPEECH_LOCK:
-            if SPEECH_PROCESS and SPEECH_PROCESS.poll() is None:
-                SPEECH_PROCESS.terminate()
-            if not text:
-                return self.send(200,{'status':'stopped'})
-            process=subprocess.Popen(['/usr/bin/say','-v','Samantha'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            SPEECH_PROCESS=process
-        try:
-            process.communicate(text.encode(),timeout=180)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.communicate()
-        return self.send(200 if process.returncode in (0,-15) else 503,{'status':'finished' if process.returncode==0 else 'stopped'})
 
     def reject(self):
         self.send(405,{'error':'Action unavailable. File deletion is not supported.'})
@@ -174,7 +137,6 @@ def serve(port=4783,data_dir=None,open_browser=False,instance_id=None):
     app.store=Store(data_dir)
     app.token=secrets.token_urlsafe(32)
     app.instance_id=instance_id or secrets.token_urlsafe(24)
-    app.voice=has_voice()
     if open_browser:
         import webbrowser
         threading.Timer(.5,webbrowser.open,args=(f'http://127.0.0.1:{port}/',)).start()
@@ -184,8 +146,6 @@ def serve(port=4783,data_dir=None,open_browser=False,instance_id=None):
     except KeyboardInterrupt:
         pass
     finally:
-        if SPEECH_PROCESS and SPEECH_PROCESS.poll() is None:
-            SPEECH_PROCESS.terminate()
         app.server_close()
     return 0
 
