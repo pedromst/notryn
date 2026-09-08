@@ -155,17 +155,24 @@ window.NotrynGraph=class{
  }
  drawConnections(){
   const c=this.ctx,density=Math.max(.045,Math.min(.22,.22/Math.sqrt(Math.max(1,this.edges.length/100))));
+  const activeCount=this.selected?this.edges.filter(e=>e.source===this.selected||e.target===this.selected).length:0;
+  const pulseCount=this.selected?Math.max(1,Math.min(3,Math.floor(96/Math.max(1,activeCount)))):2;
   let sparks=0;
   for(let i=0;i<this.edges.length;i++){
    const e=this.edges[i],a=this.ids.get(e.source),b=this.ids.get(e.target);if(!this.filter(a)||!this.filter(b))continue;
    const p=this.points.get(a.id),q=this.points.get(b.id),active=this.selected&&(a.id===this.selected||b.id===this.selected);
-   this.line(p,q,`rgba(${this.palette.rgb},${active?.64:this.selected?.028:density})`,active?1.05:.65);
-   if((!this.selected||active)&&i%Math.max(1,Math.ceil(this.edges.length/24))===0&&sparks++<24){
-    const t=(this.time*(.07+this.hash(e.source+e.target)*.035)+this.hash('pulse'+i))%1,tail=Math.max(0,t-.1);
-    const x=p.x+(q.x-p.x)*t,y=p.y+(q.y-p.y)*t,tx=p.x+(q.x-p.x)*tail,ty=p.y+(q.y-p.y)*tail;
+   this.line(p,q,active?this.palette.accent+'b8':`rgba(${this.palette.rgb},${this.selected?.028:density})`,active?1.4:.65);
+   if(active||!this.selected&&i%Math.max(1,Math.ceil(this.edges.length/24))===0){
+    // Selected links always get pulses, regardless of their index in the graph.
+    // Space several along each line, with a bounded total cost for dense Brains.
+    const start=active&&b.id===this.selected?q:p,end=start===p?q:p;
+    for(let j=0;j<pulseCount&&sparks<(this.selected?96:48);j++,sparks++){
+    const t=(this.time*(.07+this.hash(e.source+e.target)*.035)+this.hash('pulse'+i)+j/pulseCount)%1,tail=Math.max(0,t-.065);
+    const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t,tx=start.x+(end.x-start.x)*tail,ty=start.y+(end.y-start.y)*tail;
     const streak=c.createLinearGradient(tx,ty,x+.01,y+.01);streak.addColorStop(0,this.palette.pulse+'00');streak.addColorStop(1,this.palette.pulse+'aa');
-    this.line({x:tx,y:ty},{x,y},streak,1.2);this.glow(x,y,6,this.palette.rgb,.12);
-    c.fillStyle=this.palette.pulse;c.beginPath();c.arc(x,y,1.1,0,Math.PI*2);c.fill();
+    this.line({x:tx,y:ty},{x,y},streak,active?1.7:1.2);this.glow(x,y,active?8:6,this.palette.rgb,active?.22:.12);
+    c.fillStyle=this.palette.pulse;c.beginPath();c.arc(x,y,active?1.7:1.25,0,Math.PI*2);c.fill();
+    }
    }
   }
  }
@@ -224,15 +231,16 @@ window.NotrynGraph=class{
    c.fillStyle=pearl;c.beginPath();c.arc(p.x,p.y,r,0,Math.PI*2);c.fill();
    if(n.kind==='folder'){c.strokeStyle=color+'99';c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,r+4,0,Math.PI*2);c.stroke();c.strokeStyle=color+'2d';c.beginPath();c.arc(p.x,p.y,r+8,0,Math.PI*2);c.stroke();}
    if(focused){
-    c.strokeStyle=color+'aa';c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,r+6,0,Math.PI*2);c.stroke();
+    c.strokeStyle=(this.selected===n.id?this.palette.accent:color)+'dd';c.lineWidth=this.selected===n.id?1.8:1;c.beginPath();c.arc(p.x,p.y,r+6,0,Math.PI*2);c.stroke();
     c.strokeStyle=color+'27';c.beginPath();c.arc(p.x,p.y,r+11,0,Math.PI*2);c.stroke();
    }
    c.globalAlpha=1;
   }
   this.labelRects=this.layoutLabels();
   for(const rect of this.labelRects){
-   c.font=rect.font;c.fillStyle=rect.focused?this.palette.labelActive:this.palette.label;c.beginPath();c.roundRect(rect.x,rect.y,rect.w,rect.h,5);c.fill();
-   c.strokeStyle=rect.focused?this.palette.accent+'55':this.palette.line+'55';c.lineWidth=.6;c.stroke();c.fillStyle=rect.focused?this.palette.labelText:this.palette.labelMuted;c.fillText(rect.name,rect.x+6,rect.y+15);
+   const selected=rect.id===this.selected,linked=!!this.selected&&!selected&&this.neighbors?.has(rect.id);
+   c.font=rect.font;c.fillStyle=selected?this.palette.labelSelected:linked?this.palette.labelLinked:rect.focused?this.palette.labelActive:this.palette.label;c.beginPath();c.roundRect(rect.x,rect.y,rect.w,rect.h,5);c.fill();
+   c.strokeStyle=selected?this.palette.accent:linked?this.palette.accent+'99':rect.focused?this.palette.accent+'55':this.palette.line+'55';c.lineWidth=selected?1.4:linked?1:.6;c.stroke();c.fillStyle=selected?this.palette.labelSelectedText:linked?this.palette.labelLinkedText:rect.focused?this.palette.labelText:this.palette.labelMuted;c.fillText(rect.name,rect.x+6,rect.y+15);
   }
  }
  tick(now){
