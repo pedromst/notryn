@@ -23,15 +23,16 @@ done
 iconutil -c icns "$ICONSET" -o "$BUILD/Notryn.icns"
 "$VENV/bin/pyinstaller" --noconfirm --clean --distpath "$BUILD/sidecar" --workpath "$BUILD/work" "$ROOT/packaging/macos/Notryn.spec"
 "$BUILD/sidecar/notryn/notryn" version | grep -Fx "$VERSION"
-NOTRYN_SIDECAR_DIR="$BUILD/sidecar/notryn" NOTRYN_ELECTRON_OUTPUT="$BUILD/electron" "$ROOT/node_modules/.bin/electron-builder" --config "$ROOT/desktop/electron-builder.cjs" --mac dir --x64 --publish never
-APP="$BUILD/electron/mac/Notryn.app"
+ARCH=$(uname -m)
+case "$ARCH" in x86_64) ELECTRON_ARCH=x64; APP="$BUILD/electron/mac/Notryn.app" ;; arm64) ELECTRON_ARCH=arm64; APP="$BUILD/electron/mac-arm64/Notryn.app" ;; *) exit 1 ;; esac
+NOTRYN_SIDECAR_DIR="$BUILD/sidecar/notryn" NOTRYN_ELECTRON_OUTPUT="$BUILD/electron" "$ROOT/node_modules/.bin/electron-builder" --config "$ROOT/desktop/electron-builder.cjs" --mac dir "--$ELECTRON_ARCH" --publish never
 test -x "$APP/Contents/MacOS/Notryn"
 test -x "$APP/Contents/Resources/notryn/notryn"
 codesign --force --deep --sign - "$APP"
 codesign --verify --deep --strict "$APP"
 "$APP/Contents/Resources/notryn/notryn" version | grep -Fx "$VERSION"
-ARCHIVE="$OUTPUT/Notryn-$VERSION-macos-x86_64.zip"
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$ARCHIVE"
+ARCHIVE="$OUTPUT/Notryn-$VERSION-macos-$ARCH.zip"
+ditto -c -k --norsrc --noextattr --keepParent "$APP" "$ARCHIVE"
 (cd "$OUTPUT" && shasum -a 256 "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256")
-cp "$ROOT/packaging/macos/install-alpha.sh" "$OUTPUT/install-notryn-macos.sh"
+sh "$ROOT/packaging/build-setup.sh"
 echo "$ARCHIVE"
