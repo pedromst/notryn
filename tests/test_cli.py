@@ -4,10 +4,19 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from notryn_cli import copy_state, data_home
+from notryn_cli import copy_state, data_home, parser, process_command
 
 
 class CliTests(unittest.TestCase):
+    def test_random_instance_starting_with_hyphen_reaches_server_unchanged(self):
+        for frozen in (False, True):
+            with self.subTest(frozen=frozen), patch('sys.frozen', frozen, create=True):
+                command = process_command('serve', Path('/tmp/test state'), 4783, '-random-token')
+                parsed = parser().parse_args(command[1 if frozen else 2:])
+                self.assertEqual(parsed.instance, '-random-token')
+                self.assertEqual(parsed.data_dir, '/tmp/test state')
+                self.assertEqual(parsed.command, 'serve')
+
     def test_platform_data_directories_and_override(self):
         root = Path('/tmp/notryn-test-home')
         root = root.resolve()

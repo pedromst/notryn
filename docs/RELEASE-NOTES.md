@@ -6,6 +6,7 @@ First public beta of the local Markdown desktop app. Free to use under PolyForm 
 - macOS Intel and Apple silicon: experimental packages, ad-hoc signed, not Apple-notarized. macOS may block them. Do not disable Gatekeeper. Native CI validates the package lifecycle; broader physical-device testing remains pending.
 - Windows and Linux ARM: no package yet.
 - Real app demo, clearer folders, glass selection colors and smoother connection focus.
+- Fixes an intermittent startup failure when the randomly generated server instance ID starts with a hyphen.
 - Beta updates follow newer preview releases and then stable releases. Notes and settings remain separate from app updates.
 
 Install: https://notryn.com/guide.html
