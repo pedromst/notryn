@@ -121,6 +121,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(201,self.server.store.folder(body.get('brain'),body.get('path')))
             if self.path=='/api/move':
                 return self.send(200,self.server.store.move(body.get('brain'),body.get('source'),body.get('destination'),body.get('kind'),body.get('guard')))
+            if self.path=='/api/rename':
+                return self.send(200,self.server.store.rename(body.get('brain'),body.get('source'),body.get('name'),body.get('kind'),body.get('guard')))
             self.send(404,{'error':'Unknown action.'})
         except Problem as exc:
             self.send(exc.status,{'error':exc.message})

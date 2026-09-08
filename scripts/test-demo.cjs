@@ -14,8 +14,14 @@ result=await request('/api/notes',{brain:'example-brain',path:before.data.path,r
 result=await request('/api/graph?brain=example-brain');assert.equal(result.data.edges.length,19);
 assert.equal((await request('/api/folders',{brain:'example-brain',path:'Projects/New folder'})).status,200);
 assert.equal((await request('/api/notes',{brain:'example-brain',path:'Projects/New folder/New note.md',revision:null,content:'# A new sample'})).status,200);
+result=await request('/api/rename',{brain:'example-brain',source:'Projects/New folder/New note.md',name:'Renamed note',kind:'note'});assert.equal(result.status,200);assert.equal(result.data.path,'Projects/New folder/Renamed note.md');
+result=await request('/api/rename',{brain:'example-brain',source:'Projects/New folder',name:'Renamed folder',kind:'folder'});assert.equal(result.status,200);assert.equal(result.data.path,'Projects/Renamed folder');
+assert.equal((await request('/api/note?brain=example-brain&path=Projects/Renamed%20folder/Renamed%20note.md')).data.content,'# A new sample');
+assert.equal((await request('/api/rename',{brain:'example-brain',source:'Projects/Renamed folder',name:'Studio',kind:'folder'})).status,409);
+result=await request('/api/move',{brain:'example-brain',source:'Ideas/Small beginnings.md',destination:'Knowledge',kind:'note'});assert.equal(result.status,200);assert.equal(result.data.path,'Knowledge/Small beginnings.md');
+assert.equal((await request('/api/graph?brain=example-brain')).data.edges.length,19);
 assert.equal((await request('/api/folders/browse',{path:'/Users'})).status,400);
 assert.equal((await request('/api/notes',{brain:'example-brain',path:'../private.md',revision:null,content:'x'})).status,400);
 assert.equal((await request('https://example.com/api/state')).status,403);
-assert.equal(networkCalls,0);console.log('PASS: sample graph and links, edit/read/conflict, new folder/note, rejected real folder access and zero API network requests.');
+assert.equal(networkCalls,0);console.log('PASS: sample graph and links, edit/read/conflict, create/rename/move, rejected real folder access and zero API network requests.');
 })();

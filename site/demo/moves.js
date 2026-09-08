@@ -2,7 +2,7 @@
 // File organization is shared by drag-and-drop, row menus and the command palette.
 window.NotrynFiles=(()=>{
  let dragged=null,context=null,moving=false,returnKey=null;
- const tree=$('#file-tree'),root=$('#brain-root'),menu=$('#item-dialog'),dialog=$('#move-dialog');
+ const tree=$('#file-tree'),root=$('#brain-root'),menu=$('#item-dialog'),dialog=$('#move-dialog'),renameDialog=$('#rename-dialog');
  function itemFor(key){
   if(key?.startsWith('folder:')){const path=key.slice(7);return state.data.folders.includes(path)?{kind:'folder',path,key,brain:state.brain}:null;}
   const note=state.data.nodes.find(n=>n.id===key?.slice(5));return note?{kind:'note',path:note.path,key:'note:'+note.id,brain:state.brain}:null;
@@ -17,9 +17,9 @@ window.NotrynFiles=(()=>{
  function canOrganize(){
   if(moving)return false;
   if(!writable()){toast('This Brain is read-only.');return false;}
-  if(state.selected&&!state.note){toast('Wait for the note to finish opening, or close it before moving files.');return false;}
+  if(state.selected&&!state.note){toast('Wait for the note to finish opening, or close it before changing files.');return false;}
   if(state.saving){toast('Wait for your note to finish saving.');return false;}
-  if(state.dirty){toast('Save your draft before moving files. Your writing is still here.');return false;}
+  if(state.dirty){toast('Save your draft before changing files. Your writing is still here.');return false;}
   return true;
  }
  function validDestination(item,path){return item&&!(item.kind==='folder'&&(path===item.path||path.startsWith(item.path+'/')));}
@@ -30,17 +30,32 @@ window.NotrynFiles=(()=>{
   context=item;returnKey=item?.key||null;
   $('#item-title').textContent=item?item.path.split('/').pop():'Brain root';
   $('#item-location').textContent=item?.path||current()?.name||'';
-  $('#item-move').hidden=!item||!writable();$('#item-new-note').hidden=!writable()||item?.kind==='note';$('#item-new-folder').hidden=!writable()||item?.kind==='note';$('#item-remove').hidden=!item;
+  $('#item-rename').hidden=!item||!writable();$('#item-move').hidden=!item||!writable();$('#item-new-note').hidden=!writable()||item?.kind==='note';$('#item-new-folder').hidden=!writable()||item?.kind==='note';$('#item-remove').hidden=!item;
   showDialog('#item-dialog');$('#item-dialog .item-action:not([hidden])')?.focus();
  }
+ $('#item-rename').onclick=()=>{const item=context;menu.close();openRename(item);};
  $('#item-move').onclick=()=>{const item=context;menu.close();openMove(item);};
  for(const kind of ['note','folder'])$('#item-new-'+kind).onclick=()=>{const path=context?.kind==='folder'?context.path:'';menu.close();openCreate(kind,'',path);};
- menu.addEventListener('close',()=>{if(!dialog.open&&!$('#create-dialog').open)restoreFocus();});
+ menu.addEventListener('close',()=>{if(!dialog.open&&!renameDialog.open&&!$('#create-dialog').open)restoreFocus();});
  menu.addEventListener('keydown',e=>{
-  if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+  if(!NotrynKeyboard.available(e))return;
+  const direct=e.key==='F2'?'#item-rename':singleKeys&&e.key.toLowerCase()==='n'?(e.shiftKey?'#item-new-folder':'#item-new-note'):singleKeys&&!e.shiftKey&&e.key.toLowerCase()==='m'?'#item-move':singleKeys&&!e.shiftKey&&e.key.toLowerCase()==='d'?'#item-remove':null;
+  if(direct){const button=$(direct);if(!button.hidden){e.preventDefault();button.click();}return;}
+  if(e.shiftKey||!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
   const rows=[...menu.querySelectorAll('.item-action:not([hidden])')],index=rows.indexOf(document.activeElement);
   e.preventDefault();rows[e.key==='Home'?0:e.key==='End'?rows.length-1:Math.max(0,Math.min(rows.length-1,index+(e.key==='ArrowDown'?1:-1)))]?.focus();
  });
+ function openRename(item=currentItem()){
+  if(!canOrganize())return;
+  if(!item)return toast('Choose a note or folder in the library first.');
+  context=item;returnKey=item.key;const basename=item.path.split('/').pop(),name=item.kind==='note'?basename.replace(/\.md$/i,''):basename;
+  $('#rename-title').textContent=item.kind==='note'?'Rename note':'Rename folder';$('#rename-item-path').textContent=item.path;$('#rename-name').value=name;
+  $('#rename-help').textContent=item.kind==='note'?'.md is kept automatically. Links to this note will be updated.':'Notes inside this folder will keep their links.';
+  $('#rename-error').hidden=true;showDialog('#rename-dialog');$('#rename-name').focus();$('#rename-name').select();
+ }
+ $('#rename-form').onsubmit=e=>{e.preventDefault();const name=$('#rename-name').value.trim(),error=$('#rename-error');error.hidden=true;if(!name||/[\\/]/.test(name)||name.startsWith('.')){error.textContent='Use a name without slashes or a leading dot.';error.hidden=false;return;}rename(context,name);};
+ renameDialog.addEventListener('close',()=>restoreFocus());
+ renameDialog.addEventListener('cancel',e=>{if(moving)e.preventDefault();});
  function openMove(item=currentItem()){
   if(!canOrganize())return;
   if(!item)return toast('Choose a note or folder in the library first.');
@@ -78,15 +93,27 @@ window.NotrynFiles=(()=>{
   if(item.brain&&item.brain!==state.brain)return false;
   if(!validDestination(item,destination)){toast('A folder cannot be moved inside itself.');return false;}
   if(parentOf(item.path)===destination){toast('This item is already in that folder.');return false;}
+  return changePath(item,'/api/move',{destination},dialog,'Moving files and updating links…','Moved to '+(destination||'Brain root')+'.');
+ }
+ async function rename(item,name){
+  if(!canOrganize())return false;
+  if(!item||item.brain&&item.brain!==state.brain)return false;
+  const currentName=item.path.split('/').pop().replace(item.kind==='note'?/\.md$/i:/$^/,'');
+  if(name.replace(item.kind==='note'?/\.md$/i:/$^/,'')===currentName){renameDialog.close();toast('The name is unchanged.');return true;}
+  return changePath(item,'/api/rename',{name},renameDialog,'Renaming and updating links…','Renamed to '+name.replace(/\.md$/i,'')+(item.kind==='note'?'.md.':'.'));
+ }
+ async function changePath(item,route,details,panel,progressText,successMessage){
+  if(!canOrganize())return false;
   const brain=state.brain,opened=state.note?{...state.note}:null,wasEditing=state.editing,selectedPath=state.data.nodes.find(n=>n.id===state.selected)?.path;
   const workspace=$('.workspace'),header=$('.topbar'),nav=$('.mobile-nav');
+  $('#file-progress-status').textContent=progressText;
   const busy=showDialog('#move-progress');busy.oncancel=e=>e.preventDefault();
   moving=true;workspace.inert=true;header.inert=true;nav.inert=true;
   let result;
   try{
-   result=await api('/api/move',{brain,source:item.path,destination,kind:item.kind,guard:opened&&!state.newNote?{path:opened.path,revision:opened.revision}:null});
+   result=await api(route,{brain,source:item.path,kind:item.kind,...details,guard:opened&&!state.newNote?{path:opened.path,revision:opened.revision}:null});
    const relocate=path=>path===item.path||item.kind==='folder'&&path.startsWith(item.path+'/')?result.path+path.slice(item.path.length):path;
-   state.closed=new Set([...state.closed].map(relocate));state.folderPath=relocate(state.folderPath);let parent=destination;while(parent){state.closed.delete(parent);parent=parentOf(parent);}
+   state.closed=new Set([...state.closed].map(relocate));state.folderPath=relocate(state.folderPath);let parent=parentOf(result.path);while(parent){state.closed.delete(parent);parent=parentOf(parent);}
    state.query='';state.group=null;state.recent=false;$('#search').value='';
    returnKey=item.kind+':'+(item.kind==='note'?result.path.slice(0,-3):result.path);state.libraryKey=returnKey;
    if(selectedPath)state.selected=relocate(selectedPath).slice(0,-3);
@@ -97,13 +124,13 @@ window.NotrynFiles=(()=>{
     const note=await api(endpoint('/api/note',{brain,path:relocate(opened.path)}));
     if(serial===state.noteSerial){state.note=note;state.editing=wasEditing;resetEditorView();renderDocument();graph.select(state.selected);}
    }
-   renderLegend();renderTree();dialog.close();
-   toast('Moved to '+(destination||'Brain root')+'.'+(result.updatedLinks?' Links updated.':''));return true;
+   renderLegend();renderTree();panel.close();
+   toast(successMessage+(result.updatedLinks?' Links updated.':''));return true;
   }catch(error){
-   // A completed move must never be reported as a failed filesystem operation.
-   const message=result?'Moved successfully. Refresh the library to reopen the note.':error.message;
+   // A completed filesystem change must never be reported as a failed rename or move.
+   const message=result?'Changed successfully. Refresh the library to reopen the note.':error.message;
    if(result&&opened){state.editing=false;$('#document-read').hidden=false;$('#editor-wrap').hidden=true;rich.setVisible(false);$('#document-read').replaceChildren(el('p','empty-list',message));$('#doc-folder').textContent=state.note.path;}
-   if(dialog.open){$('#move-error').textContent=message;$('#move-error').hidden=false;}else toast(message);
+   if(panel.open){const error=panel.querySelector('.form-error');error.textContent=message;error.hidden=false;}else toast(message);
    return false;
   }finally{moving=false;workspace.inert=false;header.inert=false;nav.inert=false;busy.close();restoreFocus();}
  }
@@ -145,5 +172,5 @@ window.NotrynFiles=(()=>{
  tree.addEventListener('dragover',e=>{if(!dragged)return;const rect=tree.getBoundingClientRect();if(e.clientY<rect.top+36)tree.scrollTop-=10;else if(e.clientY>rect.bottom-36)tree.scrollTop+=10;});
  root.onclick=()=>menuFor(null);root.oncontextmenu=e=>{e.preventDefault();menuFor(null);};dropZone(root,'');
  document.addEventListener('drop',clearDrag);document.addEventListener('dragend',clearDrag);
- return {decorate,openMove,openMenu:()=>menuFor(currentItem()),destinationHere,currentItem,contextItem:()=>context};
+ return {decorate,openMove,openRename,openMenu:()=>menuFor(currentItem()),destinationHere,currentItem,contextItem:()=>context};
 })();

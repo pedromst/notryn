@@ -125,7 +125,7 @@ class Store:
         return {**brain,'readOnly':not self.can_write(brain),'available':Path(brain['root']).is_dir()}
 
     def state(self):
-        return {'brains':[self.summary(b) for b in self.brains if not b.get('removedAt')], 'version':VERSION,'agent':{'connected':False,'mode':'local-guide'}}
+        return {'brains':[self.summary(b) for b in self.brains if not b.get('removedAt')], 'version':VERSION}
 
     def is_removed(self, brain, path, except_id=None):
         return any(r['id'] != except_id and r['brain'] == brain['id'] and r['kind'] != 'brain' and
@@ -394,6 +394,10 @@ class Store:
     def move(self, brain_id, source, destination, kind, guard=None):
         from filemoves import move_item
         return move_item(self, brain_id, source, destination, kind, guard)
+
+    def rename(self, brain_id, source, name, kind, guard=None):
+        from filemoves import rename_item
+        return rename_item(self, brain_id, source, name, kind, guard)
 
     def folder(self, brain_id, path):
         brain=self.get(brain_id)
