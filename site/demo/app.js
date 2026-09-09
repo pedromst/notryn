@@ -28,7 +28,7 @@ function navigateBrainFolder(path,{focus=false}={}){
  renderGraphView();renderLegend();renderTree();$('#file-tree').scrollTop=0;graph.fit();
  if(focus)$('#graph').focus({preventScroll:true});
 }
-function upBrainFolder({library=false}={}){if(!state.folderPath)return toast('You are already at the Brain root.');navigateBrainFolder(NotrynHierarchy.parent(state.folderPath),{focus:!library});if(library)($('#library-back').hidden?$('#file-tree .tree-row'):$('#library-back'))?.focus({preventScroll:true});}
+function upBrainFolder({library=false}={}){if(!state.folderPath)return toast('You are already at the Brain root.');const previous=state.folderPath;navigateBrainFolder(NotrynHierarchy.parent(previous),{focus:!library});if(library)($$('#file-tree .tree-row').find(row=>row.dataset.key==='folder:'+previous)||$('#library-location-name')).focus({preventScroll:true});}
 function showDialog(id){const d=$(id);if(!d.open)d.showModal();return d;}
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 // Search inputs consume Escape in some browsers. Follow the dialog's normal
@@ -88,8 +88,7 @@ function renderLegend(){
 }
 function renderTree(){
  updateBrainScope();
- $('#brain-root').hidden=!writable();
- $('#library-back').hidden=!state.folderPath;$('#library-back').title='Back to '+(NotrynHierarchy.parent(state.folderPath)||'Brain root')+' (U)';
+ renderLibraryLocation();
  const box=$('#file-tree'),focused=box.contains(document.activeElement)?document.activeElement.dataset.key:null;
  const preferred=focused||state.libraryKey;box.replaceChildren();
  const markRow=(row,folder)=>{
@@ -116,7 +115,16 @@ function renderTree(){
  const rows=[...box.querySelectorAll('.tree-row')],entry=rows.find(b=>b.dataset.key===preferred)||rows.find(b=>b.getAttribute('aria-current')==='true')||rows[0];
  rows.forEach(b=>{b.tabIndex=b===entry?0:-1;window.NotrynFiles?.decorate(b);});
  if(focused&&entry)entry.focus({preventScroll:true});
- if(!box.children.length){const p=el('div','empty-list',state.data.nodes.length?'No notes found.':'Your notes will appear here.');if(writable()){const b=el('button','','Create your first note');b.onclick=()=>openCreate('note');p.append(b);}box.append(p);}
+ if(!box.children.length)box.append(el('div','empty-list',state.query?'No notes match your search.':state.recent?'No recent notes.':'This folder is empty.'));
+}
+function renderLibraryLocation(){
+ const brain=current(),name=state.folderPath?NotrynHierarchy.name(state.folderPath):brain?.name||'Your Brains';
+ $('#library-toolbar').hidden=!brain;
+ const location=$('#library-location-name');location.textContent=name;location.title=state.folderPath||name;
+ const back=$('#library-back');back.disabled=!state.folderPath;updateControlHint(back);
+ for(const id of ['library-new-note','new-folder']){
+  const button=$('#'+id);button.disabled=!writable();updateControlHint(button);
+ }
 }
 $('#file-tree').onfocusin=e=>{const row=e.target.closest('.tree-row');if(!row)return;state.libraryKey=row.dataset.key;$$('#file-tree .tree-row').forEach(b=>b.tabIndex=b===row?0:-1);};
 $('#file-tree').onkeydown=e=>{
@@ -309,10 +317,10 @@ async function saveNote({finish=false}={}){
 $('#save-note').onclick=()=>saveNote({finish:true});$('#doc-close').onclick=closeDocument;
 
 function expandFolderPath(path){while(path){state.closed.delete(path);path=path.split('/').slice(0,-1).join('/');}}
-let createKind='note';async function openCreate(kind,title='',destination=window.NotrynFiles?.destinationHere()||state.folderPath||''){if(!current())return openBrainForm('create');if(!writable())return toast('This Brain is read-only. Create or choose a writable Brain.');if(!await canLeave())return;setBrainFocus(false);document.body.classList.remove('brain-peek');createKind=kind;$('#create-title').textContent=kind==='folder'?'New folder':'New note';$('#create-name').value=title;$('#create-name').setCustomValidity('');$('#create-name').placeholder=kind==='folder'?'Projects':'The beginning of an idea';$('#create-submit').textContent=kind==='folder'?'Create folder':'Start writing';$('#create-folder').replaceChildren();const option=el('option','','Brain root');option.value='';$('#create-folder').append(option);for(const f of state.data.folders){const o=el('option','',f);o.value=f;$('#create-folder').append(o);}$('#create-folder').value=destination;$('#create-dialog .form-error').hidden=true;showDialog('#create-dialog');$('#create-name').focus();}
-$('#create-form').onsubmit=async e=>{e.preventDefault();const name=$('#create-name').value.trim(),folder=$('#create-folder').value,error=$('#create-dialog .form-error');if(!name||/[\\/]/.test(name)||name.startsWith('.')){error.textContent='Use a name without slashes or a leading dot.';error.hidden=false;return;}const path=(folder?folder+'/':'')+name+(createKind==='note'&&!/\.md$/i.test(name)?'.md':'');$('#create-submit').disabled=true;try{if(createKind==='folder'){await api('/api/folders',{brain:state.brain,path});expandFolderPath(folder);await loadGraph();$('#create-dialog').close();toast('Folder created.');}else{if(state.data.nodes.some(n=>n.path===path))throw Error('A note with this name already exists.');closeDocumentUnsafe();state.newNote=true;state.editing=true;expandFolderPath(folder);state.note={path,content:'# '+name.replace(/\.md$/i,'')+'\n\n',revision:null};$('#document').hidden=false;$('#create-dialog').close();resetEditorView();renderDocument();focusEditor(true);}}catch(e){error.textContent=e.message;error.hidden=false;}finally{$('#create-submit').disabled=false;}};
+let createKind='note';async function openCreate(kind,title='',destination=state.folderPath||''){if(!current())return openBrainForm('create');if(!writable())return toast('This Brain is read-only. Create or choose a writable Brain.');if(!await canLeave())return;setBrainFocus(false);document.body.classList.remove('brain-peek');createKind=kind;$('#create-title').textContent=kind==='folder'?'New folder':'New note';$('#create-name').value=title;$('#create-name').setCustomValidity('');$('#create-name').placeholder=kind==='folder'?'Projects':'The beginning of an idea';$('#create-submit').textContent=kind==='folder'?'Create folder':'Start writing';$('#create-folder').replaceChildren();const option=el('option','',current().name+' (root)');option.value='';$('#create-folder').append(option);for(const f of state.data.folders){const o=el('option','',f);o.value=f;$('#create-folder').append(o);}$('#create-folder').value=destination;$('#create-dialog .form-error').hidden=true;showDialog('#create-dialog');$('#create-name').focus();}
+$('#create-form').onsubmit=async e=>{e.preventDefault();const name=$('#create-name').value.trim(),folder=$('#create-folder').value,error=$('#create-dialog .form-error');if(!name||/[\\/]/.test(name)||name.startsWith('.')){error.textContent='Use a name without slashes or a leading dot.';error.hidden=false;return;}const path=(folder?folder+'/':'')+name+(createKind==='note'&&!/\.md$/i.test(name)?'.md':'');$('#create-submit').disabled=true;try{if(createKind==='folder'){await api('/api/folders',{brain:state.brain,path});expandFolderPath(folder);await loadGraph();navigateBrainFolder(folder);$('#create-dialog').close();const row=$$('#file-tree .tree-row').find(row=>row.dataset.key==='folder:'+path);row?.focus({preventScroll:true});row?.scrollIntoView({block:'nearest'});toast('Folder created.');}else{if(state.data.nodes.some(n=>n.path===path))throw Error('A note with this name already exists.');closeDocumentUnsafe();state.newNote=true;state.editing=true;expandFolderPath(folder);state.note={path,content:'# '+name.replace(/\.md$/i,'')+'\n\n',revision:null};navigateBrainFolder(folder);$('#document').hidden=false;$('#create-dialog').close();resetEditorView();renderDocument();focusEditor(true);}}catch(e){error.textContent=e.message;error.hidden=false;}finally{$('#create-submit').disabled=false;}};
 function resetEditorView(){state.previewReading=false;$('#editor-preview').hidden=true;$('#preview-toggle').textContent='Preview';showEditorSurface();}
-$('#new-note').onclick=()=>openCreate('note');$('#empty-create').onclick=()=>openCreate('note');$('#mobile-create').onclick=()=>openCreate('note');$('#new-folder').onclick=()=>openCreate('folder');
+$('#new-note').onclick=()=>openCreate('note');$('#empty-create').onclick=()=>openCreate('note');$('#library-new-note').onclick=()=>openCreate('note');$('#new-folder').onclick=()=>openCreate('folder');
 let brainAction='create';async function openBrainForm(action){if(state.remotePreview)return toast('This preview provides read-only access to connected Brains.');if(!await canLeave())return;$('#brains-dialog').close();brainAction=action;$('#brain-form-title').textContent=action==='create'?'Create a Brain':'Open a folder';$('#connect-fields').hidden=action!=='connect';$('#brain-form-path').required=action==='connect';$('#brain-submit').textContent=action==='create'?'Create Brain':'Open folder';$('#brain-form-help').textContent=action==='create'?'A new space for your Markdown notes.':'Connect an existing folder. Your files stay where they are.';$('#brain-form-name').value='';$('#brain-form-path').value='';$('#brain-form-name').setCustomValidity('');$('#brain-form-path').setCustomValidity('');$('#brain-form-access').value='read';$('#brain-form-dialog .form-error').hidden=true;showDialog('#brain-form-dialog');$('#brain-form-name').focus();}
 $('#brain-form').onsubmit=async e=>{e.preventDefault();$('#brain-submit').disabled=true;try{const {brain,graph:graphData}=await api('/api/brains',{action:brainAction,name:$('#brain-form-name').value,path:$('#brain-form-path').value,writable:$('#brain-form-access').value==='write'});$('#brain-form-dialog').close();await switchBrain(brain.id,{brain,graphData});toast(brainAction==='create'?'Brain created.':'Folder connected.');}catch(e){const p=$('#brain-form-dialog .form-error');p.textContent=e.message;p.hidden=false;}finally{$('#brain-submit').disabled=false;}};
 let brainAccessId=null;
@@ -507,6 +515,45 @@ const actionItems=()=>[
  {title:'Previous note in brain',group:'Brain view',key:'K / Page Up',plain:['k','PageUp'],context:'graph',repeat:true,icon:'note',run:()=>stepGraphNote(-1)},
  {title:'Open highlighted item',group:'Brain view',key:'Enter',plain:'Enter',context:'graph',icon:'note',run:openGraphNote}
 ];
+// Button hints use the same shortcuts as the palette and keyboard handler.
+const controlActions={
+ '#toggle-brain,#notebook-show-brain':'Show / hide brain',
+ '#full-brain':'Show full Brain','#open-themes':'Choose theme',
+ '#open-command':'Notes and commands','#open-shortcuts':'Commands and shortcuts',
+ '#search':'Filter notes','#sidebar-open,#sidebar-close':'Toggle library',
+ '#recent-notes':'Recent notes','#legend-all':'Show Brain root',
+ '#library-back,.legend-back':'Back one folder','#brain-picker,#home-button':'Switch Brain',
+ '#refresh':'Refresh notes','#swap-layout':'Swap note and brain',
+ '#focus-note':'Focus note / exit focus',
+ '#new-note,#library-new-note,#empty-create,#notebook-create,#item-new-note':'New note',
+ '#new-folder,#item-new-folder':'New folder','#edit-toggle':'Edit or finish editing',
+ '#format-note':'Format text','#visual-mode,#source-mode':'Switch Write / Markdown',
+ '#item-rename':'Rename note or folder',
+ '#item-move':'Move note or folder','#item-remove':'Remove note or folder from Notryn',
+ '#open-removed':'Removed items','.file-options':'Note or folder actions',
+ '.note-folder-link':'Show note in folder','#save-note':'Save and finish editing',
+ '#preview-toggle':'Preview note','#add-new-brain,#welcome-create':'Create a Brain',
+ '#add-existing-brain,#welcome-open':'Open a folder','#fit':'Center brain',
+ '#zoom-in':'Zoom in','#zoom-out':'Zoom out','#motion':'Pause / resume motion'
+};
+function updateControlHint(button,actions=actionItems()){
+ const title=Object.entries(controlActions).find(([selector])=>button.matches(selector))?.[1];
+ const action=button.dataset.format?actions.find(a=>a.format===button.dataset.format):actions.find(a=>a.title===title);
+ if(!action)return;
+ let label=button.getAttribute('aria-label')||action.title;
+ if(['library-new-note','new-folder','new-note'].includes(button.id))label=writable()?action.title+' in '+(NotrynHierarchy.name(state.folderPath)||current()?.name):'This Brain is read-only';
+ if(button.id==='library-back')label=state.folderPath?'Back to '+(NotrynHierarchy.name(NotrynHierarchy.parent(state.folderPath))||current()?.name):'You are at the Brain root';
+ if(button.id==='save-note')label=state.saving?'Saving in this demo':state.dirty?'Save changes and return to reading':'Return to reading';
+ if(['visual-mode','source-mode'].includes(button.id))label=button.textContent;
+ const keys=Array.isArray(action.plain)?action.plain:[action.plain];
+ const enabled=(singleKeys||action.editorKey||!action.plain||keys.every(key=>key.length>1))&&!(action.title==='Switch Write / Markdown'&&button.getAttribute('aria-pressed')==='true');
+ if(['library-new-note','new-folder','library-back'].includes(button.id)){
+  if(enabled&&!button.disabled)button.setAttribute('aria-keyshortcuts',(action.plainShift?'Shift+':'')+action.plain.toUpperCase());
+  else button.removeAttribute('aria-keyshortcuts');
+ }
+ button.title=label+(interfaceHints&&enabled&&action.key&&!button.disabled?' ('+action.key+(action.context==='graph'?' with Brain focused':'')+')':'');
+}
+function refreshControlHints(){const actions=actionItems();$$(Object.keys(controlActions).join(',')+',[data-format]').forEach(button=>updateControlHint(button,actions));}
 const commandSearchAliases={
  'Choose theme':'theme themes tema temas appearance colors colours cor cores glass matrix daylight omarchy',
  'Show / hide brain':'hide show brain notes workspace esconder mostrar cerebro notas',
@@ -573,6 +620,7 @@ $('#shortcut-search').onkeydown=e=>{
  if(e.key==='Enter')rows[0]?.click();else rows[e.key==='ArrowDown'?0:rows.length-1]?.focus({preventScroll:true});
  if(e.key!=='Enter')document.activeElement.closest('.shortcut-command')?.scrollIntoView({block:'nearest'});
 };
+for(const event of ['mouseover','focusin'])document.addEventListener(event,e=>{const button=e.target.closest?.('button,input');if(button)updateControlHint(button);});
 $('#open-shortcuts').onclick=openShortcuts;$('#open-shortcuts').title='Commands and shortcuts (?)';
 let commandItems=[],commandIndex=0;
 function renderCommands(){const q=clean($('#command-input').value.trim()),actions=actionItems().filter(a=>matchesCommand(a,q)),notes=(q?NotrynHierarchy.searchNotes(state.data,q):[...state.data.nodes].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).slice(0,5)).map(n=>({title:NotrynHierarchy.filename(n),detail:n.path+' · '+n.title,icon:'note',run:()=>openNote(n.id)}));const box=$('#commands');box.replaceChildren();commandItems=[];for(const[label,items]of[['Notes',notes],['Actions',actions]]){if(!items.length)continue;box.append(el('div','command-group-label',label));for(const item of items){const index=commandItems.length;commandItems.push(item);const b=el('button','command-row');b.setAttribute('role','option');b.dataset.index=index;b.append(icon(item.icon),el('span','',item.title));if(item.detail)b.append(el('small','',item.detail));if(item.key)b.append(el('kbd','',item.key));b.onclick=()=>runCommand(index);box.append(b);}}if(!commandItems.length)box.append(el('p','empty-list','No notes or actions match that name.'));commandIndex=0;highlightCommand();}
@@ -587,12 +635,14 @@ function updateKeyboardPreference(){
  restGraphHint();
  $('.mod').textContent=singleKeys?'P':'Tab';
  $('#shortcut-mode-status').textContent=singleKeys?'Letters work outside text fields. While writing: Esc, then a command.':'Single-key shortcuts are off. Use Tab and Enter, the command palette or buttons.';
+ refreshControlHints();
 }
 $('#single-key-toggle').onchange=e=>{singleKeys=e.target.checked;try{NotrynDemoStorage.setItem('notryn-single-keys',singleKeys?'on':'off');}catch{}updateKeyboardPreference();renderShortcuts();};
 updateKeyboardPreference();
 function updateInterfaceHints(){
  document.documentElement.dataset.interfaceHints=interfaceHints?'on':'off';
  $('#interface-hints-toggle').checked=interfaceHints;
+ refreshControlHints();
 }
 function setInterfaceHints(enabled){
  interfaceHints=enabled;try{NotrynDemoStorage.setItem('notryn-interface-hints',enabled?'on':'off');}catch{}
