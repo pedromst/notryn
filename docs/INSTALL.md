@@ -1,6 +1,6 @@
 # Install, update and uninstall
 
-Public beta `0.2.0-beta.6`. Linux/Omarchy first; macOS Intel and Apple silicon packages use the same commands. Windows has no installer yet.
+Public beta `0.2.0-beta.7`. Linux/Omarchy first; macOS Intel and Apple silicon packages use the same commands. Windows has no installer yet.
 
 ## Before installing
 
@@ -26,7 +26,7 @@ sh notryn-install.sh
 Fallback if the domain is unavailable:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.6/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.7/install.sh | sh
 ```
 
 Add `--no-open` to install without opening the app. The bootstrap detects the OS and architecture, verifies the setup checksum, and runs the setup program. The setup then downloads the app, compares its SHA-256 with the GitHub release asset digest, checks the archive paths and tests its local server in disposable state. It then installs the app and creates the launcher.
@@ -72,7 +72,7 @@ Public beta installations follow newer preview releases, then stable releases. O
 To choose a specific newer release:
 
 ```sh
-notryn update --version 0.2.0-beta.6
+notryn update --version 0.2.0-beta.7
 ```
 
 The app refuses downgrades through update. It keeps the current version if the download, checksum, package validation or local-server test fails. When replacement fails, it restores the previous app. It does not close an open editor or discard an unsaved draft for you.
@@ -119,6 +119,14 @@ It does not delete your data or empty Trash. There is no destructive `--purge` f
 New Brains are folders in the location selected during creation. Use the same normal user and state location when updating. A custom `NOTRYN_HOME` remains supported for terminal server work; it is not a way to relocate the desktop installation.
 
 ## Troubleshooting
+
+### Split windows
+
+The desktop app supports windows down to 320 × 320 pixels. Below 900 pixels wide it uses compact Brain/Notes navigation. Short windows keep the Library scrollable. Save your work, update and reopen the app to pick up changes to desktop window limits.
+
+### Installing alongside a development checkout
+
+The macOS installer writes to `~/Applications/Notryn.app`, not your source checkout. Use a separate data directory and port for development: the installed desktop app uses port 4783 and its normal private state. The supported `notryn uninstall` command removes managed application files while keeping notes and settings. Third-party cleanup utilities can remove additional files, so their behaviour is outside the installer's control.
 
 - **Private release not found:** confirm `gh auth status`, repository access and the release tag. Never paste a token into a support report.
 - **Notryn still running:** quit the desktop app. For a server started from the terminal, use `notryn stop`.

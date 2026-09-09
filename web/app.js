@@ -308,9 +308,11 @@ async function saveNote({finish=false}={}){
  try{
   const result=await api('/api/notes',{brain:state.brain,path:state.note.path,content:value,revision:state.newNote?null:state.note.revision});
   state.note={...state.note,content:value,revision:result.revision};state.newNote=false;state.selected=state.note.path.slice(0,-3);
-  updateEditor();await loadGraph();
+  updateEditor();
   toast(state.dirty?'Saved to disk. Newer edits are still unsaved.':'Saved to disk successfully.');
   if(finish&&!state.dirty)finishEditing();
+  // Disk persistence is confirmed above. Reindexing must not hold the editor open.
+  void loadGraph();
  }catch(e){$('#document-error').textContent=e.message;$('#document-error').hidden=false;}
  finally{state.saving=false;updateEditor();}
 }
@@ -436,7 +438,14 @@ $('#graph').onfocus=()=>{graph.dirty=true;graphStatus(currentGraphStatus());$('#
 $('#graph').onblur=()=>{$('#graph-status').hidden=true;restGraphHint();graph.dirty=true;};
 const graphViewport=matchMedia('(max-width:900px)');
 function restGraphHint(){$('#graph-hint').textContent=graphViewport.matches?'Drag to rotate · Pinch to zoom':singleKeys?'H hide brain · Shift H full Brain · ? shortcuts':'Tab to explore · Use controls to navigate';}
-graphViewport.addEventListener('change',restGraphHint);restGraphHint();
+function adaptWorkspace(){
+ if(graphViewport.matches){
+  if(document.body.classList.contains('notes-only')||!$('#document').hidden)document.body.dataset.mobile='notes';
+  $$('button[data-mobile]').forEach(b=>b.classList.toggle('active',b.dataset.mobile===document.body.dataset.mobile));
+ }else document.body.classList.remove('brain-peek');
+ restGraphHint();
+}
+graphViewport.addEventListener('change',adaptWorkspace);adaptWorkspace();
 async function controlBrain(action,key){
  if(!await focusBrain())return;
  if(action==='zoom-in')graph.zoomBy(1.12);

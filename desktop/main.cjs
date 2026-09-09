@@ -49,8 +49,9 @@ function createWindow() {
     title: 'notryn',
     width: 1500,
     height: 940,
-    minWidth: 920,
-    minHeight: 640,
+    // Let tiling window managers reach the existing compact layout (<= 900px).
+    minWidth: 320,
+    minHeight: 320,
     backgroundColor: '#071018',
     autoHideMenuBar: true,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
