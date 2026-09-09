@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.6. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.7. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -18,7 +18,7 @@ Workspace reference for 0.2.0-beta.6. See [installation](INSTALL.md) for package
 - Mobile navigation for Brain and Notes; creation buttons stay in the current folder.
 - Brain creation includes a required location picker and shows the complete destination before creating anything.
 
-Version `0.2.0-beta.6` lets each person choose and verify where a new Brain folder will be created. The A and Shift A shortcuts remain unassigned.
+Version `0.2.0-beta.7` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 

@@ -89,3 +89,40 @@ body.notes-only:not(.no-brain):has(#document[hidden]) .notebook-empty{display:fl
 .folder-row .folder-toggle {
   margin-left: 0;
 }
+
+/* Short tiled windows keep controls reachable and leave room to scroll notes. */
+@media(max-width:380px){
+ .topbar .brand>span{display:none}
+ .topbar .brain-picker{min-width:0;flex:1;max-width:none}
+ .topbar .global-search{flex-shrink:0}
+}
+@media(max-height:600px){
+ .library{overflow-y:auto;padding-block:10px}
+ .library> :not(.file-tree){flex-shrink:0}
+ .library .local-search{margin-block:8px;padding:8px 10px}
+ .library-tabs{margin-bottom:8px}
+ .file-tree{flex:1 0 76px}
+ .library-bottom{margin-top:6px;padding-top:4px}
+ .library-toolbar{gap:6px;padding-bottom:6px;margin-bottom:4px}
+}
+@media(max-width:900px) and (max-height:420px){
+ body{grid-template-rows:58px minmax(0,1fr) calc(54px + env(safe-area-inset-bottom))}
+ .topbar{height:48px}
+ .mobile-nav{height:44px;padding-block:2px}
+ .mobile-nav button{padding-block:2px}
+ .mobile-nav .icon{width:16px;height:16px}
+ .document-toolbar{min-height:46px;padding:5px 10px;flex-shrink:0}
+ .document-toolbar .primary,.document-toolbar .secondary{min-height:32px;padding-block:5px}
+ .editor-label{padding:5px 10px}
+ .editor-modes button,#format-note{padding:4px 6px}
+ .editor-bottom{padding:4px 12px;flex-shrink:0}
+ #editor{padding:8px 14px}
+ .ProseMirror{padding:12px 16px 30px}
+ .library-top{display:none}
+ .library-toolbar{flex-direction:row;align-items:center;gap:8px}
+ .library-location{flex:1;min-width:0;gap:5px}
+ .library-create{flex-shrink:0;gap:5px}
+ .library-create>button{min-height:34px;font-size:10px;padding:6px}
+ .library-location .folder-back{width:30px;height:34px;min-height:34px}
+ #library-location-name{font-size:11px}
+}
