@@ -29,6 +29,8 @@ node scripts/build-demo.mjs --check
 node scripts/test-demo.cjs
 ```
 
+For Library changes, run `python3 scripts/test-library-ui.py` after installing Playwright and its Chromium browser. It starts isolated test servers and uses temporary sample files, never your connected Brains. Add `--screenshots /tmp/notryn-ui` to capture responsive layouts.
+
 For UI changes, include desktop and mobile screenshots. Demo UI is built from the app; refresh it with `node scripts/build-site.mjs` and `node scripts/build-demo.mjs`. Interface text and project documentation are in English.
 
 Be respectful, specific and constructive. Harassment, discriminatory abuse and disclosure of private information are not welcome. The maintainer may remove disruptive content and decline contributions.

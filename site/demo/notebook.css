@@ -9,8 +9,6 @@
 .legend .legend-back::before{display:none}
 .folder-back .icon{width:12px;height:12px;transform:rotate(-90deg)}
 .folder-back kbd{font:inherit;font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 3px;line-height:1}
-.library-tabs .folder-back{gap:5px;white-space:nowrap}
-.library-tabs:has(.folder-back:not([hidden])){gap:12px}
 html[data-interface-hints="off"] .folder-back kbd,html[data-single-keys="off"] .folder-back kbd{display:none}
 .universe-bottom .legend{flex:1;min-width:0;max-width:none;flex-wrap:nowrap;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:4px 2px}
 .legend::-webkit-scrollbar{display:none}
