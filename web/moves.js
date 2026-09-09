@@ -2,7 +2,7 @@
 // File organization is shared by drag-and-drop, row menus and the command palette.
 window.NotrynFiles=(()=>{
  let dragged=null,context=null,moving=false,returnKey=null;
- const tree=$('#file-tree'),root=$('#brain-root'),menu=$('#item-dialog'),dialog=$('#move-dialog'),renameDialog=$('#rename-dialog');
+ const tree=$('#file-tree'),location=$('#library-location-name'),back=$('#library-back'),menu=$('#item-dialog'),dialog=$('#move-dialog'),renameDialog=$('#rename-dialog');
  function itemFor(key){
   if(key?.startsWith('folder:')){const path=key.slice(7);return state.data.folders.includes(path)?{kind:'folder',path,key,brain:state.brain}:null;}
   const note=state.data.nodes.find(n=>n.id===key?.slice(5));return note?{kind:'note',path:note.path,key:'note:'+note.id,brain:state.brain}:null;
@@ -13,7 +13,7 @@ window.NotrynFiles=(()=>{
   if(document.activeElement.closest('#document')&&state.note&&!state.newNote)return {kind:'note',path:state.note.path,key:'note:'+state.selected};
   return itemFor(state.libraryKey)||itemFor('note:'+state.selected);
  }
- function restoreFocus(key=returnKey){const row=$$('#file-tree .tree-row').find(b=>b.dataset.key===key);(row||root).focus({preventScroll:true});}
+ function restoreFocus(key=returnKey){const row=$$('#file-tree .tree-row').find(b=>b.dataset.key===key);(row||location).focus({preventScroll:true});}
  function canOrganize(){
   if(moving)return false;
   if(!writable()){toast('This Brain is read-only.');return false;}
@@ -24,7 +24,6 @@ window.NotrynFiles=(()=>{
  }
  function validDestination(item,path){return item&&!(item.kind==='folder'&&(path===item.path||path.startsWith(item.path+'/')));}
  function parentOf(path){return path.split('/').slice(0,-1).join('/');}
- function destinationHere(){const item=currentItem();return item?.kind==='folder'?item.path:item?parentOf(item.path):'';}
  function menuFor(item){
   if(state.remotePreview||moving)return;
   context=item;returnKey=item?.key||null;
@@ -140,16 +139,17 @@ window.NotrynFiles=(()=>{
   $('#library-drop-hint').hidden=true;
  }
  function dropZone(element,destination){
+  const target=()=>typeof destination==='function'?destination():destination;
   const accept=e=>{
-   if(!dragged||!validDestination(dragged,destination)||parentOf(dragged.path)===destination)return;
+   const path=target();if(!dragged||element.disabled||!validDestination(dragged,path)||parentOf(dragged.path)===path)return;
    e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';
    $$('.drop-target').forEach(b=>{if(b!==element)b.classList.remove('drop-target');});element.classList.add('drop-target');
-   $('#library-drop-hint').textContent='Move into '+(destination||'Brain root');$('#library-drop-hint').hidden=false;
+   $('#library-drop-hint').textContent='Move into '+(path||current()?.name||'Brain root');$('#library-drop-hint').hidden=false;
   };
   element.addEventListener('dragenter',accept);element.addEventListener('dragover',accept);
   element.addEventListener('dragleave',e=>{if(!element.contains(e.relatedTarget)){element.classList.remove('drop-target');}});
   element.addEventListener('drop',e=>{
-   if(!dragged)return;e.preventDefault();e.stopPropagation();const item=dragged;clearDrag();move(item,destination);
+   if(!dragged||element.disabled)return;e.preventDefault();e.stopPropagation();const item=dragged,path=target();clearDrag();move(item,path);
   });
  }
  function decorate(row){
@@ -164,13 +164,13 @@ window.NotrynFiles=(()=>{
   row.addEventListener('dragstart',e=>{
    if(!canOrganize()){e.preventDefault();return;}
    dragged={...item,brain:state.brain};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-notryn-item',item.key);
-   row.classList.add('drag-source');tree.classList.add('is-dragging');document.body.classList.add('file-dragging');$('#library-drop-hint').textContent='Drop on a folder or Brain root';$('#library-drop-hint').hidden=false;
+   row.classList.add('drag-source');tree.classList.add('is-dragging');document.body.classList.add('file-dragging');$('#library-drop-hint').textContent=state.folderPath?'Drop on a folder, or the back arrow to move up':'Drop on a folder';$('#library-drop-hint').hidden=false;
   });
   row.addEventListener('dragend',clearDrag);
   if(item.kind==='folder')dropZone(entry,item.path);
  }
  tree.addEventListener('dragover',e=>{if(!dragged)return;const rect=tree.getBoundingClientRect();if(e.clientY<rect.top+36)tree.scrollTop-=10;else if(e.clientY>rect.bottom-36)tree.scrollTop+=10;});
- root.onclick=()=>menuFor(null);root.oncontextmenu=e=>{e.preventDefault();menuFor(null);};dropZone(root,'');
+ dropZone(location,()=>state.folderPath);dropZone(back,()=>parentOf(state.folderPath));
  document.addEventListener('drop',clearDrag);document.addEventListener('dragend',clearDrag);
- return {decorate,openMove,openRename,openMenu:()=>menuFor(currentItem()),destinationHere,currentItem,contextItem:()=>context};
+ return {decorate,openMove,openRename,openMenu:()=>menuFor(currentItem()),currentItem,contextItem:()=>context};
 })();

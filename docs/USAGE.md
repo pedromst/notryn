@@ -1,10 +1,10 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.3. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.4. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
-- Library with drag-and-drop notes/folders, contextual creation, filtering and recent notes.
+- Library with the current folder name, a back arrow, New note and New folder buttons, drag-and-drop, filtering and recent notes.
 - Remove notes, folders or Brains from Notryn while keeping their files, with optional recoverable Trash and a searchable Removed items space.
 - Visual note writing with selection-based formatting, an optional Markdown view, preview and explicit saving.
 - Note on the left by default, a saved preference for swapping sides, and a full-width focus mode.
@@ -15,9 +15,9 @@ Workspace reference for 0.2.0-beta.3. See [installation](INSTALL.md) for package
 - Hover a label or browse with the keyboard to highlight its direct connections and gently fade unrelated items. Emphasis transitions smoothly in both directions, including quick moves between labels; dimmed names remain faintly readable. Moving the pointer away restores the open note's emphasis. Translucent highlights replace hover summaries; opening a note also brings its linked notes from other folders into the map, while the Library keeps the current folder's contents.
 - Search covers every indexed note, regardless of the open folder. It matches words in filenames, paths and document titles across spaces, hyphens and accents, with exact filenames first. Search results are no longer capped at 30; the reader retains the original document title.
 - Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
-- Mobile navigation for the brain, notes and creation.
+- Mobile navigation for Brain and Notes; creation buttons stay in the current folder.
 
-Version `0.2.0-beta.3` adds safe renaming for notes and folders, visible action-menu shortcuts and automatic link updates after a rename. The A and Shift A shortcuts remain unassigned.
+Version `0.2.0-beta.4` makes folder navigation and creation clearer, with text buttons and optional shortcut hints on hover. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 
@@ -61,6 +61,8 @@ Shortcuts use the same letters on macOS, Windows and Linux. They work outside te
 Swapping panes preserves unsaved text, the cursor and the reading position. Esc inside a text field leaves it while keeping the draft; outside fields it leaves focus mode or closes the current panel, asking before discarding unsaved writing. On mobile, the note already uses the full width and the layout controls are hidden.
 
 Global NOTRYN commands do not bind Ctrl, Cmd, Alt, AltGr or Super combinations. F2 uses the familiar file-manager action to rename the focused note or folder; other function keys stay native. Browser and window-manager commands keep their native bindings outside the editor. Inside an editable note, **Ctrl/Cmd+S saves without leaving writing** and **Ctrl/Cmd+Enter toggles Preview**. The Save button and Shift S save and return to reading; Done returns when there are no changes. A failed save or newer unsaved edits keep the editor open. No autosave is enabled. Ctrl/Cmd plus scrolling keeps browser zoom; ordinary scrolling over the brain zooms the brain. Tab and Shift Tab keep native focus navigation, including in Markdown.
+
+Buttons work without learning shortcuts. Hover over an action to see its name and, where available, its shortcut from the same command catalog used by the keyboard. Brain camera hints specify that the Brain must be focused. Turning off single-key shortcuts removes those key hints; hiding interface hints keeps the action names while removing shortcut hints. The **?** menu remains the complete searchable reference.
 
 Tab/Shift Tab follow the visible control order, including buttons on mobile WebKit. Modal dialogs keep focus inside; at workspace edges, browser navigation remains available. Escape closes a search dialog even when its search field contains text, while respecting any operation that temporarily blocks cancellation.
 
@@ -111,9 +113,11 @@ Less frequent flows share that same route: **Manage Brain access**, **Remove thi
 
 ### Organizing files
 
-Drag a note onto a folder to move it. Drag a folder onto another folder to move its entire contents, including subfolders and attachments. Drop onto **Brain root** above the library to return an item to the top level. A highlighted folder shows the drop destination; open a collapsed folder first to reach its children.
+The Library shows just the current folder name, or your Brain name at the root. Use the **back arrow** to return to its parent. **New note** and **New folder** are always visible below the name (beside it when there is room); nothing needs to be selected first. A new folder appears immediately and receives focus. Choosing a different destination in the creation dialog also opens that destination. Read-only Brains show the same navigation with creation disabled.
 
-For keyboard or touch, use the item's **⋯** menu. It shows **N** for a new note, **Shift N** for a new folder, **F2** for rename, **M** for move and **D** for removal. With a library row focused, press **F2** to rename it; `.md` stays attached automatically. Press **M** to open the destination picker, type to filter folders, use ↑/↓ to choose and **Enter** to move. **Esc** cancels. The command palette and **?** reference include both actions. N/Shift N default to the focused folder or the current note's folder.
+Drag a note onto a folder to move it. Drag a folder onto another folder to move its entire contents, including subfolders and attachments. Inside a folder, drop an item onto the **back arrow** to move it up one level. A highlighted target shows the destination. Use the Move picker to choose any other folder, including the Brain root.
+
+For keyboard or touch, use the item's **⋯** menu. It shows **N** for a new note, **Shift N** for a new folder, **F2** for rename, **M** for move and **D** for removal. With a library row focused, press **F2** to rename it; `.md` stays attached automatically. Press **M** to open the destination picker, type to filter folders, use ↑/↓ to choose and **Enter** to move. **Esc** cancels. The command palette and **?** reference include both actions. The Library buttons and N/Shift N use the **currently open folder**, even when a note elsewhere is open or a child folder is focused. New note/New folder in an item menu use that specific folder instead.
 
 Save an open draft before renaming or moving files. The open note follows its new path and revision. Neither action can replace an existing item or change a read-only Brain. A move also cannot leave the current Brain or place a folder inside itself or its descendants. Folders containing symbolic links or app data cannot be moved or renamed through this feature.
 

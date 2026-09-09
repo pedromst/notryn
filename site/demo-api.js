@@ -61,8 +61,8 @@
   }
   function request(url,data){
     const route=url.pathname;
-    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.3'};
-    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.3'};
+    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.4'};
+    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.4'};
     if(route==='/api/theme')return {available:false};
     if(route==='/api/graph')return graph(url.searchParams.get('brain'));
     if(route==='/api/note'){
