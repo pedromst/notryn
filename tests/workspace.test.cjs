@@ -49,3 +49,8 @@ test('desktop shell permits half, third and quarter tiles to reach the responsiv
  assert.equal(options.width,1500);assert.equal(options.height,940);
  assert.equal(options.webPreferences.sandbox,true);assert.equal(options.webPreferences.nodeIntegration,false);
 });
+test('desktop top bar moves the macOS window without swallowing its controls',()=>{
+ const styles=fs.readFileSync(path.join(__dirname,'../web/style.css'),'utf8');
+ assert.match(styles,/\.topbar\s*\{[^}]*-webkit-app-region:drag/);
+ assert.match(styles,/\.topbar :is\(button,input,textarea,select,a\)\s*\{[^}]*-webkit-app-region:no-drag/);
+});

@@ -1,21 +1,18 @@
-# Notryn 0.2.0-beta.7
+# Notryn 0.2.0-beta.8
 
-Use Notryn in split windows and finish saving without waiting for the whole Brain to refresh.
+Move the macOS window naturally while keeping every top-bar action usable.
 
-- Desktop windows can shrink to 320 × 320 pixels, allowing Omarchy and other tiling window managers to activate the compact layout instead of clipping the desktop view.
-- Narrow windows keep navigation and toolbar controls within reach. Short windows use tighter spacing and scrollable Library controls.
-- Resizing preserves the open note and unsaved draft. Brain and Notes remain available through the compact navigation.
-- Save confirms once the server has persisted the note. Graph indexing continues separately, so a large Brain no longer delays finishing the edit.
-- Edits typed during a save remain unsaved and open. Write errors and conflicts still preserve the draft.
-- The public demo uses the same responsive interface and temporary sample notes.
+- Empty areas of the integrated top bar are now draggable on macOS.
+- Brain selection, search, note creation, themes and command controls remain clickable and editable.
+- The split-window layout and prompt save confirmation from beta.7 remain included.
 
-Validated with 117 Python tests, 64 Node tests and browser checks at 320 × 320, 480 × 360, 640 × 720, 960 × 540 and 1440 × 950. Physical testing on Omarchy remains useful; the screenshot report was reproduced through the desktop minimum-size constraint and short browser viewports.
+Validated with 117 Python tests and 65 Node tests. The draggable region and interactive exclusions are covered in the desktop workspace checks; physical confirmation on macOS remains useful after updating.
 
 Free to use under PolyForm Shield 1.0.0. No account, subscription or note telemetry.
 
 Install: https://notryn.com/guide.html
 
-Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.7/install.sh
+Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.8/install.sh
 
 Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
 
