@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.5. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.6. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -16,8 +16,9 @@ Workspace reference for 0.2.0-beta.5. See [installation](INSTALL.md) for package
 - Search covers every indexed note, regardless of the open folder. It matches words in filenames, paths and document titles across spaces, hyphens and accents, with exact filenames first. Search results are no longer capped at 30; the reader retains the original document title.
 - Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
 - Mobile navigation for Brain and Notes; creation buttons stay in the current folder.
+- Brain creation includes a required location picker and shows the complete destination before creating anything.
 
-Version `0.2.0-beta.4` makes folder navigation and creation clearer, with text buttons and optional shortcut hints on hover. The A and Shift A shortcuts remain unassigned.
+Version `0.2.0-beta.6` lets each person choose and verify where a new Brain folder will be created. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 
@@ -109,7 +110,7 @@ W cycles through visible panes and Shift W reverses direction outside text field
 
 All actions remain in the P command palette, including actions without a dedicated key. Type an action name, navigate with arrows and press Enter. Typed characters in the palette, theme picker and forms are handled locally and do not trigger workspace commands.
 
-Less frequent flows share that same route: **Manage Brain access**, **Remove this Brain from Notryn**, **Expand all folders**, **Collapse all folders**, and **Configure keyboard shortcuts**. Permissions, restoration and removal still require choosing an item and confirming in their dialogs with Tab/Enter. Open the folder browser with **O**, Tab to **Browse folders**, Enter; arrows/Enter browse directories and Tab reaches **Choose folder**. The Brain picker uses the same **Shift B** and **O** bindings as the workspace. Themes use T, arrows and Enter.
+Less frequent flows share that same route: **Manage Brain access**, **Remove this Brain from Notryn**, **Expand all folders**, **Collapse all folders**, and **Configure keyboard shortcuts**. Permissions, restoration and removal still require choosing an item and confirming in their dialogs with Tab/Enter. When creating a Brain, enter its name, choose the parent location and verify the complete **Brain folder** path before confirming. Open the folder browser with **O**, Tab to **Choose**, Enter; arrows/Enter browse directories and Tab reaches **Choose this location** or **Use this folder**. The Brain picker uses the same **Shift B** and **O** bindings as the workspace. Themes use T, arrows and Enter.
 
 ### Organizing files
 

@@ -6,6 +6,15 @@
   let serial=1;
   const brains=[{id:'example-brain',name:'Example Brain',root:'Demo / Example Brain',scope:'all',readOnly:false,available:true}];
   const workspaces=new Map([[brains[0].id,{notes:new Map(Object.entries(window.NOTRYN_DEMO_NOTES)),folders:new Set(['Projects','Projects/Studio','Ideas','Knowledge'])}]]);
+  const demoFolders=new Map([
+    ['Demo computer',['Desktop','Documents','Notes']],
+    ['Demo computer/Desktop',['Designs']],
+    ['Demo computer/Documents',['Personal','Work']],
+    ['Demo computer/Notes',[]],
+    ['Demo computer/Desktop/Designs',[]],
+    ['Demo computer/Documents/Personal',[]],
+    ['Demo computer/Documents/Work',[]]
+  ]);
   const originalFetch=window.fetch.bind(window);
   const clone=value=>JSON.parse(JSON.stringify(value));
   const fail=(message,status=400)=>{const error=new Error(message);error.status=status;throw error;};
@@ -14,6 +23,13 @@
     return value;
   };
   const parent=path=>path.split('/').slice(0,-1).join('/');
+  function browseDemo(data){
+    const path=demoFolders.has(data.path)?data.path:'Demo computer',query=String(data.query||'').toLocaleLowerCase();
+    const names=demoFolders.get(path).filter(name=>name.toLocaleLowerCase().includes(query));
+    return {path,name:path.split('/').pop(),parent:parent(path)||null,folders:names.map(name=>({name,path:path+'/'+name})),
+      places:[{name:'Home',path:'Demo computer'},{name:'Documents',path:'Demo computer/Documents'},{name:'Desktop',path:'Demo computer/Desktop'}],
+      total:names.length,nextOffset:null,selectable:path!=='Demo computer',creatable:true};
+  }
   function workspace(id){const brain=brains.find(b=>b.id===id);if(!brain)fail('This demo Brain is not connected.',404);return {brain,...workspaces.get(id)};}
   const relocatePath=(path,source,target,kind)=>path===source||kind==='folder'&&path.startsWith(source+'/')?target+path.slice(source.length):path;
   function rewriteWikiLinks(content,source,nextSource,paths,relocate){
@@ -61,8 +77,8 @@
   }
   function request(url,data){
     const route=url.pathname;
-    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.5'};
-    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.5'};
+    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.6'};
+    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.6'};
     if(route==='/api/theme')return {available:false};
     if(route==='/api/graph')return graph(url.searchParams.get('brain'));
     if(route==='/api/note'){
@@ -89,15 +105,17 @@
     if(route==='/api/rename')return changePath(data,'rename');
     if(route==='/api/brains'){
       if(data.action==='access'){const {brain}=workspace(data.brain);brain.readOnly=!data.writable;return {brain};}
-      if(data.action==='create'){
+      if(data.action==='create'||data.action==='connect'){
         const name=String(data.name||'').trim();if(!name||name.length>80)fail('Choose a name between 1 and 80 characters.');
-        const brain={id:'demo-brain-'+(++serial),name,root:'Demo / '+name,scope:'all',readOnly:false,available:true};
+        if(!data.path)fail(data.action==='create'?'Choose where to create the Brain.':'Choose a folder to open.');
+        const brain={id:'demo-brain-'+(++serial),name,root:data.action==='create'?data.path+'/'+name:data.path,scope:'all',readOnly:data.action==='connect'&&!data.writable,available:true};
         brains.push(brain);workspaces.set(brain.id,{notes:new Map(),folders:new Set()});return {brain,graph:graph(brain.id)};
       }
-      fail('Install Notryn to connect folders from your computer. This demo uses sample notes only.');
+      fail('This action is unavailable in the demo.');
     }
     if(route==='/api/removals/list')return {items:[]};
-    if(route==='/api/notes/reveal'||route==='/api/folders/browse')fail('Computer folders are available in the installed app. These sample notes live only in this browser tab.');
+    if(route==='/api/folders/browse')return browseDemo(data);
+    if(route==='/api/notes/reveal')fail('Computer folders are available in the installed app. These sample notes live only in this browser tab.');
     if(route.startsWith('/api/removals'))fail('Removing files can be tried in the installed app. This demo keeps its sample notes in memory.');
     fail('This device action is available in the installed app.',403);
   }

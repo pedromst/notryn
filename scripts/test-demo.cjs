@@ -20,8 +20,10 @@ assert.equal((await request('/api/note?brain=example-brain&path=Projects/Renamed
 assert.equal((await request('/api/rename',{brain:'example-brain',source:'Projects/Renamed folder',name:'Studio',kind:'folder'})).status,409);
 result=await request('/api/move',{brain:'example-brain',source:'Ideas/Small beginnings.md',destination:'Knowledge',kind:'note'});assert.equal(result.status,200);assert.equal(result.data.path,'Knowledge/Small beginnings.md');
 assert.equal((await request('/api/graph?brain=example-brain')).data.edges.length,19);
-assert.equal((await request('/api/folders/browse',{path:'/Users'})).status,400);
+result=await request('/api/folders/browse',{path:'Demo computer/Documents'});assert.equal(result.status,200);assert.equal(result.data.creatable,true);
+assert.equal((await request('/api/brains',{action:'create',name:'Visible Brain'})).status,400);
+result=await request('/api/brains',{action:'create',name:'Visible Brain',path:'Demo computer/Documents'});assert.equal(result.status,200);assert.equal(result.data.brain.root,'Demo computer/Documents/Visible Brain');
 assert.equal((await request('/api/notes',{brain:'example-brain',path:'../private.md',revision:null,content:'x'})).status,400);
 assert.equal((await request('https://example.com/api/state')).status,403);
-assert.equal(networkCalls,0);console.log('PASS: sample graph and links, edit/read/conflict, create/rename/move, rejected real folder access and zero API network requests.');
+assert.equal(networkCalls,0);console.log('PASS: sample graph and links, edit/read/conflict, create/rename/move, chosen Brain location and zero API network requests.');
 })();

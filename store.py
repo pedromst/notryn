@@ -67,6 +67,20 @@ def slug(value):
     text = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode().lower()
     return re.sub(r'[^a-z0-9]+', '-', text).strip('-')[:70] or 'brain'
 
+def brain_folder_name(value):
+    """Return a portable folder name for a newly created Brain."""
+    name = str(value).strip()
+    reserved = {'con','prn','aux','nul',*(f'com{i}' for i in range(1,10)),*(f'lpt{i}' for i in range(1,10))}
+    if (not name or len(name) > 80 or name.startswith('.') or name.endswith('.') or
+            any(character in '<>:"/\\|?*' or ord(character) < 32 for character in name) or
+            name.split('.',1)[0].casefold() in reserved):
+        raise Problem('Use a name between 1 and 80 characters that is safe as a folder name.')
+    return name
+
+def creation_parent(root):
+    """A new named folder may live here without writing into the app or a filesystem root."""
+    return root != Path(root.anchor) and root != HERE and not root.is_relative_to(HERE)
+
 def atomic(path, data):
     fd, temporary = tempfile.mkstemp(prefix='.notryn-', dir=path.parent)
     try:
@@ -131,12 +145,13 @@ class Store:
         return any(r['id'] != except_id and r['brain'] == brain['id'] and r['kind'] != 'brain' and
                    (path == r['path'] or r['kind'] == 'folder' and path.startswith(r['path'] + '/')) for r in self.removals)
 
-    def add(self, name, existing=None, writable=False):
+    def add(self, name, existing=None, writable=False, create_in=None):
         name = str(name).strip()
         if not name or len(name) > 80:
             raise Problem('Choose a name between 1 and 80 characters.')
         with self.lock:
             ident = slug(name) + '-' + secrets.token_hex(3)
+            created_root = False
             if existing is not None:
                 root = folder_path(existing)
                 if not root.is_dir():
@@ -155,14 +170,41 @@ class Store:
                     raise Problem('This folder is already connected as “' + duplicate['name'] + '”.', 409)
                 if writable and self.is_protected(root):
                     raise Problem('This folder overlaps with a read-only Brain.', 403)
+            elif create_in is not None:
+                parent = folder_path(create_in)
+                if not parent.is_dir():
+                    raise Problem('The chosen location no longer exists on this computer.', 404)
+                if not creation_parent(parent):
+                    raise Problem('Choose a personal folder, not a system or application folder.')
+                root = parent / brain_folder_name(name)
+                if os.path.lexists(root):
+                    raise Problem('A folder with this Brain name already exists in that location.', 409)
+                if self.is_protected(root):
+                    raise Problem('This location is inside a read-only Brain.', 403)
+                try:
+                    root.mkdir()
+                except PermissionError:
+                    raise Problem('Notryn cannot create a folder in this location. Choose another one.', 403)
+                created_root = True
+                writable = True
             else:
                 root = self.home / 'brains' / ident
                 root.mkdir(parents=True, exist_ok=False)
+                created_root = True
                 writable = True
             scope = 'all'
             brain = {'id':ident,'name':name,'root':str(root),'readOnly':not writable,'scope':scope,'createdAt':self.now()}
             self.brains.append(brain)
-            self.persist()
+            try:
+                self.persist()
+            except Exception:
+                self.brains.pop()
+                if created_root:
+                    try:
+                        root.rmdir()
+                    except OSError:
+                        pass
+                raise
             return self.summary(brain)
 
     def set_access(self, brain_id, writable):
@@ -221,7 +263,7 @@ class Store:
         page=folders[offset:offset+200]
         return {'path':str(root),'name':root.name or str(root),'parent':str(root.parent) if root.parent!=root else None,
                 'folders':page,'places':places,'total':len(folders),'nextOffset':offset+len(page) if offset+len(page)<len(folders) else None,
-                'selectable':specific_folder(root)}
+                'selectable':specific_folder(root),'creatable':creation_parent(root) and os.access(root,os.W_OK)}
 
     def base(self, brain):
         root = Path(brain['root'])

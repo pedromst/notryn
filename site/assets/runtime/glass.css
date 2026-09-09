@@ -79,8 +79,10 @@ input::placeholder,textarea::placeholder{color:#8da5b0}*{scrollbar-color:#96bece
 @media(max-width:900px){.graph-hint{font-size:10px;letter-spacing:0}}
 /* Folder selection works with typed paths, pointer input and keyboard navigation. */
 .path-field{display:flex;align-items:center;gap:5px;border:1px solid #b8dce134;background:#0a1824bd;border-radius:9px;padding-right:5px}
-.form-dialog .path-field input{border:0;background:none;padding-right:4px;font-size:12px}.path-field:focus-within{border-color:var(--accent)}
-.path-field .icon-button{color:var(--accent);width:36px;height:36px;border-radius:7px}.path-field .icon-button:hover{background:#b4ebd916}
+.form-dialog .path-field input{border:0;background:none;padding-right:4px;font-size:12px;min-width:0}.path-field:focus-within{border-color:var(--accent)}
+.path-field .path-browse{display:flex;align-items:center;gap:7px;flex-shrink:0;min-height:36px;padding:8px 10px;color:var(--accent);border-radius:7px}.path-field .path-browse .icon{width:15px;height:15px}.path-field .path-browse:hover{background:#b4ebd916}
+.brain-destination{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;align-items:center;margin:14px 0 5px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--theme-soft);font-size:10px;color:var(--muted)}.brain-destination code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font:inherit}
+#brain-form-dialog{overflow:auto}
 #folder-dialog{width:580px;padding:0}.folder-heading{padding:23px 24px 16px;margin:0}.folder-heading p{margin:6px 0 0;color:var(--muted);font-size:11px}
 .folder-places{display:flex;gap:6px;flex-wrap:wrap;padding:0 24px 17px}.folder-places button{padding:7px 10px;font-size:11px;background:#c7e5f008;border:1px solid var(--line);border-radius:8px}.folder-places button[aria-pressed=true]{background:#b4ebd91f;color:var(--accent)}
 .folder-location{display:flex;align-items:center;gap:9px;padding:10px 17px;border-block:1px solid var(--line);background:#08162255}.folder-location span{font-size:11px;color:#bdd3db;overflow-wrap:anywhere;min-width:0}.folder-location .icon-button{flex-shrink:0}

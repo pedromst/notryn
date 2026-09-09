@@ -26,12 +26,16 @@ class HttpTests(unittest.TestCase):
             with urllib.request.urlopen(req) as r:return r.status,json.loads(r.read())
         except urllib.error.HTTPError as e:return e.code,json.loads(e.read())
     def test_write_requires_origin_and_session_token(self):
-        body={'action':'create','name':'Test'}
+        parent=Path(self.temp.name)/'Brains';parent.mkdir()
+        body={'action':'create','name':'Test','path':str(parent)}
         self.assertEqual(self.request('/api/brains',body)[0],403)
         self.assertEqual(self.request('/api/brains',body,{'Origin':'https://other.example','X-Notryn-Token':self.http.token})[0],403)
         self.assertEqual(self.request('/api/brains',body,{'Origin':self.origin,'X-Notryn-Token':'wrong'})[0],403)
         code,data=self.request('/api/brains',body,{'Origin':self.origin,'X-Notryn-Token':self.http.token});self.assertEqual(code,201)
         self.assertEqual(data['brain']['name'],'Test')
+        self.assertEqual(data['brain']['root'],str((parent/'Test').resolve()));self.assertTrue((parent/'Test').is_dir())
+        missing={key:value for key,value in body.items() if key!='path'}
+        self.assertEqual(self.request('/api/brains',missing,{'Origin':self.origin,'X-Notryn-Token':self.http.token})[0],400)
     def test_readonly_source_rejects_browser_writes(self):
         folder=Path(self.temp.name)/'existing';folder.mkdir();(folder/'one.md').write_text('original')
         brain=self.http.store.add('Existing',str(folder),False)

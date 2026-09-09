@@ -1,6 +1,6 @@
 # Install, update and uninstall
 
-Public beta `0.2.0-beta.5`. Linux/Omarchy first; macOS Intel and Apple silicon packages use the same commands. Windows has no installer yet.
+Public beta `0.2.0-beta.6`. Linux/Omarchy first; macOS Intel and Apple silicon packages use the same commands. Windows has no installer yet.
 
 ## Before installing
 
@@ -26,7 +26,7 @@ sh notryn-install.sh
 Fallback if the domain is unavailable:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.5/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.6/install.sh | sh
 ```
 
 Add `--no-open` to install without opening the app. The bootstrap detects the OS and architecture, verifies the setup checksum, and runs the setup program. The setup then downloads the app, compares its SHA-256 with the GitHub release asset digest, checks the archive paths and tests its local server in disposable state. It then installs the app and creates the launcher.
@@ -72,7 +72,7 @@ Public beta installations follow newer preview releases, then stable releases. O
 To choose a specific newer release:
 
 ```sh
-notryn update --version 0.2.0-beta.5
+notryn update --version 0.2.0-beta.6
 ```
 
 The app refuses downgrades through update. It keeps the current version if the download, checksum, package validation or local-server test fails. When replacement fails, it restores the previous app. It does not close an open editor or discard an unsaved draft for you.
@@ -114,9 +114,9 @@ It does not delete your data or empty Trash. There is no destructive `--purge` f
 | App | `~/.local/lib/notryn` | `~/Applications/Notryn.app` |
 | App backups | `~/.local/lib/.notryn-backups` | `~/Applications/.notryn-backups` |
 | Command | `~/.local/bin/notryn` | `~/.local/bin/notryn` |
-| State and app-created Brains | `$XDG_DATA_HOME/notryn` or `~/.local/share/notryn` | `~/Library/Application Support/Notryn` |
+| Settings, recovery data and older app-created Brains | `$XDG_DATA_HOME/notryn` or `~/.local/share/notryn` | `~/Library/Application Support/Notryn` |
 
-Use the same normal user and state location when updating. A custom `NOTRYN_HOME` remains supported for terminal server work; it is not a way to relocate the desktop installation.
+New Brains are folders in the location selected during creation. Use the same normal user and state location when updating. A custom `NOTRYN_HOME` remains supported for terminal server work; it is not a way to relocate the desktop installation.
 
 ## Troubleshooting
 
