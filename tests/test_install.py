@@ -94,6 +94,32 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.install.manifest()['version'], '0.2.0-alpha.3')
         self.assert_data_preserved()
 
+    def test_cancelled_activation_restores_app_manifest_and_preserves_notes(self):
+        with patch.object(self.install, 'verify_app'):
+            self.install.install(FixtureReleases(self.root))
+            real_write = self.install.write_manifest
+            def interrupt_after_write(value, app=None):
+                real_write(value, app)
+                if app is None and value['version'] == '0.2.0-alpha.4':
+                    raise KeyboardInterrupt()
+            with patch.object(self.install, 'write_manifest', side_effect=interrupt_after_write):
+                with self.assertRaises(KeyboardInterrupt):
+                    self.install.install(FixtureReleases(self.root, '0.2.0-alpha.4'))
+        self.assertIn('0.2.0-alpha.3', self.install.sidecar.read_text())
+        self.assertEqual(self.install.manifest()['version'], '0.2.0-alpha.3')
+        self.assertFalse((self.install.data / 'installation.lock').exists())
+        self.assert_data_preserved()
+
+    def test_interruption_before_backup_move_never_removes_the_current_app(self):
+        with patch.object(self.install, 'verify_app'):
+            self.install.install(FixtureReleases(self.root))
+            with patch.object(self.install, 'write_manifest', side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    self.install.install(FixtureReleases(self.root, '0.2.0-alpha.4'))
+        self.assertIn('0.2.0-alpha.3', self.install.sidecar.read_text())
+        self.assertEqual(self.install.manifest()['version'], '0.2.0-alpha.3')
+        self.assert_data_preserved()
+
     def test_refuse_live_app_and_concurrent_installer(self):
         with patch.object(self.install, 'stopped', side_effect=RuntimeError('Quit Notryn first')):
             with self.assertRaises(RuntimeError):

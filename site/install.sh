@@ -1,7 +1,7 @@
 #!/bin/sh
 # Notryn bootstrap. This file will be served over HTTPS after public approval.
 set -eu
-VERSION=0.2.0-beta.4
+VERSION=0.2.0-beta.5
 PRIVATE=0
 OPEN=1
 while test "$#" -gt 0; do
@@ -29,14 +29,17 @@ trap 'notryn_exit_code=$?; rm -rf "$WORK"; exit "$notryn_exit_code"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
 NAME="notryn-setup-$OS-$ARCH"
-echo "Preparing Notryn $VERSION for $OS ${ARCH}..."
+printf '\nPreparing Notryn %s for %s %s\n\n' "$VERSION" "$OS" "$ARCH" >&2
+echo 'Downloading installer...' >&2
 if test "$PRIVATE" -eq 1; then
   EXPECTED=$(gh api --hostname github.com "repos/pedromst/notryn/releases/tags/v$VERSION" --jq ".assets[] | select(.name == \"$NAME\") | .digest")
   EXPECTED=${EXPECTED#sha256:}
   gh release download "v$VERSION" --repo github.com/pedromst/notryn --pattern "$NAME" --dir "$WORK"
 else
   BASE="https://github.com/pedromst/notryn/releases/download/v$VERSION"
-  curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location --show-error --silent --max-time 600 "$BASE/$NAME" -o "$WORK/$NAME"
+  if test -t 2 && test "${TERM:-dumb}" != dumb; then DOWNLOAD_PROGRESS=--progress-bar; else DOWNLOAD_PROGRESS=--silent; fi
+  curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location --show-error "$DOWNLOAD_PROGRESS" --max-time 600 "$BASE/$NAME" -o "$WORK/$NAME"
+  echo 'Checking installer...' >&2
   curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location --show-error --silent --max-time 60 "$BASE/$NAME.sha256" -o "$WORK/checksum"
   EXPECTED=$(awk 'NR == 1 {print $1}' "$WORK/checksum")
 fi
@@ -47,6 +50,7 @@ else
   ACTUAL=$(shasum -a 256 "$WORK/$NAME" | awk '{print $1}')
 fi
 test "$EXPECTED" = "$ACTUAL" || { echo 'Installer checksum mismatch. Nothing was installed.' >&2; exit 1; }
+echo 'Installer verified. Starting setup...' >&2
 chmod 700 "$WORK/$NAME"
 set -- --version "$VERSION"
 if test "$PRIVATE" -eq 1; then set -- "$@" --private; fi

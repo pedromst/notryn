@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.4. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.5. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 

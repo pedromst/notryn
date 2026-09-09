@@ -285,6 +285,9 @@ def main(argv=None):
             open_url(record["port"])
         print(("Notryn started" if created else "Notryn is already running") + f" at http://127.0.0.1:{record['port']}/.")
         return 0
+    except KeyboardInterrupt:
+        print('\nOperation cancelled.', file=sys.stderr)
+        return 130
     except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as exc:
         print(str(exc), file=sys.stderr)
         return 1

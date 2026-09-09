@@ -19,6 +19,7 @@ import tempfile
 import zipfile
 from pathlib import Path, PurePosixPath
 from urllib.request import Request, urlopen
+from notryn_progress import Progress, heading
 
 REPO = 'pedromst/notryn'
 API = 'https://api.github.com/repos/' + REPO
@@ -102,21 +103,27 @@ class Releases:
             raise RuntimeError('Release checksum or size is missing. Nothing was installed.')
         target = Path(directory) / name
         if self.private:
-            run(['gh', 'release', 'download', release['tag_name'], '--repo', 'github.com/' + REPO, '--pattern', name, '--dir', directory], timeout=600)
+            with Progress('Downloading app (private release)'):
+                run(['gh', 'release', 'download', release['tag_name'], '--repo', 'github.com/' + REPO, '--pattern', name, '--dir', directory], timeout=600)
         else:
             # Construct the trusted GitHub URL; never execute URLs from a manifest.
             url = 'https://github.com/' + REPO + '/releases/download/' + release['tag_name'] + '/' + name
-            with urlopen(Request(url, headers={'User-Agent': 'Notryn installer'}), timeout=60, context=https_context()) as response, target.open('wb') as output:
-                if not response.url.startswith('https://'):
-                    raise RuntimeError('Insecure download redirect refused.')
-                count = 0
-                while chunk := response.read(1024 * 1024):
-                    count += len(chunk)
-                    if count > asset['size']:
-                        raise RuntimeError('Download exceeded the expected size.')
-                    output.write(chunk)
-        if target.stat().st_size != asset['size'] or sha256(target) != digest[7:]:
-            raise RuntimeError('Download checksum did not match GitHub. Nothing was installed.')
+            with Progress('Downloading app', asset['size']) as progress:
+                with urlopen(Request(url, headers={'User-Agent': 'Notryn installer'}), timeout=60, context=https_context()) as response, target.open('wb') as output:
+                    if not response.url.startswith('https://'):
+                        raise RuntimeError('Insecure download redirect refused.')
+                    count = 0
+                    while chunk := response.read(256 * 1024):
+                        count += len(chunk)
+                        if count > asset['size']:
+                            raise RuntimeError('Download exceeded the expected size.')
+                        output.write(chunk)
+                        progress.update(count)
+                    if count != asset['size']:
+                        raise RuntimeError('Download ended before the expected size. Nothing was installed.')
+        with Progress('Verifying download'):
+            if target.stat().st_size != asset['size'] or sha256(target) != digest[7:]:
+                raise RuntimeError('Download checksum did not match GitHub. Nothing was installed.')
         return target
 
 
@@ -301,7 +308,8 @@ class Installation:
             existing = self.manifest() if self.app.exists() and self.manifest_path().is_file() else None
             # Beta installations follow preview releases; stable installations stay stable.
             preview = client.private or bool(existing and '-' in existing['version'])
-            release = client.release(version, prerelease=preview)
+            with Progress('Checking for updates' if existing else 'Finding release'):
+                release = client.release(version, prerelease=preview)
             version = release['tag_name'].removeprefix('v')
             if existing:
                 if version_key(version) <= version_key(existing['version']):
@@ -309,16 +317,19 @@ class Installation:
                     return existing['version']
             extension = 'tar.gz' if self.system == 'linux' else 'zip'
             name = f'Notryn-{version}-{self.system}-{self.arch}.{extension}'
+            heading('Updating to' if existing else 'Installing', version, self.system, self.arch)
             with tempfile.TemporaryDirectory(prefix='notryn-download-') as temporary:
-                print('Downloading Notryn ' + version + ' for ' + self.system + ' ' + self.arch + '…', flush=True)
                 archive = client.download(release, name, temporary)
-                root = safe_extract(archive, Path(temporary) / 'unpacked', 'Notryn-' + version if self.system == 'linux' else 'Notryn.app')
-                self.verify_app(root, version)
+                with Progress('Unpacking app'):
+                    root = safe_extract(archive, Path(temporary) / 'unpacked', 'Notryn-' + version if self.system == 'linux' else 'Notryn.app')
+                with Progress('Checking app'):
+                    self.verify_app(root, version)
                 self.app.parent.mkdir(parents=True, exist_ok=True)
                 stage = Path(tempfile.mkdtemp(prefix='.notryn-new-', dir=self.app.parent))
                 backup = None
                 try:
-                    shutil.copytree(root, stage, dirs_exist_ok=True, symlinks=True)
+                    with Progress('Preparing files'):
+                        shutil.copytree(root, stage, dirs_exist_ok=True, symlinks=True)
                     if self.app.exists():
                         # Only migrate the recognizable prior private alpha layout.
                         if not self.sidecar.is_file():
@@ -326,21 +337,26 @@ class Installation:
                         self.backups.mkdir(parents=True, exist_ok=True)
                         backup = self.backups / ('notryn-' + (existing or {}).get('version', 'legacy') + '-' + secrets.token_hex(6))
                     metadata = {'version': version, 'platform': self.system, 'arch': self.arch, 'private': client.private, 'previous': backup.name if backup else None, 'sha256': sha256(archive)}
-                    if backup:
-                        if existing:
-                            self.write_manifest(existing, backup)
-                        self.app.rename(backup)
-                    try:
-                        stage.rename(self.app)
-                        self.launchers()
-                        self.write_manifest(metadata)
-                    except Exception:
-                        if self.app.exists():
-                            shutil.rmtree(self.app)
-                        if backup:
-                            backup.rename(self.app)
+                    with Progress('Installing app'):
+                        try:
+                            if backup:
+                                if existing:
+                                    self.write_manifest(existing, backup)
+                                self.app.rename(backup)
+                            stage.rename(self.app)
                             self.launchers()
-                        raise
+                            self.write_manifest(metadata)
+                        except BaseException:
+                            # Also recover an interrupted swap. Do not remove an
+                            # old app if interruption happened before it moved.
+                            if not stage.exists() and self.app.exists():
+                                shutil.rmtree(self.app)
+                            if backup and backup.exists():
+                                backup.rename(self.app)
+                                self.launchers()
+                                if existing:
+                                    self.write_manifest(existing)
+                            raise
                 finally:
                     if stage.exists():
                         shutil.rmtree(stage)
@@ -421,6 +437,9 @@ def main():
         if not args.no_open:
             installation.open()
         return 0
+    except KeyboardInterrupt:
+        print('\nInstallation cancelled.', file=sys.stderr)
+        return 130
     except Exception as error:
         print('Installation stopped: ' + str(error), file=sys.stderr)
         return 1
