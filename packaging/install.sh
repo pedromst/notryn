@@ -1,7 +1,7 @@
 #!/bin/sh
 # Notryn bootstrap. This file will be served over HTTPS after public approval.
 set -eu
-VERSION=0.2.0-beta.5
+VERSION=0.2.0-beta.6
 PRIVATE=0
 OPEN=1
 while test "$#" -gt 0; do

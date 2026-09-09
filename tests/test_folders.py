@@ -38,6 +38,24 @@ class FolderTests(unittest.TestCase):
         for value in ['', '""',{},'\x00','file://remote.example/folder']:
             with self.subTest(value=value),self.assertRaises(Problem):self.store.add('Invalid',value)
         self.assertEqual(self.store.config.read_bytes(),original)
+    def test_new_brain_is_created_inside_the_chosen_location(self):
+        parent=self.root/'My notes';parent.mkdir()
+        brain=self.store.add('Ideas and projects',create_in=str(parent))
+        target=parent/'Ideas and projects'
+        self.assertEqual(brain['root'],str(target));self.assertFalse(brain['readOnly']);self.assertTrue(target.is_dir())
+        self.store.write(brain['id'],'Start.md','# Start',None)
+        self.assertEqual((target/'Start.md').read_text(),'# Start')
+    def test_new_brain_never_reuses_or_escapes_the_chosen_location(self):
+        parent=self.root/'Chosen';parent.mkdir();occupied=parent/'Taken';occupied.mkdir()
+        with self.assertRaises(Problem) as caught:self.store.add('Taken',create_in=str(parent))
+        self.assertEqual(caught.exception.status,409)
+        for name in ['../outside','A/B','.hidden','CON','ends.']:
+            with self.subTest(name=name),self.assertRaises(Problem):self.store.add(name,create_in=str(parent))
+        self.assertEqual(list(parent.iterdir()),[occupied])
+    def test_new_brain_cannot_write_inside_a_readonly_brain(self):
+        protected=self.root/'Protected';protected.mkdir();self.store.add('Protected',str(protected),False)
+        with self.assertRaises(Problem) as caught:self.store.add('Nested',create_in=str(protected))
+        self.assertEqual(caught.exception.status,403);self.assertFalse((protected/'Nested').exists())
     def test_browser_lists_only_folders_and_does_not_connect_or_modify(self):
         for name in ['Zulu','Alpha','.hidden']:(self.folder/name).mkdir()
         config=self.store.config.read_bytes()
@@ -63,6 +81,7 @@ class FolderTests(unittest.TestCase):
         with patch('store.Path.home',return_value=self.root):
             data=self.store.browse()
         self.assertFalse(data['selectable'])
+        self.assertTrue(data['creatable'])
         self.assertIn({'name':'Desktop','path':str(self.root/'Desktop')},data['places'])
     def test_invalid_search_and_missing_folder_return_clear_errors(self):
         for args in [{'query':{}},{'offset':-1},{'offset':True}]:

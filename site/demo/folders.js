@@ -5,7 +5,7 @@ function folderBusy(value){
  folderBrowser.loading=value;$('#folder-results').setAttribute('aria-busy',String(value));
  $$('#folder-results button').forEach(b=>b.disabled=value);
  $('#folder-parent').disabled=value||!folderBrowser.data?.parent;
- $('#folder-choose').disabled=value||!folderBrowser.data?.selectable;
+ $('#folder-choose').disabled=value||!(brainAction==='create'?folderBrowser.data?.creatable:folderBrowser.data?.selectable);
  $('#folder-more').disabled=value;
 }
 function focusFolderResult(){
@@ -28,9 +28,10 @@ async function loadFolders(path,query='',offset=0,focusResults=false){
   const results=$('#folder-results');if(offset===0)results.replaceChildren();
   for(const folder of data.folders)results.append(folderRow(folder));
   const rows=[...results.querySelectorAll('button')];rows.forEach((row,i)=>row.tabIndex=i===0?0:-1);
-  if(!rows.length)results.append(el('p','empty-list',query?'No matching folders.':data.selectable?'No subfolders. You can choose this folder.':'No folders here. Choose another location.'));
+  const allowed=brainAction==='create'?data.creatable:data.selectable;
+  if(!rows.length)results.append(el('p','empty-list',query?'No matching folders.':allowed?'No subfolders. You can choose this location.':'No folders here. Choose another location.'));
   $('#folder-more').hidden=data.nextOffset===null;
-  $('#folder-feedback').textContent=data.selectable?(data.total===1?'1 folder':data.total+' folders'):'Open a specific folder to use as a Brain.';
+  $('#folder-feedback').textContent=allowed?(data.total===1?'1 folder':data.total+' folders'):(brainAction==='create'?'Choose a writable personal location.':'Open a specific folder to use as a Brain.');
   folderBusy(false);if(focusResults)focusFolderResult();return true;
  }catch(error){
   if(serial===folderBrowser.serial){$('#folder-feedback').textContent=error.message;folderBusy(false);}
@@ -43,6 +44,10 @@ function navigateFolder(path,focusResults=false){
 async function openFolderBrowser(){
  if(state.remotePreview)return;
  const opening=++folderBrowser.opening;
+ const creating=brainAction==='create';
+ $('#folder-dialog-title').textContent=creating?'Choose a location':'Choose a folder';
+ $('#folder-dialog-title').nextElementSibling.textContent=creating?'Your new Brain will be created inside this folder.':'Open a folder, then choose it.';
+ $('#folder-choose').textContent=creating?'Choose this location':'Use this folder';
  folderBrowser.data=null;$('#folder-location').textContent='';$('#folder-results').replaceChildren();$('#folder-places').replaceChildren();$('#folder-more').hidden=true;
  $('#folder-keyboard-help').textContent='↑ ↓ navigate · Enter opens · Tab to choose';
  showDialog('#folder-dialog');$('#folder-filter').focus();
@@ -50,9 +55,10 @@ async function openFolderBrowser(){
  if(!await navigateFolder(initial)&&initial&&opening===folderBrowser.opening&&$('#folder-dialog').open)await navigateFolder(null);
 }
 function chooseFolder(){
- const data=folderBrowser.data;if(!data?.selectable||folderBrowser.loading)return;
+ const data=folderBrowser.data,allowed=brainAction==='create'?data?.creatable:data?.selectable;if(!allowed||folderBrowser.loading)return;
  $('#brain-form-path').value=data.path;$('#brain-form-path').setCustomValidity('');
- if(!$('#brain-form-name').value.trim()){$('#brain-form-name').value=data.name.slice(0,80);$('#brain-form-name').setCustomValidity('');}
+ if(brainAction==='connect'&&!$('#brain-form-name').value.trim()){$('#brain-form-name').value=data.name.slice(0,80);$('#brain-form-name').setCustomValidity('');}
+ updateBrainForm();
  $('#brain-form-dialog .form-error').hidden=true;$('#folder-dialog').close();$('#brain-submit').focus();
 }
 $('#browse-folders').onclick=openFolderBrowser;$('#folder-choose').onclick=chooseFolder;

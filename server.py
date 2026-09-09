@@ -107,9 +107,14 @@ class Handler(BaseHTTPRequestHandler):
                 if body['action']=='access':
                     brain=self.server.store.set_access(body.get('brain'),body.get('writable'))
                     return self.send(200,{'brain':brain})
-                if body['action']=='connect' and not body.get('path'):
-                    raise Problem('Enter the Brain folder path on this computer.')
-                brain=self.server.store.add(body.get('name',''),body.get('path') if body['action']=='connect' else None,body.get('writable') is True)
+                if body['action'] in {'create','connect'} and not body.get('path'):
+                    raise Problem('Choose where to create the Brain.' if body['action']=='create' else 'Enter the Brain folder path on this computer.')
+                brain=self.server.store.add(
+                    body.get('name',''),
+                    existing=body.get('path') if body['action']=='connect' else None,
+                    writable=body.get('writable') is True,
+                    create_in=body.get('path') if body['action']=='create' else None,
+                )
                 # Return the first inventory with the successful connection. This
                 # makes a newly connected Brain usable immediately, without a
                 # second state request racing the first graph load in the shell.

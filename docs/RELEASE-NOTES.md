@@ -1,20 +1,20 @@
-# Notryn 0.2.0-beta.5
+# Notryn 0.2.0-beta.6
 
-See what is happening while Notryn installs or updates, with clear progress from download to completion.
+Choose where every new Brain lives before Notryn creates it.
 
-- Public app downloads show a live bar with measured percentage, transferred size and average speed.
-- Checking, unpacking, preparing and installing show an animated activity indicator, elapsed time and completion marks. Percentages describe the download only.
-- The one-line installer shows download progress too, including when its input comes from a pipe.
-- Narrow terminals use a compact display. Redirected logs remain plain text; terminal colours respect `NO_COLOR`.
-- Interrupted or failed transfers stop clearly. Cancelling during app replacement restores the previous managed app and its version record when recovery can complete.
-
-**Already installed?** Your old updater still uses its old display for this one update. Save and quit, then run `curl -fsSL https://notryn.com/install.sh | sh` to use the new progress immediately. Future `notryn update` runs will show it too.
+- **Create a Brain** now includes a visible location field and a clear **Choose** button.
+- The folder picker starts from familiar locations such as Home, Desktop and Documents on the current computer.
+- Notryn shows the complete destination, including the new Brain folder name, before creation.
+- The chosen location is used for the real Markdown folder. New Brains are no longer silently placed inside Notryn's private settings.
+- Existing Brains stay in their current locations. Updating does not move or change them.
+- Unsafe names, occupied destinations, protected read-only Brains and unwritable locations are rejected without replacing files.
+- The public interactive demo follows the same creation flow using temporary sample locations and resets on reload.
 
 Free to use under PolyForm Shield 1.0.0. No account, subscription or note telemetry.
 
 Install: https://notryn.com/guide.html
 
-Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.5/install.sh
+Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.6/install.sh
 
 Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
 

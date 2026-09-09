@@ -26,12 +26,12 @@ curl -fsSL https://notryn.com/install.sh | sh
 If the domain is unavailable, use the same versioned installer directly from GitHub:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.5/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.6/install.sh | sh
 ```
 
 The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. Omarchy has been tested; not every distribution is verified.
 
-[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.5)
+[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.6)
 
 ## Everyday commands
 
@@ -50,6 +50,7 @@ Updating downloads the package first and checks its integrity and local server b
 ## What you can do
 
 - Write visually or in Markdown, with explicit saving and conflict protection.
+- Choose exactly where every new Brain folder is created and see its full path before confirming.
 - Navigate your actual folders and see connections in an interactive Brain.
 - Rename or move notes and folders while Notryn updates their resolved links.
 - Use the mouse, direct shortcuts or a searchable command menu.
@@ -62,12 +63,12 @@ Updating downloads the package first and checks its integrity and local server b
 
 Connected folders stay where you put them. The application, settings and Brains are separate:
 
-| System | Application | Settings and app-created Brains |
+| System | Application | Settings and recovery data |
 | --- | --- | --- |
 | Linux | `~/.local/lib/notryn` | `$XDG_DATA_HOME/notryn`, normally `~/.local/share/notryn` |
 | macOS | `~/Applications/Notryn.app` | `~/Library/Application Support/Notryn` |
 
-The local server listens only on `127.0.0.1`. Nothing is automatically uploaded to an AI model. Uninstalling keeps your data and retains recoverable application backups. Back up your own folders and private state independently.
+New Brains are stored in the location you choose. Brains created by older versions remain in their existing private-state location. The local server listens only on `127.0.0.1`. Nothing is automatically uploaded to an AI model. Uninstalling keeps your data and retains recoverable application backups. Back up your own folders and private state independently.
 
 ## Current limits
 
