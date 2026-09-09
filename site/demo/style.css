@@ -31,3 +31,7 @@ body[data-note-side="left"] .document{border-left:0;border-right:1px solid var(-
 @media(max-width:900px){.graph-keyboard-status{left:18px;top:55px;max-width:calc(100% - 36px)}}
 
 .shortcut-alias{display:block;color:var(--muted);font-size:10px;font-weight:400;margin-top:4px;line-height:1.7}
+
+/* Electron uses the quiet spaces in the top bar to move its frameless macOS window. */
+.topbar{-webkit-app-region:drag}
+.topbar :is(button,input,textarea,select,a){-webkit-app-region:no-drag}
