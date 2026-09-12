@@ -206,3 +206,12 @@ test('selection label text stays readable in every preset and custom Omarchy pal
   assert.notEqual(p.labelSelected,p.labelLinked);
  }
 });
+
+test('Jarvis owns a distinct holographic glass material system',()=>{
+ const css=fs.readFileSync(require('node:path').join(__dirname,'../web/themes.css'),'utf8');
+ assert.match(css,/--jarvis-glass:/);
+ assert.match(css,/data-theme="jarvis"[^}]+clip-path:polygon/);
+ assert.match(css,/data-theme="jarvis"[^}]+backdrop-filter:blur\(30px\)/);
+ assert.match(css,/data-theme="jarvis"[^}]+\.universe::after/);
+ assert.match(css,/prefers-reduced-transparency:reduce[^}]+data-theme="jarvis"/);
+});

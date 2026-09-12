@@ -14,7 +14,7 @@ window.NotrynThemes=(()=>{
   {id:'glass',name:'Glass',description:'Quiet light in a deep blue space.',bg:'#070e18',panel:'#101e2a',text:'#e3eff0',accent:'#b4ebd9',secondary:'#95bee6',colors:['#aeeed8','#b8c4ef','#e0c49c','#a7d9ef','#d3dfb0','#dcbcd9']},
   {id:'daylight',name:'Daylight',description:'Frosted glass. A clear place to write.',bg:'#edf1ee',panel:'#fcfdf9',text:'#213a3c',accent:'#217564',secondary:'#416d9c',colors:['#287867','#6668a1','#9c6831','#376f97','#647830','#a05d7c']},
   {id:'matrix',name:'Matrix',description:'Phosphor green. Focus after dark.',bg:'#050c08',panel:'#0d1911',text:'#d5f3dc',accent:'#81ef9c',secondary:'#37a862',colors:['#8cf7a6','#54d785','#bce68b','#52bfa8','#b3f1c1','#80b780']},
-  {id:'jarvis',name:'Jarvis',description:'Cyan telemetry around a calm reactor core.',bg:'#02070d',panel:'#071923',text:'#d9f7ff',accent:'#48dfff',secondary:'#208acb',colors:['#48dfff','#67aef4','#75ead7','#b4dcff','#58b5d4','#91cfff']},
+  {id:'jarvis',name:'Jarvis',description:'Holographic glass around a calm reactor core.',bg:'#02070d',panel:'#071923',text:'#d9f7ff',accent:'#48dfff',secondary:'#208acb',colors:['#48dfff','#67aef4','#75ead7','#b4dcff','#58b5d4','#91cfff']},
   {id:'command',name:'Command',description:'Amber signals. Precise, structured panels.',bg:'#111318',panel:'#1c2027',text:'#eeeae1',accent:'#efbb71',secondary:'#8fa9bf',colors:['#efbb71','#8fb5ce','#d79171','#cbd7da','#c1c791','#b3a3ce']},
   {id:'dusk',name:'Dusk',description:'Warm ink for slower evenings.',bg:'#19141a',panel:'#261f29',text:'#efe3e5',accent:'#e3b3c5',secondary:'#a8a3d1',colors:['#e3b3c5','#b8addb','#ddb991','#9fc7c5','#b9c79a','#c99fb8']}
  ];
