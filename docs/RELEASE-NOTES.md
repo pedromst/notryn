@@ -1,18 +1,20 @@
-# Notryn 0.2.0-beta.8
+# Notryn 0.2.0-beta.9
 
-Move the macOS window naturally while keeping every top-bar action usable.
+Find the right Markdown file and repair note links without rewriting the surrounding text.
 
-- Empty areas of the integrated top bar are now draggable on macOS.
-- Brain selection, search, note creation, themes and command controls remain clickable and editable.
-- The split-window layout and prompt save confirmation from beta.7 remain included.
+- Link search now leads with the real `.md` filename, followed by the note title and complete path.
+- Exact filename and filename-stem matches appear before partial title or path matches.
+- Clicking an existing note link in Write opens **Edit link** with **Open note**, **Remove link**, **Cancel** and **Change link**.
+- Changing a link preserves its visible text. Removing it keeps that text as ordinary writing and can be undone before saving.
+- The editor license manifest is again generated only from runtime editor dependencies.
 
-Validated with 117 Python tests and 65 Node tests. The draggable region and interactive exclusions are covered in the desktop workspace checks; physical confirmation on macOS remains useful after updating.
+Validated with 117 Python tests, 66 Node tests and an isolated Chromium flow at desktop and 390 px. The test changed a wrong target to `BRAIN.md`, saved it, reopened it, navigated through it, removed it and undid the removal. Physical-device confirmation remains useful after updating.
 
 Free to use under PolyForm Shield 1.0.0. No account, subscription or note telemetry.
 
 Install: https://notryn.com/guide.html
 
-Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.8/install.sh
+Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.9/install.sh
 
 Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
 

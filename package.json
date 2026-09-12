@@ -1,6 +1,6 @@
 {
   "name": "notryn-local-editor",
-  "version": "0.2.0-beta.8",
+  "version": "0.2.0-beta.9",
   "description": "A local space to think, write and explore connections between Markdown notes. Open a folder you already use or create a new Brain. Your files stay yours, in an open format.",
   "scripts": {
     "build:editor": "node scripts/build-editor.mjs",

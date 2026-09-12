@@ -26,12 +26,12 @@ curl -fsSL https://notryn.com/install.sh | sh
 If the domain is unavailable, use the same versioned installer directly from GitHub:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.8/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.9/install.sh | sh
 ```
 
 The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. Omarchy has been tested; not every distribution is verified.
 
-[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.8)
+[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.9)
 
 ## Everyday commands
 
@@ -49,7 +49,7 @@ Updating downloads the package first and checks its integrity and local server b
 
 ## What you can do
 
-- Write visually or in Markdown, with explicit saving and conflict protection.
+- Write visually or in Markdown, with explicit saving, conflict protection and editable note links.
 - Choose exactly where every new Brain folder is created and see its full path before confirming.
 - Navigate your actual folders and see connections in an interactive Brain.
 - Rename or move notes and folders while Notryn updates their resolved links.

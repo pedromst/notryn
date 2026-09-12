@@ -27,7 +27,8 @@
 .format-toolbar button[aria-pressed=true]{background:var(--theme-soft);color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
 .format-toolbar button:disabled{opacity:.28}.format-divider{height:18px;width:1px;background:var(--line);margin:0 3px}
 .link-notes{max-height:180px;overflow:auto;display:flex;flex-direction:column;border-top:1px solid var(--line);padding-top:8px;margin-top:5px}
-.link-note{justify-content:flex-start;text-align:left;padding:10px;border-radius:5px;font-size:12px;min-height:38px}
+.link-note{align-items:flex-start;flex-direction:column;justify-content:center;text-align:left;padding:9px 10px;border-radius:5px;min-height:48px;gap:2px}
+.link-note-file{font-size:12px;font-weight:500;color:var(--text);overflow-wrap:anywhere}.link-note small{font-size:9px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
 #link-dialog{width:480px}#link-dialog .dialog-heading{margin-bottom:15px}#link-dialog label{margin:13px 0}#link-dialog .dialog-actions{margin-top:18px}
 .markdown h1{font-size:27px;font-weight:500}.markdown h4,.markdown h5,.markdown h6{color:var(--text);font-weight:500}
 @media(min-width:901px){body.note-focus .ProseMirror{max-width:850px;margin-inline:auto;padding:40px 45px 100px}}

@@ -38,7 +38,8 @@ def run(screenshots):
         for path in ['Projects', 'Projects/Notryn', 'Ideas', 'Empty',
                      'Projects/A folder with a very long name to check the layout']:
             store.folder(bid, path)
-        store.write(bid, 'Start.md', '# Start\n\n[[Projects/Notryn/Plan]]', None)
+        store.write(bid, 'BRAIN.md', '# Pedro Brain\n\nThe root instructions.', None)
+        store.write(bid, 'Start.md', '# Start\n\n[[Projects/Notryn/Plan|Brain]]', None)
         store.write(bid, 'Projects/Notryn/Plan.md', '# Plan\n\n[[Start]]', None)
         readonly = Path(temp) / 'readonly'
         readonly.mkdir()
@@ -75,6 +76,44 @@ def run(screenshots):
 
                 # An opened note or a focused child must never steal the destination.
                 row('Start.md', 'note').click()
+                page.locator('#edit-toggle').click()
+                expect(page.locator('.ProseMirror .note-link')).to_have_text('Brain')
+                page.locator('.ProseMirror .note-link').click()
+                expect(page.locator('#link-dialog')).to_be_visible()
+                expect(page.locator('#link-title')).to_have_text('Edit link')
+                expect(page.locator('#open-link-note')).to_be_visible()
+                expect(page.locator('#remove-link')).to_be_visible()
+                page.locator('#link-address').fill('brain')
+                first_link = page.locator('#link-notes .link-note').first
+                expect(first_link.locator('.link-note-file')).to_have_text('BRAIN.md')
+                expect(first_link.locator('small')).to_contain_text('Pedro Brain · BRAIN.md')
+                if screenshots:
+                    page.screenshot(path=str(screenshots / 'link-search-desktop.png'))
+                    page.set_viewport_size({'width': 390, 'height': 844})
+                    page.screenshot(path=str(screenshots / 'link-search-mobile.png'))
+                    assert not page.evaluate('document.documentElement.scrollWidth > innerWidth')
+                    page.set_viewport_size({'width': 1440, 'height': 950})
+                page.locator('#link-dialog button[type="submit"]').click()
+                expect(page.locator('#link-dialog')).not_to_be_visible()
+                page.locator('#save-note').click()
+                expect(page.locator('#document-read')).to_be_visible()
+                assert '[[BRAIN|Brain]]' in (folder / 'Start.md').read_text()
+
+                # Clicking a linked word exposes open, change and removal without rewriting it.
+                page.locator('#edit-toggle').click()
+                page.locator('.ProseMirror .note-link').click()
+                page.locator('#open-link-note').click()
+                expect(page.locator('#doc-folder')).to_have_text('BRAIN.md')
+                expect(page.locator('#document-read h1')).to_have_text('Pedro Brain')
+                row('Start.md', 'note').click()
+                page.locator('#edit-toggle').click()
+                page.locator('.ProseMirror .note-link').click()
+                page.locator('#remove-link').click()
+                expect(page.locator('.ProseMirror .note-link')).to_have_count(0)
+                expect(page.locator('.ProseMirror')).to_contain_text('Brain')
+                page.keyboard.press('Meta+z')
+                expect(page.locator('.ProseMirror .note-link')).to_have_text('Brain')
+
                 row('Projects').click()
                 create('folder', 'Scratch', 'Projects')
                 expect(row('Projects/Scratch')).to_be_focused()
@@ -148,7 +187,7 @@ def run(screenshots):
                         page.screenshot(path=str(screenshots / f'library-{width}.png'))
                 page.set_viewport_size({'width': 1440, 'height': 950})
                 # Creating a Brain always exposes and uses the location chosen by the user.
-                chosen_parent = Path(temp) / 'Chosen location'
+                chosen_parent = (Path(temp) / 'Chosen location').resolve()
                 chosen_parent.mkdir()
                 page.locator('#brain-picker').click()
                 page.locator('#add-new-brain').click()

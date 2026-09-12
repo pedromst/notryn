@@ -8,6 +8,26 @@ export function safeLink(value){
  if(v.startsWith('#'))return v;
  return v&&!/[\u0000-\u0020\\]/.test(v)&&!v.startsWith('//')&&!/^[a-z][\w+.-]*:/i.test(v)&&/\.md(?:#.*)?$/i.test(v)?v:null;
 }
+export function noteFilename(note){return String(note?.path||'').split('/').pop()||String(note?.title||'');}
+function searchText(value){return String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
+export function findLinkNotes(notes,term='',limit=30){
+ const query=searchText(term);
+ return notes.map((note,index)=>{
+  const file=searchText(noteFilename(note)),stem=file.replace(/\.md$/i,''),title=searchText(note.title),path=searchText(note.path);
+  let rank=0;
+  if(query){
+   if(file===query||stem===query||path===query)rank=0;
+   else if(file.startsWith(query)||stem.startsWith(query))rank=1;
+   else if(title===query)rank=2;
+   else if(path.startsWith(query))rank=3;
+   else if(file.includes(query)||stem.includes(query))rank=4;
+   else if(title.includes(query))rank=5;
+   else if(path.includes(query))rank=6;
+   else rank=Infinity;
+  }
+  return {note,index,rank,file};
+ }).filter(item=>Number.isFinite(item.rank)).sort((a,b)=>a.rank-b.rank||a.file.localeCompare(b.file)||a.index-b.index).slice(0,limit).map(item=>item.note);
+}
 let nodes=baseSchema.spec.nodes.update('heading',{...baseSchema.spec.nodes.get('heading'),content:'inline*'});
 nodes=nodes.update('image',{...nodes.get('image'),toDOM:n=>['span',{class:'note-image-placeholder',contenteditable:'false'},'Image: '+(n.attrs.alt||n.attrs.src)]});
 nodes=nodes.addToEnd('wiki_link',{

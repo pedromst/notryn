@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {EditorState,TextSelection} from 'prosemirror-state';
 import {toggleMark,setBlockType} from 'prosemirror-commands';
-import {parseSource,serializeSource,schema,safeLink} from '../src/editor-model.mjs';
+import {parseSource,serializeSource,schema,safeLink,findLinkNotes,noteFilename} from '../src/editor-model.mjs';
 
 const fixtures=[
  '', '\n\n', '# New idea\n\n',
@@ -46,4 +46,14 @@ test('unsafe URLs do not become executable links; HTML and images stay inert',()
  const doc=parseSource('<script>alert(1)</script>\n\n![Image](https://example.com/track.png)\n').doc;
  assert.equal(doc.firstChild.type.name,'raw_block');
  assert.equal(schema.nodes.image.spec.toDOM(doc.child(1).firstChild)[0],'span');
+});
+test('link search leads with Markdown filenames and ranks exact filename matches first',()=>{
+ const notes=[
+  {path:'wiki/topics/brain-lint.md',title:'Brain lint'},
+  {path:'BRAIN.md',title:'Pedro Brain'},
+  {path:'wiki/home.md',title:'Pedro Brain home'}
+ ];
+ assert.equal(noteFilename(notes[1]),'BRAIN.md');
+ assert.deepEqual(findLinkNotes(notes,'brain').map(n=>n.path),['BRAIN.md','wiki/topics/brain-lint.md','wiki/home.md']);
+ assert.deepEqual(findLinkNotes(notes,'pedro brain').map(n=>n.path),['BRAIN.md','wiki/home.md']);
 });
