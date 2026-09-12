@@ -2,6 +2,7 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const state={brains:[],brain:null,token:'',data:{nodes:[],edges:[],folders:[]},graphView:null,folderPath:'',selected:null,note:null,editing:false,dirty:false,newNote:false,query:'',group:null,recent:false,closed:new Set(),noteSerial:0,loadSerial:0};
 state.saving=false;
+let graphCheck=null,graphCheckQueued=false;
 let singleKeys=true;
 try{singleKeys=NotrynDemoStorage.getItem('notryn-single-keys')!=='off';}catch{}
 let interfaceHints=true;
@@ -65,9 +66,38 @@ async function switchBrain(id,{brain=null,graphData=null}={}){if(!await canLeave
 async function loadGraph(graphData=null){const serial=++state.loadSerial;const b=current();document.body.classList.toggle('no-brain',!b);$('#brain-name').textContent=b?.name||'Your Brains';$('#new-note').disabled=!b||b.readOnly;$('#new-folder').disabled=!b||b.readOnly;$('#new-note').title=b?.readOnly?'This Brain is read-only':'New note (N)';$('#access-state').replaceChildren(icon(b?.readOnly?'lock':'folder'),document.createTextNode(b?.readOnly?'Read-only':'Demo files'));$('#welcome').hidden=!!b;$('#empty-brain').hidden=true;
  if(!b){state.data={nodes:[],edges:[],folders:[]};state.folderPath='';renderGraphView();renderTree();return;}
  $('#refresh').disabled=true;
- try{const data=graphData||await api(endpoint('/api/graph',{brain:b.id}));if(serial!==state.loadSerial)return;state.data=data;while(state.folderPath&&!data.folders.includes(state.folderPath))state.folderPath=NotrynHierarchy.parent(state.folderPath);if(state.folderPolicyBrain!==b.id){state.closed=new Set(data.folders.filter(f=>f.includes('/')||data.folders.length>60));state.folderPolicyBrain=b.id;}state.brains=state.brains.map(x=>x.id===b.id?data.brain:x);renderGraphView();$('#note-total').textContent=data.nodes.length;$('#empty-brain').hidden=data.nodes.length>0;$('#empty-create').disabled=!writable();$('#notebook-create').disabled=!writable();$('#empty-brain p').textContent=writable()?'Create your first note. Connections follow.':'This folder does not contain any Markdown notes yet.';renderTree();renderLegend();if(data.skipped)toast(data.skipped+' files were skipped (size, format or count limit).');}
+ try{const data=graphData||await api(endpoint('/api/graph',{brain:b.id}));if(serial!==state.loadSerial)return;state.data=data;while(state.folderPath&&!data.folders.includes(state.folderPath))state.folderPath=NotrynHierarchy.parent(state.folderPath);if(state.folderPolicyBrain!==b.id){state.closed=new Set(data.folders.filter(f=>f.includes('/')||data.folders.length>60));state.folderPolicyBrain=b.id;}state.brains=state.brains.map(x=>x.id===b.id?data.brain:x);renderGraphView();$('#note-total').textContent=data.nodes.length;$('#empty-brain').hidden=data.nodes.length>0;$('#empty-create').disabled=!writable();$('#notebook-create').disabled=!writable();$('#empty-brain p').textContent=writable()?'Create your first note. Connections follow.':'This folder does not contain any Markdown notes yet.';renderTree();renderLegend();void reconcileOpenNote();if(data.skipped)toast(data.skipped+' files were skipped (size, format or count limit).');}
  catch(e){$('#graph-summary').textContent='Brain unavailable';$('#file-tree').replaceChildren(el('p','empty-list',e.message));toast(e.message);}
  finally{$('#refresh').disabled=false;}}
+async function reconcileOpenNote(){
+ const selected=state.selected,note=state.note;if(!selected||!note||state.newNote)return;
+ const available=state.data.nodes.some(node=>node.id===selected);
+ if(!available){
+  if(state.editing||state.dirty){$('#document-error').textContent='This note was removed outside Notryn. Your draft is still here; copy it before closing.';$('#document-error').hidden=false;}
+  else{closeDocumentUnsafe();toast('The open note was removed outside Notryn.');}
+  return;
+ }
+ try{
+  const current=await api(endpoint('/api/note',{brain:state.brain,path:note.path}));
+  if(state.selected!==selected||state.note!==note||current.revision===note.revision)return;
+  if(state.dirty||state.saving){$('#document-error').textContent='This note changed outside Notryn. Your draft is still here; copy it before reopening the current version.';$('#document-error').hidden=false;return;}
+  state.note=current;renderDocument();toast('The open note was updated from disk.');
+ }catch(error){if(state.selected===selected&&state.note===note){$('#document-error').textContent=error.message;$('#document-error').hidden=false;}}
+}
+async function refreshGraphIfChanged({showError=false}={}){
+ if(document.hidden||!state.brain)return false;
+ if(graphCheck){graphCheckQueued=true;return graphCheck;}
+ const brain=state.brain,known=state.data.revision;
+ graphCheck=(async()=>{
+  try{
+   const result=await api(endpoint('/api/graph/revision',{brain}));
+   if(brain!==state.brain||result.revision===known)return false;
+   await loadGraph();return true;
+  }catch(error){if(showError)toast(error.message);return false;}
+  finally{graphCheck=null;if(graphCheckQueued){graphCheckQueued=false;void refreshGraphIfChanged({showError});}}
+ })();
+ return graphCheck;
+}
 function renderLegend(){
  const box=$('#legend');box.replaceChildren();
  if(state.folderPath){
@@ -140,7 +170,7 @@ $('#file-tree').onkeydown=e=>{
 };
 $('#search').addEventListener('keydown',e=>{if(!NotrynKeyboard.available(e)||e.shiftKey||!['ArrowDown','Enter'].includes(e.key))return;const first=$('#file-tree .tree-row');if(first){e.preventDefault();first.focus();if(e.key==='Enter')first.click();}});
 $('#library-back').onclick=()=>upBrainFolder({library:true});
-$('#search').oninput=e=>{state.query=clean(e.target.value.trim());renderGraphView();renderLegend();renderTree();};$('#all-notes').onclick=clearBrainFilters;$('#recent-notes').onclick=()=>{state.recent=true;renderTree();};$('#refresh').onclick=()=>loadGraph();
+$('#search').oninput=e=>{state.query=clean(e.target.value.trim());renderGraphView();renderLegend();renderTree();};$('#all-notes').onclick=clearBrainFilters;$('#recent-notes').onclick=()=>{state.recent=true;renderTree();void refreshGraphIfChanged({showError:true});};$('#refresh').onclick=()=>loadGraph();
 
 function updateBrainScope(){
  const total=state.data.nodes.length,view=state.graphView||{nodes:[],folderCount:0,noteCount:0},limited=!!(state.query||state.folderPath||graph.selected);
@@ -308,6 +338,7 @@ async function saveNote({finish=false}={}){
  try{
   const result=await api('/api/notes',{brain:state.brain,path:state.note.path,content:value,revision:state.newNote?null:state.note.revision});
   state.note={...state.note,content:value,revision:result.revision};state.newNote=false;state.selected=state.note.path.slice(0,-3);
+  const savedNode=state.data.nodes.find(node=>node.path===state.note.path);if(savedNode){savedNode.updatedAt=result.updatedAt||new Date().toISOString();savedNode.size=result.size??savedNode.size;if(state.recent)renderTree();}
   updateEditor();
   toast(state.dirty?'Saved in this demo. Newer edits are still unsaved.':'Saved in this demo successfully.');
   if(finish&&!state.dirty)finishEditing();
@@ -696,5 +727,7 @@ $('#document').addEventListener('keydown',e=>{
  if(!action)return;e.preventDefault();e.stopPropagation();if(!e.repeat)action.run();
 },true);
 window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshGraphIfChanged();});
+window.addEventListener('focus',()=>void refreshGraphIfChanged());
 
 (async()=>{try{await loadBrains();const saved=NotrynDemoStorage.getItem('notryn-brain');state.brain=state.brains.some(b=>b.id===saved)?saved:state.brains[0]?.id||null;await loadGraph();if(current()&&NotrynDemoStorage.getItem('notryn-workspace')==='notes')setNotebookView(true,{focus:false,remember:false});}catch(e){toast(e.message);}})();

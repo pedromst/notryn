@@ -356,7 +356,24 @@ class Store:
                 target = ids.get(target_path)
                 if target and target != source:
                     edges.add(tuple(sorted((source, target))))
-        return {'brain':self.summary(brain),'nodes':nodes,'edges':[{'source':a,'target':b} for a,b in sorted(edges)],'folders':folders,'linkPaths':sorted(paths),'skipped':skipped,'loadedAt':self.now()}
+        return {'brain':self.summary(brain),'nodes':nodes,'edges':[{'source':a,'target':b} for a,b in sorted(edges)],'folders':folders,'linkPaths':sorted(paths),'skipped':skipped,'revision':self.inventory_digest(brain,files,folders),'loadedAt':self.now()}
+
+    def inventory_digest(self, brain, files, folders):
+        """Identify filesystem changes without reading every note again."""
+        base = self.base(brain)
+        entries = [('d', folder) for folder in folders]
+        for path in files:
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            entries.append(('f', path.relative_to(base).as_posix(), stat.st_size, stat.st_mtime_ns))
+        return revision(json.dumps(entries,ensure_ascii=False,separators=(',',':')).encode())
+
+    def graph_revision(self, brain_id):
+        brain = self.get(brain_id)
+        files, folders, _ = self.inventory(brain)
+        return {'revision':self.inventory_digest(brain,files,folders),'checkedAt':self.now()}
 
     def removal_preview(self, brain_id, path, kind):
         from removals import preview
@@ -417,7 +434,8 @@ class Store:
                 if expected is None or not hmac_equal(expected,revision(old)):
                     raise Problem('This note has changed elsewhere. Your edit is still here; copy it before reopening the current version.',409)
                 if old==payload:
-                    return {'path':path,'revision':revision(old),'saved':True,'changed':False}
+                    stat=p.stat()
+                    return {'path':path,'revision':revision(old),'saved':True,'changed':False,'updatedAt':datetime.fromtimestamp(stat.st_mtime,timezone.utc).isoformat(),'size':stat.st_size}
                 backup=self.home/'backups'/brain_id
                 backup.mkdir(parents=True,exist_ok=True)
                 backup_name=slug(p.stem)+'-'+secrets.token_hex(8)+'.md'
@@ -431,7 +449,8 @@ class Store:
                     stream.write(payload)
                     stream.flush()
                     os.fsync(stream.fileno())
-            return {'path':path,'revision':revision(payload),'saved':True,'changed':True}
+            stat=p.stat()
+            return {'path':path,'revision':revision(payload),'saved':True,'changed':True,'updatedAt':datetime.fromtimestamp(stat.st_mtime,timezone.utc).isoformat(),'size':stat.st_size}
 
     def move(self, brain_id, source, destination, kind, guard=None):
         from filemoves import move_item

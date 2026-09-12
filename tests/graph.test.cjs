@@ -191,6 +191,7 @@ test('selection label text stays readable in every preset and custom Omarchy pal
  const sandbox={window:{},localStorage:{getItem:()=>null},CustomEvent:class{},document:{documentElement:{dataset:{},style:{setProperty(){}}},querySelector:()=>null,dispatchEvent(){}}};
  vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../web/theme-core.js'),'utf8'),sandbox);
  const themes=sandbox.window.NotrynThemes;
+ assert.equal(themes.presets.find(theme=>theme.id==='jarvis')?.name,'Jarvis');
  const luminance=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);
  const contrast=(a,b)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);
  const custom=['#111111','#ffffff','#808080','#ff00ff'].map(accent=>({...themes.presets[0],id:'omarchy',accent}));

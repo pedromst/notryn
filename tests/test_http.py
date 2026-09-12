@@ -47,6 +47,13 @@ class HttpTests(unittest.TestCase):
         code,data=self.request('/api/runtime')
         self.assertEqual(code,200);self.assertEqual(data['app'],'notryn')
         self.assertEqual(data['instance'],'test-instance');self.assertTrue(data['version'])
+    def test_graph_revision_is_readonly_local_and_tracks_external_changes(self):
+        brain=self.http.store.add('Revision');bid=brain['id'];self.http.store.write(bid,'A.md','# A',None)
+        before=self.http.store.config.read_bytes();code,first=self.request('/api/graph/revision?brain='+bid)
+        self.assertEqual(code,200);self.assertIn('checkedAt',first);self.assertEqual(self.http.store.config.read_bytes(),before)
+        (Path(brain['root'])/'A.md').write_text('# Changed outside')
+        self.assertNotEqual(self.request('/api/graph/revision?brain='+bid)[1]['revision'],first['revision'])
+        self.assertEqual(self.request('/api/graph/revision?brain='+bid,headers={'Host':'external.example'})[0],403)
     def test_removal_preview_execution_list_and_restore_require_local_session(self):
         brain=self.http.store.add('Removal test');bid=brain['id'];self.http.store.write(bid,'A.md','original',None)
         paths=['/api/removals/preview','/api/removals','/api/removals/list','/api/removals/restore']

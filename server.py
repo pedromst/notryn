@@ -55,6 +55,9 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path=='/api/graph':
                 default=next((b['id'] for b in self.server.store.brains if not b.get('removedAt')), '')
                 return self.send(200,self.server.store.graph(param('brain',default)))
+            if parsed.path=='/api/graph/revision':
+                default=next((b['id'] for b in self.server.store.brains if not b.get('removedAt')), '')
+                return self.send(200,self.server.store.graph_revision(param('brain',default)))
             if parsed.path=='/api/note':
                 return self.send(200,self.server.store.read(param('brain'),param('path')))
             if parsed.path=='/api/theme':

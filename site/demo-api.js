@@ -73,14 +73,19 @@
       for(const match of text.matchAll(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g))add(match[1],'wiki');
       for(const match of text.matchAll(/\[[^\]\n]*\]\(([^)\n]+)\)/g))add(match[1],'markdown');
     }
-    return {brain,nodes,edges:[...edges.values()],folders:[...folders].sort(),linkPaths:paths,skipped:0,loadedAt:new Date().toISOString()};
+    return {brain,nodes,edges:[...edges.values()],folders:[...folders].sort(),linkPaths:paths,skipped:0,revision:graphRevision(id),loadedAt:new Date().toISOString()};
+  }
+  function graphRevision(id){
+    const {notes,folders}=workspace(id);
+    return JSON.stringify([[...notes].map(([path,note])=>[path,note.revision,note.updatedAt||'']).sort(),[...folders].sort()]);
   }
   function request(url,data){
     const route=url.pathname;
-    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.9'};
-    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.9'};
+    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.10'};
+    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.10'};
     if(route==='/api/theme')return {available:false};
     if(route==='/api/graph')return graph(url.searchParams.get('brain'));
+    if(route==='/api/graph/revision')return {revision:graphRevision(url.searchParams.get('brain')),checkedAt:new Date().toISOString()};
     if(route==='/api/note'){
       const {brain,notes}=workspace(url.searchParams.get('brain')),note=notes.get(url.searchParams.get('path'));
       if(!note)fail('This sample note no longer exists.',404);return {...note,readOnly:brain.readOnly};
@@ -92,7 +97,7 @@
       if(typeof data.content!=='string'||new TextEncoder().encode(data.content).length>1024*1024)fail('Notes must be smaller than 1 MB.');
       if(!old&&data.revision!==null||old&&data.revision!==old.revision)fail('This note changed. Reopen it before saving.',409);
       if(parent(path)&&!folders.has(parent(path)))fail('Create the destination folder first.');
-      const revision='demo-'+(++serial);notes.set(path,{path,content:data.content,revision,readOnly:false,updatedAt:new Date().toISOString()});return {path,revision};
+      const revision='demo-'+(++serial),updatedAt=new Date().toISOString(),size=new TextEncoder().encode(data.content).length;notes.set(path,{path,content:data.content,revision,readOnly:false,updatedAt});return {path,revision,updatedAt,size};
     }
     if(route==='/api/folders'){
       const {brain,notes,folders}=workspace(data.brain),path=pathOf(data.path);
