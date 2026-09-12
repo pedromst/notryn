@@ -223,7 +223,7 @@ function markdown(text,stripTitle=false){
 }
 let writingMode='visual';
 try{writingMode=NotrynDemoStorage.getItem('notryn-writing-mode')==='source'?'source':'visual';}catch{}
-const rich=NotrynRichText.create({mount:$('#rich-editor'),toolbar:$('#format-toolbar'),formatButton:$('#format-note'),linkDialog:$('#link-dialog'),getNotes:()=>state.data.nodes,onChange:value=>{$('#editor').value=value;updateEditor();},onRaw:()=>setWritingMode('source'),onLeave:leaveTextField});
+const rich=NotrynRichText.create({mount:$('#rich-editor'),toolbar:$('#format-toolbar'),formatButton:$('#format-note'),linkDialog:$('#link-dialog'),getNotes:()=>state.data.nodes,onChange:value=>{$('#editor').value=value;updateEditor();},onRaw:()=>setWritingMode('source'),onLeave:leaveTextField,onOpenNote:target=>{const note=resolveNote(target);if(note)openNote(note.id);}});
 function showEditorSurface(){
  const showing=state.editing&&!state.previewReading&&$('#editor-preview').hidden&&!$('#document').hidden;
  rich.setVisible(showing&&writingMode==='visual');$('#editor').hidden=!showing||writingMode==='visual';

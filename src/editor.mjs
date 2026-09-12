@@ -1,11 +1,11 @@
 import {DOMSerializer} from 'prosemirror-model';
-import {EditorState,TextSelection,Plugin} from 'prosemirror-state';
+import {EditorState,TextSelection,NodeSelection,Plugin} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {baseKeymap,chainCommands,newlineInCode,createParagraphNear,liftEmptyBlock,splitBlock,toggleMark,setBlockType,wrapIn,lift} from 'prosemirror-commands';
 import {history,undo,redo,undoDepth,redoDepth} from 'prosemirror-history';
 import {keymap} from 'prosemirror-keymap';
 import {wrapInList,splitListItem,liftListItem} from 'prosemirror-schema-list';
-import {schema,createModel,parseSource,safeLink} from './editor-model.mjs';
+import {schema,createModel,parseSource,safeLink,findLinkNotes,noteFilename} from './editor-model.mjs';
 
 function rawContent(node,editing=false){
  const box=document.createElement('div');box.className='preserved-block';
@@ -31,7 +31,7 @@ function render(source,stripTitle=false){
  return result;
 }
 
-function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,onLeave}){
+function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,onLeave,onOpenNote}){
  const model=createModel(),q=s=>toolbar.querySelector(s);
  let pinned=false,visible=false,linkBookmark=null,lastFocus=false,positionFrame=0,styleBookmark=null;
  const bindings=Object.fromEntries(Object.entries(baseKeymap).filter(([k])=>['Enter','Backspace','Delete'].includes(k)));
@@ -46,7 +46,12 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
  bindings['Mod-Shift-x']=toggleMark(schema.marks.strike);
  const plugins=[history(),keymap(bindings),new Plugin({props:{handleDOMEvents:{
   focus(){lastFocus=true;styleBookmark=null;queueMicrotask(updateTools);return false;},
-  blur(){queueMicrotask(()=>{lastFocus=false;updateTools();});return false;}
+  blur(){queueMicrotask(()=>{lastFocus=false;updateTools();});return false;},
+  click(editor,event){
+   const link=event.target.closest?.('.note-link[data-note-target]');if(!link||!mount.contains(link))return false;
+   const nodePos=editor.posAtDOM(link,0),node=editor.state.doc.nodeAt(nodePos);if(node?.type.name!=='wiki_link')return false;
+   event.preventDefault();editor.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc,nodePos)));openLink();return true;
+  }
  }}})];
  const view=new EditorView(mount,{
   state:EditorState.create({schema,doc:model.doc,plugins}),
@@ -54,7 +59,10 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
   editable:()=>visible,
   nodeViews:{raw_block:node=>{const dom=rawContent(node,true);dom.contentEditable='false';return {dom};}},
   dispatchTransaction(tr){view.updateState(view.state.apply(tr));if(tr.docChanged)onChange(model.serialize(view.state.doc));updateTools();},
-  handleClickOn(view,pos,node,nodePos,event,direct){if(direct&&node.type.name==='raw_block'){onRaw();return true;}return false;},
+  handleClickOn(view,pos,node,nodePos,event,direct){
+   if(direct&&node.type.name==='raw_block'){onRaw();return true;}
+   return false;
+  },
   handleKeyDown(view,event){
    // The app's Escape route also leaves contenteditable without changing its draft.
    if(event.key==='Escape'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey&&!event.isComposing){event.preventDefault();pinned=false;toolbar.hidden=true;onLeave();return true;}
@@ -118,11 +126,22 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
  mount.addEventListener('scroll',()=>{cancelAnimationFrame(positionFrame);positionFrame=requestAnimationFrame(positionTools);});
  window.addEventListener('resize',updateTools);
  // Selection is kept in editor state while the dialog takes keyboard focus.
- const address=linkDialog.querySelector('#link-address'),label=linkDialog.querySelector('#link-label'),results=linkDialog.querySelector('#link-notes'),error=linkDialog.querySelector('#link-error');
+ const address=linkDialog.querySelector('#link-address'),label=linkDialog.querySelector('#link-label'),results=linkDialog.querySelector('#link-notes'),error=linkDialog.querySelector('#link-error'),openNoteButton=linkDialog.querySelector('#open-link-note'),submitButton=linkDialog.querySelector('button[type="submit"]');
+ let editingWiki=false;
+ function selectedWiki(){const s=view.state.selection;return s instanceof NodeSelection&&s.node.type.name==='wiki_link'?s.node:null;}
+ function visibleWikiLabel(node){return node.attrs.label||node.attrs.target.split('/').pop();}
+ function exactNote(value){
+  const term=String(value||'').trim().toLowerCase(),matches=getNotes().filter(note=>{
+   const file=noteFilename(note).toLowerCase(),stem=file.replace(/\.md$/i,'');
+   return [note.id,note.path,file,stem].some(candidate=>String(candidate).toLowerCase()===term);
+  });
+  return matches.length===1?matches[0]:null;
+ }
  function noteResults(){
-  const term=address.value.toLowerCase().trim();results.replaceChildren();
-  for(const note of getNotes().filter(n=>!term||(n.title+' '+n.path).toLowerCase().includes(term)).slice(0,12)){
-   const button=document.createElement('button');button.type='button';button.className='link-note';button.textContent=note.title;button.title=note.path;
+  const term=address.value.trim()||(editingWiki?'':label.value.trim());results.replaceChildren();
+  for(const note of findLinkNotes(getNotes(),term)){
+   const button=document.createElement('button'),file=document.createElement('strong'),detail=document.createElement('small');
+   button.type='button';button.className='link-note';file.className='link-note-file';file.textContent=noteFilename(note);detail.textContent=note.title+' · '+note.path;button.append(file,detail);button.title=note.title+' · '+note.path;
    button.onclick=()=>{
     restoreLinkSelection();const text=label.value.trim()||note.title;
     view.dispatch(view.state.tr.replaceSelectionWith(schema.nodes.wiki_link.create({target:note.id,label:text})).scrollIntoView());linkDialog.close();
@@ -133,6 +152,7 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
  function restoreLinkSelection(){if(linkBookmark)view.dispatch(view.state.tr.setSelection(linkBookmark.resolve(view.state.doc)));}
  function openLink(){
   let s=view.state.selection;
+  const wiki=selectedWiki();
   const existing=s.$from.marks().find(m=>m.type===schema.marks.link)||s.$from.nodeAfter?.marks.find(m=>m.type===schema.marks.link);
   if(s.empty&&existing){
    let start=s.from,end=s.to,pos=s.$from.start();
@@ -140,15 +160,17 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc,start,end)));s=view.state.selection;
   }
   linkBookmark=s.getBookmark();
-  label.value=view.state.doc.textBetween(s.from,s.to,' ',' ')||'';address.value=existing?.attrs.href||'';error.hidden=true;
-  linkDialog.querySelector('#remove-link').hidden=!existing&&!view.state.doc.rangeHasMark(s.from,s.to,schema.marks.link);
+  editingWiki=!!wiki;label.value=wiki?visibleWikiLabel(wiki):view.state.doc.textBetween(s.from,s.to,' ',' ')||'';address.value=wiki?.attrs.target||existing?.attrs.href||'';error.hidden=true;
+  linkDialog.querySelector('#link-title').textContent=wiki||existing?'Edit link':'Add a link';submitButton.textContent=wiki||existing?'Change link':'Apply link';openNoteButton.hidden=!wiki;linkDialog.querySelector('#remove-link').hidden=!wiki&&!existing&&!view.state.doc.rangeHasMark(s.from,s.to,schema.marks.link);
   pinned=false;toolbar.hidden=true;noteResults();linkDialog.showModal();address.focus();
  }
- address.oninput=()=>{error.hidden=true;noteResults();};
+ address.oninput=()=>{error.hidden=true;noteResults();};label.oninput=()=>{if(!address.value.trim())noteResults();};
  address.onkeydown=e=>{if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.isComposing&&e.key==='ArrowDown'&&results.firstChild){e.preventDefault();results.firstChild.focus();}};
  results.onkeydown=e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing||e.shiftKey)return;const rows=[...results.children],i=rows.indexOf(document.activeElement);if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();rows[(i+(e.key==='ArrowDown'?1:-1)+rows.length)%rows.length]?.focus();}};
  linkDialog.querySelector('form').onsubmit=e=>{
-  e.preventDefault();const href=safeLink(address.value);
+  e.preventDefault();const note=exactNote(address.value);
+  if(note){restoreLinkSelection();view.dispatch(view.state.tr.replaceSelectionWith(schema.nodes.wiki_link.create({target:note.id,label:label.value.trim()||note.title})).scrollIntoView());linkDialog.close();return;}
+  const href=safeLink(address.value);
   if(!href){error.textContent='Enter a complete web address, or choose a note below.';error.hidden=false;return;}
   restoreLinkSelection();const {from,to,empty}=view.state.selection,mark=schema.marks.link.create({href});let tr=view.state.tr;
   if(empty||label.value!==view.state.doc.textBetween(from,to,' ',' '))tr=tr.replaceSelectionWith(schema.text(label.value.trim()||href,[mark]),false);
@@ -156,10 +178,12 @@ function create({mount,toolbar,formatButton,linkDialog,onChange,getNotes,onRaw,o
   view.dispatch(tr.scrollIntoView());linkDialog.close();
  };
  linkDialog.querySelector('#remove-link').onclick=()=>{restoreLinkSelection();const {from,to,$from}=view.state.selection;
+  const wiki=selectedWiki();if(wiki){view.dispatch(view.state.tr.replaceSelectionWith(schema.text(visibleWikiLabel(wiki)),false).scrollIntoView());linkDialog.close();return;}
   let start=from,end=to;if(from===to){const parent=$from.parent,offset=$from.parentOffset;let pos=0;parent.forEach(n=>{if(pos<=offset&&pos+n.nodeSize>=offset&&n.marks.some(m=>m.type===schema.marks.link)){start=$from.start()+pos;end=start+n.nodeSize;}pos+=n.nodeSize;});}
   view.dispatch(view.state.tr.removeMark(start,end,schema.marks.link));linkDialog.close();
  };
- linkDialog.addEventListener('close',()=>{linkBookmark=null;view.focus();updateTools();});
+ openNoteButton.onclick=()=>{const wiki=selectedWiki();if(!wiki)return;const target=wiki.attrs.target;linkDialog.close();onOpenNote?.(target);};
+ linkDialog.addEventListener('close',()=>{linkBookmark=null;editingWiki=false;view.focus();updateTools();});
  return {
   load(source){styleBookmark=null;view.updateState(EditorState.create({schema,doc:model.load(source),plugins}));pinned=false;updateTools();},
   setVisible(value){visible=value;mount.hidden=!value;view.setProps({editable:()=>visible});if(!value){pinned=false;styleBookmark=null;}updateTools();},
