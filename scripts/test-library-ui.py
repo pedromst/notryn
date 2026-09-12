@@ -57,6 +57,10 @@ def run(screenshots):
                 browser = p.chromium.launch(headless=True)
                 errors = []
                 page = browser.new_page(viewport={'width': 1440, 'height': 950})
+                media = page.context.new_cdp_session(page)
+                media.send('Emulation.setEmulatedMedia', {
+                    'features': [{'name': 'prefers-reduced-transparency', 'value': 'no-preference'}]
+                })
                 page.on('pageerror', lambda error: errors.append(str(error)))
                 page.goto(f'http://127.0.0.1:{app.server_port}')
                 page.wait_for_load_state('networkidle')
@@ -65,11 +69,32 @@ def run(screenshots):
                 expect(page.locator('.library-top #new-folder')).to_have_count(0)
                 expect(page.locator('#mobile-create')).to_have_count(0)
 
-                # Jarvis keeps Notryn's controls while adding its own restrained HUD signature.
+                # Jarvis keeps Notryn's controls inside a distinct holographic glass cockpit.
                 page.locator('#open-themes').click()
                 expect(page.locator('#theme-option-jarvis')).to_be_visible()
                 page.locator('#theme-option-jarvis').click()
                 expect(page.locator('html')).to_have_attribute('data-theme', 'jarvis')
+                jarvis_style = page.evaluate("""() => {
+                    const style = getComputedStyle(document.querySelector('.topbar'));
+                    return {
+                        background: style.backgroundColor,
+                        backdrop: style.backdropFilter || style.webkitBackdropFilter,
+                        clip: style.clipPath,
+                        radius: style.borderRadius,
+                    };
+                }""")
+                assert 'rgba(' in jarvis_style['background'] or '/' in jarvis_style['background']
+                assert 'blur(' in jarvis_style['backdrop']
+                assert jarvis_style['clip'] not in ('', 'none')
+                assert jarvis_style['radius'] == '1px'
+                media.send('Emulation.setEmulatedMedia', {
+                    'features': [{'name': 'prefers-reduced-transparency', 'value': 'reduce'}]
+                })
+                assert page.evaluate("getComputedStyle(document.querySelector('.topbar')).backdropFilter") == 'none'
+                media.send('Emulation.setEmulatedMedia', {
+                    'features': [{'name': 'prefers-reduced-transparency', 'value': 'no-preference'}]
+                })
+                page.wait_for_function("getComputedStyle(document.querySelector('.topbar')).backdropFilter.includes('blur')")
                 if screenshots:
                     page.screenshot(path=str(screenshots / 'jarvis-theme-desktop.png'))
                     page.set_viewport_size({'width': 390, 'height': 844})

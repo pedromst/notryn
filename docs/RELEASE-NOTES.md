@@ -1,20 +1,19 @@
-# Notryn 0.2.0-beta.10
+# Notryn 0.2.0-beta.11
 
-Keep Recent notes current and give the Brain a restrained cinematic HUD.
+Turn Jarvis into a complete holographic glass workspace.
 
-- Saving updates that note's position in **Recent** immediately, while the complete Brain continues reindexing in the background.
-- Opening **Recent** or returning to Notryn detects Markdown or folder changes made in another application. The full Brain reloads only when the lightweight inventory revision changes; there is no continuous background scan.
-- An open clean note follows disk changes. An unsaved draft is never replaced; external edits or removal produce a visible warning while the draft stays open.
-- The new **Jarvis** theme brings crisp cyan telemetry and one slow reactor dial to the Brain while preserving Notryn's layout, controls, contrast and reduced-motion behavior.
-- Theme commands also understand “HUD” and “reactor” as aliases for Jarvis.
+- **Jarvis** now reshapes the full interface, not only the Brain: the top bar, Library, editor, dialogs and mobile navigation use layered translucent glass.
+- Clipped technical corners, cyan edge traces, luminous controls and deeper instrument surfaces give Jarvis its own cockpit identity while every Notryn control stays in its familiar place.
+- The Brain keeps one restrained reactor dial as the dominant motion; reduced-motion freezes it and reduced-transparency replaces glass with an opaque surface.
+- Desktop and mobile keep readable note content, visible focus states and the existing safe **Recent** refresh behavior.
 
-Validated with Python, Node and isolated Chromium coverage for inventory revisions, immediate Recent ordering, external file changes, draft preservation, theme contrast and desktop/mobile layout. Physical-device confirmation remains useful after updating.
+Validated with Python, Node and isolated Chromium coverage for Jarvis glass materials, theme contrast, reduced preferences and desktop/mobile layout. Physical-device confirmation remains useful after updating.
 
 Free to use under PolyForm Shield 1.0.0. No account, subscription or note telemetry.
 
 Install: https://notryn.com/guide.html
 
-Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.10/install.sh
+Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.11/install.sh
 
 Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
 
