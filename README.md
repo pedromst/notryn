@@ -26,12 +26,12 @@ curl -fsSL https://notryn.com/install.sh | sh
 If the domain is unavailable, use the same versioned installer directly from GitHub:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.9/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.10/install.sh | sh
 ```
 
 The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. Omarchy has been tested; not every distribution is verified.
 
-[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.9)
+[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.10)
 
 ## Everyday commands
 

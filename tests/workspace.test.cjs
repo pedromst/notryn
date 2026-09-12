@@ -7,17 +7,17 @@ const source=fs.readFileSync(path.join(__dirname,'../web/app.js'),'utf8');
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 
 function saveHarness(){
- const disk=deferred(),graph=deferred(),messages=[];
+ const disk=deferred(),graph=deferred(),messages=[];let renders=0;
  const elements={'#editor':{value:'# Updated'},'#document-error':{},'#toast':{}};
- const state={brain:'test',note:{path:'Note.md',content:'# Original',revision:'old'},editing:true,dirty:true};
+ const state={brain:'test',note:{path:'Note.md',content:'# Original',revision:'old'},editing:true,dirty:true,recent:false,data:{nodes:[{path:'Note.md',updatedAt:'old',size:10}]}};
  let refreshes=0;
  const context={state,$:s=>elements[s],writable:()=>true,updateSaveState:()=>{},clearTimeout:()=>{},
   updateEditor:()=>{state.dirty=elements['#editor'].value!==state.note.content;},
   finishEditing:()=>{state.editing=false;},toast:message=>messages.push(message),api:()=>disk.promise,
-  loadGraph:()=>{refreshes++;return graph.promise;}};
+  renderTree:()=>{renders++;},loadGraph:()=>{refreshes++;return graph.promise;}};
  vm.createContext(context);
  vm.runInContext(source.slice(source.indexOf('async function saveNote('),source.indexOf("$('#save-note').onclick")),context);
- return {context,state,elements,disk,graph,messages,refreshes:()=>refreshes};
+ return {context,state,elements,disk,graph,messages,refreshes:()=>refreshes,renders:()=>renders};
 }
 test('save waits for disk confirmation but never waits for slow graph indexing',async()=>{
  const h=saveHarness(),save=h.context.saveNote({finish:true});
@@ -26,6 +26,12 @@ test('save waits for disk confirmation but never waits for slow graph indexing',
  assert.equal(h.state.saving,false);assert.equal(h.state.editing,false);assert.equal(h.state.note.revision,'new');
  assert.equal(h.refreshes(),1);assert.match(h.messages[0],/Saved to disk/);
  h.graph.resolve();
+});
+test('save updates Recent immediately before background graph indexing finishes',async()=>{
+ const h=saveHarness();h.state.recent=true;const save=h.context.saveNote();
+ h.disk.resolve({revision:'new',updatedAt:'2026-09-12T12:00:00+00:00',size:9});await save;
+ assert.equal(h.state.data.nodes[0].updatedAt,'2026-09-12T12:00:00+00:00');assert.equal(h.state.data.nodes[0].size,9);
+ assert.equal(h.renders(),1);assert.equal(h.refreshes(),1);h.graph.resolve();
 });
 test('edits typed during saving stay open and unsaved',async()=>{
  const h=saveHarness(),save=h.context.saveNote({finish:true});h.elements['#editor'].value='# Newer typing';

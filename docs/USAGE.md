@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.9. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.10. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -9,16 +9,17 @@ Workspace reference for 0.2.0-beta.9. See [installation](INSTALL.md) for package
 - Visual note writing with selection-based formatting, an optional Markdown view, preview and explicit saving.
 - Note on the left by default, a saved preference for swapping sides, and a full-width focus mode.
 - Searchable command palette and a keyboard reference with clickable actions.
+- Recent notes update immediately after Save and revalidate local Markdown when opened or when Notryn regains focus. A complete Brain reload runs only after the lightweight filesystem revision changes, with no continuous background scan; unsaved text is preserved if a file changes elsewhere.
 - Connections from `[[note-name]]`, shortest unique wikilink paths such as `[[topics/Guide]]`, and Markdown links to `.md` files. Ambiguous shortened paths are never guessed.
 - A glass brain with translucent hemispheres, layered filaments, luminous notes and pulses along real note connections.
 - Each opened folder lists its direct subfolders and Markdown filenames, matching the files on disk. The Brain uses the same filenames; opening a note keeps sibling dots and labels visible. Dense layers use compact, non-overlapping labels where space permits.
 - Hover a label or browse with the keyboard to highlight its direct connections and gently fade unrelated items. Emphasis transitions smoothly in both directions, including quick moves between labels; dimmed names remain faintly readable. Moving the pointer away restores the open note's emphasis. Translucent highlights replace hover summaries; opening a note also brings its linked notes from other folders into the map, while the Library keeps the current folder's contents.
 - Search covers every indexed note, regardless of the open folder. It matches words in filenames, paths and document titles across spaces, hyphens and accents, with exact filenames first. Search results are no longer capped at 30; the reader retains the original document title.
-- Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom.
+- Quiet glass panels, a full-width immersive brain mode, optional motion and keyboard zoom. Themes include Glass, Daylight, Matrix, Jarvis, Command and Dusk; Jarvis adds cyan telemetry around one restrained reactor dial without changing the workspace controls.
 - Mobile navigation for Brain and Notes; creation buttons stay in the current folder.
 - Brain creation includes a required location picker and shows the complete destination before creating anything.
 
-Version `0.2.0-beta.9` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. On macOS, drag an empty area of the top bar to move the window; buttons and fields remain interactive. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
+Version `0.2.0-beta.10` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. On macOS, drag an empty area of the top bar to move the window; buttons and fields remain interactive. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 

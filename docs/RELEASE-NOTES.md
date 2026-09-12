@@ -1,20 +1,20 @@
-# Notryn 0.2.0-beta.9
+# Notryn 0.2.0-beta.10
 
-Find the right Markdown file and repair note links without rewriting the surrounding text.
+Keep Recent notes current and give the Brain a restrained cinematic HUD.
 
-- Link search now leads with the real `.md` filename, followed by the note title and complete path.
-- Exact filename and filename-stem matches appear before partial title or path matches.
-- Clicking an existing note link in Write opens **Edit link** with **Open note**, **Remove link**, **Cancel** and **Change link**.
-- Changing a link preserves its visible text. Removing it keeps that text as ordinary writing and can be undone before saving.
-- The editor license manifest is again generated only from runtime editor dependencies.
+- Saving updates that note's position in **Recent** immediately, while the complete Brain continues reindexing in the background.
+- Opening **Recent** or returning to Notryn detects Markdown or folder changes made in another application. The full Brain reloads only when the lightweight inventory revision changes; there is no continuous background scan.
+- An open clean note follows disk changes. An unsaved draft is never replaced; external edits or removal produce a visible warning while the draft stays open.
+- The new **Jarvis** theme brings crisp cyan telemetry and one slow reactor dial to the Brain while preserving Notryn's layout, controls, contrast and reduced-motion behavior.
+- Theme commands also understand “HUD” and “reactor” as aliases for Jarvis.
 
-Validated with 117 Python tests, 66 Node tests and an isolated Chromium flow at desktop and 390 px. The test changed a wrong target to `BRAIN.md`, saved it, reopened it, navigated through it, removed it and undid the removal. Physical-device confirmation remains useful after updating.
+Validated with Python, Node and isolated Chromium coverage for inventory revisions, immediate Recent ordering, external file changes, draft preservation, theme contrast and desktop/mobile layout. Physical-device confirmation remains useful after updating.
 
 Free to use under PolyForm Shield 1.0.0. No account, subscription or note telemetry.
 
 Install: https://notryn.com/guide.html
 
-Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.9/install.sh
+Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.10/install.sh
 
 Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
 

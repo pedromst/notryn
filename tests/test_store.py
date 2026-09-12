@@ -20,6 +20,14 @@ class StoreTests(unittest.TestCase):
         graph=self.store.graph(self.bid);self.assertEqual(len(graph['edges']),1);self.assertEqual(len(graph['nodes']),2)
         first=self.store.read(self.bid,'Start.md');self.store.write(self.bid,'Start.md','# New content',first['revision'])
         backups=list((self.store.home/'backups'/self.bid).glob('*.md'));self.assertEqual(len(backups),1);self.assertEqual(backups[0].read_text(),first['content'])
+    def test_graph_revision_tracks_external_note_and_folder_changes(self):
+        self.store.write(self.bid,'A.md','# A',None)
+        first=self.store.graph(self.bid);self.assertEqual(first['revision'],self.store.graph_revision(self.bid)['revision'])
+        note=Path(self.brain['root'])/'A.md';note.write_text('# A changed outside Notryn')
+        second=self.store.graph_revision(self.bid);self.assertNotEqual(second['revision'],first['revision'])
+        (Path(self.brain['root'])/'External').mkdir()
+        third=self.store.graph_revision(self.bid);self.assertNotEqual(third['revision'],second['revision'])
+        self.assertIn('checkedAt',third)
     def test_external_edit_is_not_overwritten(self):
         self.store.write(self.bid,'A.md','before',None);first=self.store.read(self.bid,'A.md');path=Path(self.brain['root'])/'A.md';path.write_text('written in another app')
         with self.assertRaises(Problem) as caught:self.store.write(self.bid,'A.md','my edit',first['revision'])
@@ -56,7 +64,7 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(external.read_text(),'outside');self.assertFalse(any(n['id']=='link' for n in self.store.graph(self.bid)['nodes']))
     def test_same_content_does_not_create_backup(self):
         self.store.write(self.bid,'A.md','same',None);first=self.store.read(self.bid,'A.md');result=self.store.write(self.bid,'A.md','same',first['revision'])
-        self.assertFalse(result['changed']);self.assertFalse((self.store.home/'backups').exists())
+        self.assertFalse(result['changed']);self.assertIn('updatedAt',result);self.assertEqual(result['size'],4);self.assertFalse((self.store.home/'backups').exists())
     def test_deleted_note_not_recreated_on_save(self):
         self.store.write(self.bid,'A.md','original',None);first=self.store.read(self.bid,'A.md');(Path(self.brain['root'])/'A.md').unlink()
         with self.assertRaises(Problem):self.store.write(self.bid,'A.md','new',first['revision'])

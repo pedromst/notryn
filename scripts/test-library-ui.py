@@ -5,10 +5,12 @@ Run: python3 scripts/test-library-ui.py [--screenshots /tmp/notryn-ui]
 """
 import argparse
 import functools
+import os
 import secrets
 import sys
 import tempfile
 import threading
+import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -63,6 +65,18 @@ def run(screenshots):
                 expect(page.locator('.library-top #new-folder')).to_have_count(0)
                 expect(page.locator('#mobile-create')).to_have_count(0)
 
+                # Jarvis keeps Notryn's controls while adding its own restrained HUD signature.
+                page.locator('#open-themes').click()
+                expect(page.locator('#theme-option-jarvis')).to_be_visible()
+                page.locator('#theme-option-jarvis').click()
+                expect(page.locator('html')).to_have_attribute('data-theme', 'jarvis')
+                if screenshots:
+                    page.screenshot(path=str(screenshots / 'jarvis-theme-desktop.png'))
+                    page.set_viewport_size({'width': 390, 'height': 844})
+                    page.screenshot(path=str(screenshots / 'jarvis-theme-mobile.png'))
+                    assert not page.evaluate('document.documentElement.scrollWidth > innerWidth')
+                    page.set_viewport_size({'width': 1440, 'height': 950})
+
                 def row(path, kind='folder'):
                     key = kind + ':' + (path[:-3] if kind == 'note' else path)
                     return page.locator(f'.tree-row[data-key="{key}"]')
@@ -114,7 +128,30 @@ def run(screenshots):
                 page.keyboard.press('Meta+z')
                 expect(page.locator('.ProseMirror .note-link')).to_have_text('Brain')
 
+                # Recent revalidates disk state, while an open draft is never replaced.
+                page.locator('#recent-notes').click()
+                expect(page.locator('#file-tree .tree-row').first).to_contain_text('Start.md')
+                plan = folder / 'Projects/Notryn/Plan.md'
+                plan.write_text('# Plan changed outside Notryn\n\n[[Start]]')
+                future = time.time_ns() + 2_000_000_000
+                os.utime(plan, ns=(future, future))
+                page.evaluate("window.dispatchEvent(new Event('focus'))")
+                expect(page.locator('#file-tree .tree-row').first).to_contain_text('Plan.md')
+                page.locator('#source-mode').click()
+                saved_start = page.locator('#editor').input_value()
+                page.locator('#editor').fill('# Local draft kept\n\n[[BRAIN|Brain]]')
+                plan.write_text('# A second external change\n\n[[Start]]')
+                future += 2_000_000_000
+                os.utime(plan, ns=(future, future))
+                with page.expect_response(lambda response: '/api/graph?' in response.url):
+                    page.evaluate("window.dispatchEvent(new Event('focus'))")
+                expect(page.locator('#editor')).to_have_value('# Local draft kept\n\n[[BRAIN|Brain]]')
+                page.locator('#editor').fill(saved_start)
+                expect(page.locator('#save-status')).to_have_text('All changes saved')
+
+                page.locator('#all-notes').click()
                 row('Projects').click()
+                expect(page.locator('#library-location-name')).to_have_text('Projects')
                 create('folder', 'Scratch', 'Projects')
                 expect(row('Projects/Scratch')).to_be_focused()
                 create('folder', 'Second', 'Projects')

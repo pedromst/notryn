@@ -66,7 +66,7 @@
   if(/^(?:(?:show|open|choose|change|switch)\s+(?:the\s+)?(?:themes?|appearance)|what themes(?: are available)?)$/.test(q)){window.openThemes();say('Choose a theme with the arrow keys, then press Enter.');return true;}
   const match=q.match(/^(?:(?:switch|change)(?:\s+(?:the\s+)?theme)?\s+to|(?:use|set|apply)(?:\s+(?:the\s+)?theme(?:\s+to)?)?|follow)\s+(?:the\s+)?(.+?)(?:\s+theme)?$/);
   if(!match)return false;
-  const name=match[1].replace(/^the\s+/,''),aliases={light:'daylight',dark:'glass','control panel':'command','command panel':'command','system':'omarchy','desktop':'omarchy','follow omarchy':'omarchy'};
+  const name=match[1].replace(/^the\s+/,''),aliases={light:'daylight',dark:'glass',hud:'jarvis',reactor:'jarvis','control panel':'command','command panel':'command','system':'omarchy','desktop':'omarchy','follow omarchy':'omarchy'};
   const id=aliases[name]||options().find(t=>t.id===name||t.name.toLowerCase()===name)?.id;
   if(!id)return false;
   if(id==='omarchy')await sync();themes.choose(id,omarchy);
