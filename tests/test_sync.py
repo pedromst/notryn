@@ -164,6 +164,47 @@ class SyncTests(unittest.TestCase):
         service.configure(brain['id'], 'ana/notes', confirm_public=True)
         self.assertFalse(store.get(brain['id'])['sync']['private'])
 
+    def test_repository_that_becomes_public_pauses_sync(self):
+        store, service, brain = self.device('one')
+        store.write(brain['id'], 'A.md', 'a', None)
+        service.configure(brain['id'], 'ana/notes')
+        service.api = fake_api(private=False)
+        store.write(brain['id'], 'B.md', 'secret', None)
+        with self.assertRaises(Problem) as context:
+            service.sync(brain['id'])
+        self.assertEqual(context.exception.status, 428)
+        self.assertNotIn('B.md', Git(self.remote).out('ls-tree', '-r', '--name-only', 'main'))
+        service.configure(brain['id'], 'ana/notes', confirm_public=True)
+        self.assertIn('B.md', Git(self.remote).out('ls-tree', '-r', '--name-only', 'main'))
+
+    def test_existing_remote_with_the_same_name_is_left_alone(self):
+        store, service, brain = self.device('one')
+        root = Path(brain['root'])
+        git = Git(root)
+        git.run('init', '-q')
+        git.run('remote', 'add', 'notryn', 'https://example.com/mine.git')
+        with self.assertRaises(Problem) as context:
+            service.configure(brain['id'], 'ana/notes')
+        self.assertEqual(context.exception.status, 409)
+        service.stop(brain['id'])
+        self.assertEqual(git.out('remote', 'get-url', 'notryn'), 'https://example.com/mine.git')
+
+    def test_scheduler_survives_unexpected_failures(self):
+        store, service, brain = self.device('one')
+        store.write(brain['id'], 'A.md', 'a', None)
+        service.configure(brain['id'], 'ana/notes', interval=5)
+        exclude = Path(brain['root']) / '.git' / 'info' / 'exclude'
+        exclude.write_bytes(b'\xff\xfe not utf-8')
+        service.status[brain['id']]['at'] = '2000-01-01T00:00:00+00:00'
+        service.tick()
+        self.assertEqual(service.status[brain['id']]['state'], 'error')
+
+    def test_private_preview_hides_sync_details(self):
+        from share import reader_payload
+        brain = {'id': 'b', 'name': 'Notes', 'sync': {'repo': 'ana/notes'}}
+        self.assertNotIn('sync', reader_payload('/api/graph', {'brain': brain, 'nodes': []})['brain'])
+        self.assertNotIn('sync', reader_payload('/api/state', {'brains': [brain]})['brains'][0])
+
     def test_read_only_brain_cannot_sync(self):
         store = Store(self.base / 'ro' / 'state')
         service = LocalSync(store, SecretStore(store.home, backend='file'), Entitlements(store.home, enabled=False), fake_api())

@@ -431,7 +431,9 @@ class SyncService:
         self.status.pop(brain_id, None)
         if config and (Path(brain['root']) / '.git').is_dir():
             # History stays in the folder; Notryn only stops talking to GitHub.
-            Git(brain['root']).run('remote', 'remove', REMOTE, check=False)
+            git = Git(brain['root'])
+            if self.managed_remote(git):
+                git.run('remote', 'remove', REMOTE, check=False)
         return self.describe()
 
     # ------------------------------------------------------------- sync
@@ -462,6 +464,9 @@ class SyncService:
         current = git.run('remote', 'get-url', REMOTE, check=False)
         if current.returncode:
             git.run('remote', 'add', REMOTE, url)
+            git.run('config', f'remote.{REMOTE}.notrynManaged', 'true')
+        elif not self.managed_remote(git):
+            raise Problem(f'This folder already has a Git remote named "{REMOTE}". Rename it, then try again.', 409)
         elif current.stdout.strip() != url:
             git.run('remote', 'set-url', REMOTE, url)
         exclude = root / '.git' / 'info' / 'exclude'
@@ -471,6 +476,10 @@ class SyncService:
         if missing:
             exclude.write_text(existing + ('' if not existing or existing.endswith('\n') else '\n') + '# Added by Notryn\n' + '\n'.join(missing) + '\n', encoding='utf-8')
         return Git(root, token, self.identity(git))
+
+    @staticmethod
+    def managed_remote(git):
+        return git.run('config', '--get', f'remote.{REMOTE}.notrynManaged', check=False).stdout.strip() == 'true'
 
     def head(self, git):
         result = git.run('rev-parse', '--verify', '-q', 'HEAD', check=False)
@@ -543,6 +552,12 @@ class SyncService:
         changed = git.out('diff', '--name-only', before, after).splitlines() if after != before else []
         return changed, copies
 
+    def check_visibility(self, token, config):
+        """Pause before sending notes to a repository that became public."""
+        info = self.api(token, '/repos/' + config['repo'])
+        if isinstance(info, dict) and not info.get('private') and config.get('private', True):
+            raise Problem('This repository is now public: anyone could read your notes. Sync is paused until you confirm or make it private again.', 428)
+
     def sync(self, brain_id, reason='manual'):
         self.require_feature()
         brain = self.store.get(brain_id)
@@ -561,6 +576,7 @@ class SyncService:
         tracking = f'refs/remotes/{REMOTE}/{branch}'
         try:
             token = self.token()
+            self.check_visibility(token, config)
             with self.store.lock:
                 git = self.prepare(brain, config, token)
             changed, copies, pushed = [], [], False
@@ -603,6 +619,10 @@ class SyncService:
         except Problem as error:
             self.status[brain_id] = {'state': 'error', 'at': now(), 'error': error.message, 'reason': reason}
             raise
+        except (OSError, UnicodeError, ValueError) as error:
+            message = 'Sync stopped because a file in this Brain could not be read or written (' + type(error).__name__ + ').'
+            self.status[brain_id] = {'state': 'error', 'at': now(), 'error': message, 'reason': reason}
+            raise Problem(message, 500)
         finally:
             lock.release()
 
@@ -632,14 +652,20 @@ class SyncService:
                 continue
             try:
                 self.sync(brain['id'], reason='startup' if startup else 'schedule')
-            except Problem:
-                pass  # Recorded in status for the interface.
+            except Exception:
+                pass  # Recorded in status for the interface; other Brains keep syncing.
 
     def start(self, every=30):
         def loop():
-            self.tick(startup=True)
-            while not self.stopped.wait(every):
-                self.tick()
+            startup = True
+            while True:
+                try:
+                    self.tick(startup=startup)
+                except Exception:
+                    pass  # The scheduler must outlive any single failure.
+                startup = False
+                if self.stopped.wait(every):
+                    return
         self.thread = threading.Thread(target=loop, name='notryn-sync', daemon=True)
         self.thread.start()
 

@@ -27,7 +27,8 @@ def reader_payload(path, payload):
         return {**payload, 'token': '', 'remotePreview': True,
                 'brains': [{**{k: v for k, v in b.items() if k != 'sync'}, 'readOnly': True} for b in payload['brains']]}
     if path == '/api/graph':
-        return {**payload, 'brain': {**payload['brain'], 'readOnly': True}}
+        brain = {k: v for k, v in payload['brain'].items() if k != 'sync'}
+        return {**payload, 'brain': {**brain, 'readOnly': True}}
     if path == '/api/note':
         return {**payload, 'readOnly': True}
     return payload

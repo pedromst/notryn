@@ -94,7 +94,8 @@ window.NotrynSync=(()=>{
  $('#sync-save').onclick=()=>run(async()=>{
   const sync=brainSync();let result;
   if(unsaved())throw Error('Save the note you are editing first, then sync.');
-  if(sync?.enabled)result=await api('/api/sync/run',{brain:state.brain});
+  if(sync?.enabled&&$('#sync-public').checked)result=await api('/api/sync/brain',{action:'configure',brain:state.brain,repo:sync.repo,interval:sync.interval,onOpen:!!sync.onOpen,confirmPublic:true});
+  else if(sync?.enabled){try{result=await api('/api/sync/run',{brain:state.brain});}catch(e){if(e.status===428){$('#sync-public-wrap').hidden=false;$('#sync-public').focus();}throw e;}}
   else{
    const repo=$('#sync-repo').value.trim();if(!repo){$('#sync-repo').focus();throw Error('Enter your repository, for example ana/notryn-brain.');}
    $('#sync-save').textContent='Connecting…';
@@ -102,6 +103,7 @@ window.NotrynSync=(()=>{
    catch(e){if(e.status===428){$('#sync-public-wrap').hidden=false;$('#sync-public').focus();}throw e;}
    await loadBrains();
   }
+  $('#sync-public-wrap').hidden=true;$('#sync-public').checked=false;
   seen[state.brain]=result.at;finished(result);await refresh();
  });
  // Stopping asks for a second click instead of a native dialog.
