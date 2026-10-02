@@ -55,7 +55,7 @@ Updating downloads the package first and checks its integrity and local server b
 - Rename or move notes and folders while Notryn updates their resolved links.
 - Use the mouse, direct shortcuts or a searchable command menu.
 - Keep a personal notebook or project context for tools that can read Markdown.
-- Keep a Brain the same on several computers with optional [GitHub Sync](docs/SYNC.md), through a private repository you own.
+- Keep a Brain the same on several computers with optional [GitHub Sync](docs/SYNC.md), through a private repository you own. [Setup help](https://notryn.com/sync.html)
 - Work locally, without a Notryn account, cloud subscription or connected AI model.
 
 [Workspace and keyboard guide](docs/USAGE.md)
@@ -93,4 +93,4 @@ python3 -m unittest discover -s tests -v
 
 [Distribution and trust model](docs/DISTRIBUTION.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Public release checklist](docs/PUBLIC-RELEASE-CHECKLIST.md)
 
-Copyright 2026 Pedro Teixeira. [PolyForm Shield 1.0.0](LICENSE) permits free use for allowed purposes, including use within businesses, and restricts competing products. This is source-available, not an OSI open-source license. Third-party components retain their [own licenses](THIRD_PARTY_NOTICES.md). GitHub Sync is free during the beta and may become an optional paid feature later ([maintainer notes](docs/PAYMENTS.md)). [Contribution terms](CONTRIBUTOR-AGREEMENT.md).
+Copyright 2026 Pedro Teixeira. [PolyForm Shield 1.0.0](LICENSE) permits free use for allowed purposes, including use within businesses, and restricts competing products. This is source-available, not an OSI open-source license. Third-party components retain their [own licenses](THIRD_PARTY_NOTICES.md). GitHub Sync is free during the beta. It may become an optional paid feature in the future; if so, it will be very affordable, with a one-time option ([maintainer notes](docs/PAYMENTS.md)). [Contribution terms](CONTRIBUTOR-AGREEMENT.md).

@@ -2,7 +2,9 @@
 
 Keep the same Brain on several computers through a **private GitHub repository you own**, similar to the Obsidian Git plugin. Notes travel only between your computers and GitHub. Notryn has no server that receives your notes or your token, and no Notryn account is needed.
 
-GitHub Sync is free during the beta. It may become an optional paid feature later; your notes and repository always stay yours.
+GitHub Sync is free during the beta. It may become an optional paid feature in the future to support development. If it does, it will be very affordable, with a one-time option, and the rest of Notryn stays free. Your notes and repository always stay yours.
+
+Step-by-step help: https://notryn.com/sync.html
 
 ## Requirements
 
