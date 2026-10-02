@@ -29,7 +29,7 @@
 .sync-guide a,.sync-guide-title{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-size:11px;text-decoration:none}
 .sync-guide a{color:var(--accent)}.sync-guide a:hover{text-decoration:underline;text-underline-offset:3px}
 .sync-guide a .icon{width:12px;height:12px}
-.sync-guide li>span:last-child{display:block}
+.sync-guide li>span:not(.sync-guide-title){display:block}.sync-guide .sync-skip{margin-top:6px;padding:7px 9px;border-left:2px solid var(--accent);background:var(--theme-tint,#a7dfc50d);border-radius:0 6px 6px 0}
 .sync-guide b,.sync-public b{color:var(--text);font-weight:500}
 #sync-dialog .sync-inline{display:flex;flex-direction:row;align-items:stretch;gap:8px;margin:4px 0 0}
 #sync-dialog .sync-inline input{flex:1}

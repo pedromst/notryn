@@ -24,6 +24,16 @@ Step-by-step help: https://notryn.com/sync.html
 4. Paste the token and press **Connect**. Notryn checks it with GitHub and shows the account it belongs to.
 5. Enter the repository (`your-name/notryn-brain` or its GitHub URL), choose the schedule and press **Start syncing**. Your notes are sent on the first sync.
 
+## Notes already on GitHub (for example Obsidian Git)
+
+You do not need a new repository:
+
+1. Open the folder with your notes in Notryn (**Your Brains → Open a folder**, *Read and write*), unless it is already a Brain.
+2. Create the token as above, choosing **your existing repository** under *Only select repositories*.
+3. In **GitHub Sync**, connect the token and type your existing repository (`your-name/my-notes`), then **Start syncing**.
+
+Nothing is overwritten; both sides are merged. Notryn adds its own `notryn` remote and leaves `origin` and Obsidian Git alone. If Obsidian Git also runs on the same computer, turn off its automatic sync so both apps do not sync at the same moment.
+
 ## Every other computer
 
 1. Install Notryn and Git.
