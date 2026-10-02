@@ -183,6 +183,8 @@ class SyncTests(unittest.TestCase):
         git.run('init', '-q')
         git.run('checkout', '-q', '-b', 'drafts')
         store.write(brain['id'], 'Draft.md', 'not for main', None)
+        git.run('add', '-A')
+        git.run('commit', '-q', '-m', 'draft')
         with self.assertRaises(Problem) as context:
             service.configure(brain['id'], 'ana/notes')
         self.assertEqual(context.exception.status, 409)
@@ -190,6 +192,26 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(Git(self.remote).run('rev-parse', '--verify', '-q', 'main', check=False).returncode, 1)
         git.run('checkout', '-q', '-b', 'main')
         self.assertTrue(service.sync(brain['id'])['pushed'])
+
+    def test_empty_repository_on_another_branch_name_is_adopted(self):
+        store, service, brain = self.device('one')
+        Git(Path(brain['root'])).run('init', '-q', '-b', 'master')
+        store.write(brain['id'], 'A.md', 'a', None)
+        self.assertTrue(service.configure(brain['id'], 'ana/notes')['pushed'])
+        self.assertIn('A.md', Git(self.remote).out('ls-tree', '-r', '--name-only', 'main'))
+
+    def test_orphan_branch_in_a_repository_with_history_is_refused(self):
+        store, service, brain = self.device('one')
+        git = Git(Path(brain['root']), identity={'name': 'Test', 'email': 'test@example.com'})
+        git.run('init', '-q', '-b', 'main')
+        store.write(brain['id'], 'Keep.md', 'main notes', None)
+        git.run('add', '-A')
+        git.run('commit', '-q', '-m', 'main')
+        git.run('switch', '-q', '--orphan', 'drafts')
+        with self.assertRaises(Problem) as context:
+            service.configure(brain['id'], 'ana/notes')
+        self.assertEqual(context.exception.status, 409)
+        self.assertEqual(Git(self.remote).run('rev-parse', '--verify', '-q', 'main', check=False).returncode, 1)
 
     def test_existing_remote_with_the_same_name_is_left_alone(self):
         store, service, brain = self.device('one')

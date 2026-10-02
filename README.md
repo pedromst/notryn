@@ -16,6 +16,7 @@ Linux first, then macOS. The installer detects your computer, downloads the matc
 | macOS Intel | Desktop app in `~/Applications` |
 | macOS Apple silicon | Native ARM64 package |
 | Windows | Not available yet |
+| iOS / Android | Mobile version in development, no date yet |
 
 Run as your normal user, after saving and quitting an older Notryn:
 
@@ -26,12 +27,12 @@ curl -fsSL https://notryn.com/install.sh | sh
 If the domain is unavailable, use the same versioned installer directly from GitHub:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.12/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.13/install.sh | sh
 ```
 
 The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. Omarchy has been tested; not every distribution is verified.
 
-[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.12)
+[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.13)
 
 ## Everyday commands
 

@@ -15,6 +15,27 @@ window.NotrynSync=(()=>{
   if(sync.conflicts?.length)parts.push(sync.conflicts.length+' GitHub cop'+(sync.conflicts.length===1?'y':'ies')+' kept');
   return parts.join(' · ')+'. Syncs '+every(sync.interval)+(sync.onOpen?' and when Notryn opens.':'.');
  }
+ // Keep the blue "transfer" cloud visible long enough to be noticed.
+ let activeUntil=0,activeTimer=null;
+ function activity(on,ms=1800){
+  const button=$('#open-sync');if(!button)return;
+  if(on){activeUntil=Math.max(activeUntil,Date.now()+ms);button.classList.add('sync-active');}
+  clearTimeout(activeTimer);
+  const settle=()=>{
+   // Re-check calmly while a sync is still running; never spin.
+   if(busyRun||brainSync()?.state==='syncing'||Date.now()<activeUntil){activeTimer=setTimeout(settle,Math.max(400,activeUntil-Date.now()));return;}
+   button.classList.remove('sync-active');
+  };
+  activeTimer=setTimeout(settle,Math.max(400,activeUntil-Date.now()));
+ }
+ let busyRun=false;
+ function notice(sync){
+  // Background syncs speak only when something moved or went wrong.
+  if(sync.state==='error')return toast('GitHub Sync: '+sync.error);
+  const parts=[];if(sync.pulled)parts.push(sync.pulled+' change'+(sync.pulled===1?'':'s')+' received');if(sync.pushed)parts.push('your changes sent');
+  if(sync.conflicts?.length)parts.push(sync.conflicts.length+' GitHub cop'+(sync.conflicts.length===1?'y':'ies')+' kept');
+  if(parts.length)toast('GitHub Sync · '+parts.join(' · ')+'.');
+ }
  function indicator(){
   const button=$('#open-sync'),sync=brainSync();if(!button)return;
   button.hidden=!!state.remotePreview;
@@ -28,9 +49,10 @@ window.NotrynSync=(()=>{
   try{info=await api('/api/sync');}catch{return;}
   for(const[id,sync]of Object.entries(info.brains)){
    // A finished sync may have changed files on disk; reuse the normal external-change check.
-   if(sync.at&&seen[id]&&seen[id]!==sync.at&&id===state.brain&&sync.pulled)void refreshGraphIfChanged();
+   if(sync.at&&seen[id]&&seen[id]!==sync.at&&id===state.brain){activity(true);notice(sync);if(sync.pulled)void refreshGraphIfChanged();}
    if(sync.at)seen[id]=sync.at;
   }
+  if(brainSync()?.state==='syncing')activity(true);
   indicator();if(dialog.open&&!busy&&!editing)render();schedule();
  }
  function schedule(){clearTimeout(timer);const active=Object.values(info?.brains||{}).some(b=>b.enabled);timer=setTimeout(refresh,Object.values(info?.brains||{}).some(b=>b.state==='syncing')?3000:active?20000:120000);}
@@ -74,10 +96,10 @@ window.NotrynSync=(()=>{
   render();(info.account.connected?($('#sync-save').hidden||$('#sync-save').disabled?$('#sync-dialog [data-close]'):($('#sync-repo').disabled?$('#sync-save'):$('#sync-repo'))):$('#sync-token')).focus();
  }
  async function run(action){
-  if(busy)return;busy=true;error('');render();
+  if(busy)return;busy=true;busyRun=true;activity(true,1200);error('');render();
   try{return await action();}
   catch(e){error(e.message);await refresh();}
-  finally{busy=false;if(info)render();}
+  finally{busy=false;busyRun=false;activity(false);if(info)render();}
  }
  $('#sync-account-form').onsubmit=e=>{e.preventDefault();run(async()=>{const token=$('#sync-token').value.trim();if(!token)throw Error('Paste the token you created on GitHub.');$('#sync-connect').textContent='Checking…';try{info=await api('/api/sync/account',{action:'connect',token});}finally{$('#sync-connect').textContent='Connect';}$('#sync-token').value='';render();toast('GitHub connected as @'+info.account.login+'.');$('#sync-repo').focus();});};
  $('#sync-disconnect').onclick=()=>run(async()=>{info=await api('/api/sync/account',{action:'disconnect'});render();toast('GitHub disconnected. The token was deleted from this computer.');});
@@ -119,7 +141,7 @@ window.NotrynSync=(()=>{
  $('#brain-form-dialog').addEventListener('close',()=>{if(afterCreate&&!state.brains.length)afterCreate=false;});
  for(const id of ['#sync-repo','#sync-token','#sync-license']){$(id).addEventListener('focus',()=>editing=true);$(id).addEventListener('blur',()=>editing=false);}
  $('#open-sync').onclick=open;$('#brains-sync').onclick=open;$('#welcome-sync').onclick=open;
- async function syncNow(){if(state.remotePreview)return;if(!info)await refresh();const sync=brainSync();if(!sync?.enabled)return open();if(unsaved())return toast('Save the note you are editing first, then sync.');toast('Syncing with GitHub…');try{const result=await api('/api/sync/run',{brain:state.brain});seen[state.brain]=result.at;finished(result);}catch(e){toast(e.message);}await refresh();}
+ async function syncNow(){if(state.remotePreview)return;if(!info)await refresh();const sync=brainSync();if(!sync?.enabled)return open();if(unsaved())return toast('Save the note you are editing first, then sync.');toast('Syncing with GitHub…');busyRun=true;activity(true,1200);try{const result=await api('/api/sync/run',{brain:state.brain});seen[state.brain]=result.at;finished(result);}catch(e){toast(e.message);}finally{busyRun=false;activity(false);}await refresh();}
  document.addEventListener('notryn-brainchange',indicator);
  setTimeout(refresh,600);
  return {open,syncNow,refresh};

@@ -1,5 +1,12 @@
 /* GitHub Sync: two calm steps, a status line and a small topbar signal. */
-.sync-button{position:relative}
+.sync-button{position:relative;--sync-blue:#5aaeff}
+/* While data moves, the cloud turns blue and fills from the bottom, like a transfer. */
+.sync-button .sync-fill{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--sync-blue);opacity:0;clip-path:inset(100% 0 0 0)}
+.sync-button.sync-active{color:var(--sync-blue)!important;border-color:color-mix(in srgb,var(--sync-blue),transparent 45%)!important;box-shadow:0 0 14px color-mix(in srgb,var(--sync-blue),transparent 70%)}
+.sync-button.sync-active .sync-fill{opacity:.55;animation:sync-fill 1.3s ease-in-out infinite}
+.sync-button.sync-active .sync-dot{display:none!important}
+@keyframes sync-fill{0%{clip-path:inset(100% 0 0 0)}70%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 0);opacity:0}}
+@media(prefers-reduced-motion:reduce){.sync-button.sync-active .sync-fill{animation:none;clip-path:inset(40% 0 0 0)}}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
 .sync-button .sync-dot{position:absolute;right:5px;top:5px;width:6px;height:6px;border:1px solid var(--bg);display:none}
 .sync-button[data-sync=on] .sync-dot,.sync-button[data-sync=syncing] .sync-dot,.sync-button[data-sync=error] .sync-dot{display:block}

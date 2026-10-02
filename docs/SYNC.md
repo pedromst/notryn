@@ -6,6 +6,8 @@ GitHub Sync is free during the beta. It may become an optional paid feature in t
 
 Step-by-step help: https://notryn.com/sync.html
 
+A mobile version of Notryn is in development, with no release date yet. Brains synced through GitHub will be ready for it.
+
 ## Requirements
 
 - Notryn 0.2.0-beta.12 or newer.
@@ -60,7 +62,7 @@ Notryn syncs:
 - every 5, 10, 15, 30 or 60 minutes while it is open, if you choose a schedule;
 - when you press **Sync now** in the dialog or **Shift Y** anywhere.
 
-The top bar's cloud shows a green dot when the current Brain is synced, amber while syncing and red when the last sync failed. Hover it for the last sync time. The library refreshes automatically when changes arrive. Save the note you are editing before pressing **Sync now**; if a scheduled sync changes a note while you edit it, Notryn's usual conflict protection keeps your draft.
+The top bar's cloud shows a green dot when the current Brain is synced and red when the last sync failed. While notes are being sent or received it turns blue and fills up. When a background sync brings or sends changes, or fails, a short message tells you. Hover it for the last sync time. The library refreshes automatically when changes arrive. Save the note you are editing before pressing **Sync now**; if a scheduled sync changes a note while you edit it, Notryn's usual conflict protection keeps your draft.
 
 ### Conflicts never lose an edit
 
