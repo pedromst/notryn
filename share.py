@@ -25,9 +25,10 @@ def reader_payload(path, payload):
     """Describe the gateway's existing read-only policy to the interface."""
     if path == '/api/state':
         return {**payload, 'token': '', 'remotePreview': True,
-                'brains': [{**b, 'readOnly': True} for b in payload['brains']]}
+                'brains': [{**{k: v for k, v in b.items() if k != 'sync'}, 'readOnly': True} for b in payload['brains']]}
     if path == '/api/graph':
-        return {**payload, 'brain': {**payload['brain'], 'readOnly': True}}
+        brain = {k: v for k, v in payload['brain'].items() if k != 'sync'}
+        return {**payload, 'brain': {**brain, 'readOnly': True}}
     if path == '/api/note':
         return {**payload, 'readOnly': True}
     return payload
@@ -84,6 +85,8 @@ class Gateway(BaseHTTPRequestHandler):
             return self.send(200, ENTRY_JS, 'application/javascript; charset=utf-8')
         if not self.authenticated():
             return self.send(200, ENTRY) if path == '/' else self.send(401, {'error': 'Private access.'})
+        if path.startswith('/api/sync'):
+            return self.send(403, {'error': 'Sync settings stay on the computer that owns them.'})
         if path == '/api/voice':
             return self.send(200, {'available': False, 'local': False, 'remotePreview': True})
         connection = http.client.HTTPConnection('127.0.0.1', self.origin_port, timeout=15)

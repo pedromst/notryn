@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.11. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.12. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -19,7 +19,7 @@ Workspace reference for 0.2.0-beta.11. See [installation](INSTALL.md) for packag
 - Mobile navigation for Brain and Notes; creation buttons stay in the current folder.
 - Brain creation includes a required location picker and shows the complete destination before creating anything.
 
-Version `0.2.0-beta.11` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. On macOS, drag an empty area of the top bar to move the window; buttons and fields remain interactive. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
+Version `0.2.0-beta.12` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. On macOS, drag an empty area of the top bar to move the window; buttons and fields remain interactive. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 
@@ -45,6 +45,8 @@ Shortcuts use the same letters on macOS, Windows and Linux. They work outside te
 | Show the open note in its computer folder | Shift O |
 | Review removal of the focused note or folder | D |
 | Removed items: restore or remove an entry | Shift D, then Tab to the action and Enter |
+| GitHub Sync settings | Y |
+| Sync with GitHub now | Shift Y |
 | Preview note | V |
 | Switch pane | W / Shift W |
 | Save | S |
@@ -136,6 +138,10 @@ The review shows the affected location. The separate **Also move files to Notryn
 Open **Removed items** from the library's trash icon, the Brain picker or the command palette. Search, use ↑/↓ to reach **Restore**, and press **Enter** to bring an item back. Restore its Brain and parent folder first if they were also removed. Restoration never overwrites a file already at the original location; resolve that conflict before retrying. Save any open draft before removing or restoring items.
 
 Removed records survive restarts. Preserve the private state and recovery storage until everything you need is restored. On the same filesystem, Trash is under the private state's `trash/` directory; another filesystem uses a hidden `.notryn-trash/` beside the Brain, or inside its root when needed. Each recovery slot includes its original location. There is no permanent-delete or Empty Trash action in this preview.
+
+### Sync across computers
+
+Open **GitHub Sync** with the cloud button in the top bar, the card in **Your Brains**, or **Y**. Connect a fine-grained GitHub token once per computer, then choose a private repository for the current Brain. Use the same repository on every computer. Notryn can sync when it opens, on a schedule and with **Shift Y**. When two computers change the same note, this computer's version stays and the other is kept as a “GitHub copy”. The cloud shows green when synced, amber while syncing and red after an error. See [GitHub Sync](SYNC.md) for setup, security and troubleshooting.
 
 ### Write naturally
 

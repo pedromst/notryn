@@ -4,6 +4,8 @@ Notryn is Copyright 2026 Pedro Teixeira, licensed under PolyForm Shield 1.0.0. T
 
 The desktop distribution includes Electron (MIT) and Chromium notices in the bundled Electron resources. The Python runtime uses the Python Software Foundation license. PyInstaller uses GPL 2.0 or later with its bootloader exception, allowing distribution under the application license. See https://www.python.org/psf/license/ and https://pyinstaller.org/en/stable/license.html.
 
+The license verification in `notryn_license.py` adapts the Ed25519 reference code from RFC 8032, section 6 (Simplified BSD License; Copyright (c) 2017 IETF Trust and the persons identified as the document authors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the conditions in the Simplified BSD License, https://trustee.ietf.org/license-info, are met).
+
 ## @types/linkify-it 5.0.0
 
     MIT License
