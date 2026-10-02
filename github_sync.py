@@ -457,6 +457,10 @@ class SyncService:
         elif (root / '.git').is_symlink() or not (root / '.git').is_dir():
             raise Problem('This Brain uses a linked Git folder that Notryn cannot manage.', 409)
         current_branch = git.run('symbolic-ref', '-q', '--short', 'HEAD', check=False).stdout.strip()
+        if current_branch and current_branch != config['branch'] and self.head(git) is None:
+            # A repository without commits (for example "git init" on master) has nothing to protect.
+            git.run('symbolic-ref', 'HEAD', 'refs/heads/' + config['branch'])
+            current_branch = config['branch']
         if current_branch != config['branch']:
             # Never publish another branch (or a detached checkout) into the synced one.
             shown = current_branch or 'a detached commit'

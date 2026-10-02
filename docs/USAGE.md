@@ -1,6 +1,6 @@
 # Using Notryn
 
-Workspace reference for 0.2.0-beta.12. See [installation](INSTALL.md) for package availability.
+Workspace reference for 0.2.0-beta.13. See [installation](INSTALL.md) for package availability.
 
 ## Your workspace
 
@@ -19,7 +19,7 @@ Workspace reference for 0.2.0-beta.12. See [installation](INSTALL.md) for packag
 - Mobile navigation for Brain and Notes; creation buttons stay in the current folder.
 - Brain creation includes a required location picker and shows the complete destination before creating anything.
 
-Version `0.2.0-beta.12` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. On macOS, drag an empty area of the top bar to move the window; buttons and fields remain interactive. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
+Version `0.2.0-beta.13` supports narrow and short tiled windows. Below 900 pixels, Brain and Notes use compact navigation; resizing preserves your open note and unsaved draft. On macOS, drag an empty area of the top bar to move the window; buttons and fields remain interactive. Save confirms disk persistence before refreshing the Brain. The A and Shift A shortcuts remain unassigned.
 
 Shortcuts use the same letters on macOS, Windows and Linux. They work outside text fields. While writing, press **Esc** first to leave the field without closing or changing the note, then use an action. **P → search an action → Enter** reaches every command; **?** searches the keyboard reference. Frequent actions also have direct keys. In a dialog, Tab/Shift Tab move between controls, arrows navigate choices and Enter confirms. No letter shortcut runs while you type.
 
@@ -141,7 +141,7 @@ Removed records survive restarts. Preserve the private state and recovery storag
 
 ### Sync across computers
 
-Open **GitHub Sync** with the cloud button in the top bar, the card in **Your Brains**, or **Y**. Connect a fine-grained GitHub token once per computer, then choose a private repository for the current Brain. Use the same repository on every computer. Notryn can sync when it opens, on a schedule and with **Shift Y**. When two computers change the same note, this computer's version stays and the other is kept as a “GitHub copy”. The cloud shows green when synced, amber while syncing and red after an error. See [GitHub Sync](SYNC.md) for setup, security and troubleshooting.
+Open **GitHub Sync** with the cloud button in the top bar, the card in **Your Brains**, or **Y**. Connect a fine-grained GitHub token once per computer, then choose a private repository for the current Brain. Use the same repository on every computer. Notryn can sync when it opens, on a schedule and with **Shift Y**. When two computers change the same note, this computer's version stays and the other is kept as a “GitHub copy”. The cloud shows a green dot when synced, turns blue and fills up while notes move, and shows red after an error. See [GitHub Sync](SYNC.md) for setup, security and troubleshooting.
 
 ### Write naturally
 
