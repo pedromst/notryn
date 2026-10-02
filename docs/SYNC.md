@@ -6,6 +6,8 @@ GitHub Sync is free during the beta. It may become an optional paid feature in t
 
 Step-by-step help: https://notryn.com/sync.html
 
+A mobile version of Notryn is in development, with no release date yet. Brains synced through GitHub will be ready for it.
+
 ## Requirements
 
 - Notryn 0.2.0-beta.12 or newer.

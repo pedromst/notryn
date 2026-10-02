@@ -16,6 +16,7 @@ Linux first, then macOS. The installer detects your computer, downloads the matc
 | macOS Intel | Desktop app in `~/Applications` |
 | macOS Apple silicon | Native ARM64 package |
 | Windows | Not available yet |
+| iOS / Android | Mobile version in development, no date yet |
 
 Run as your normal user, after saving and quitting an older Notryn:
 
