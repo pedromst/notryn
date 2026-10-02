@@ -177,6 +177,20 @@ class SyncTests(unittest.TestCase):
         service.configure(brain['id'], 'ana/notes', confirm_public=True)
         self.assertIn('B.md', Git(self.remote).out('ls-tree', '-r', '--name-only', 'main'))
 
+    def test_folder_on_another_branch_is_not_pushed(self):
+        store, service, brain = self.device('one')
+        git = Git(Path(brain['root']), identity={'name': 'Test', 'email': 'test@example.com'})
+        git.run('init', '-q')
+        git.run('checkout', '-q', '-b', 'drafts')
+        store.write(brain['id'], 'Draft.md', 'not for main', None)
+        with self.assertRaises(Problem) as context:
+            service.configure(brain['id'], 'ana/notes')
+        self.assertEqual(context.exception.status, 409)
+        self.assertIn('drafts', context.exception.message)
+        self.assertEqual(Git(self.remote).run('rev-parse', '--verify', '-q', 'main', check=False).returncode, 1)
+        git.run('checkout', '-q', '-b', 'main')
+        self.assertTrue(service.sync(brain['id'])['pushed'])
+
     def test_existing_remote_with_the_same_name_is_left_alone(self):
         store, service, brain = self.device('one')
         root = Path(brain['root'])
