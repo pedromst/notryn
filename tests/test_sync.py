@@ -135,7 +135,7 @@ class SyncTests(unittest.TestCase):
         store_a.write(brain_a['id'], 'Shared.md', 'laptop', store_a.read(brain_a['id'], 'Shared.md')['revision'])
         sync_a.sync(brain_a['id'])
         store_b.write(brain_b['id'], 'Shared.md', 'desktop', store_b.read(brain_b['id'], 'Shared.md')['revision'])
-        git = Git(brain_b['root'])
+        git = Git(brain_b['root'], identity={'name': 'Test', 'email': 'test@example.com'})
         git.run('add', '-A')
         git.run('commit', '-q', '-m', 'local')
         git.run('fetch', '-q', 'notryn', '+refs/heads/main:refs/remotes/notryn/main')
