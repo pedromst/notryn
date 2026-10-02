@@ -13,6 +13,8 @@ from urllib.parse import parse_qs, unquote, urlparse
 from store import Store, Problem
 from themes import omarchy_theme
 from desktop import reveal_note
+from github_sync import SyncService
+from notryn_license import LicenseProblem
 from notryn_version import VERSION
 
 HERE=Path(__file__).resolve().parent
@@ -62,6 +64,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,self.server.store.read(param('brain'),param('path')))
             if parsed.path=='/api/theme':
                 return self.send(200,omarchy_theme())
+            if parsed.path=='/api/sync':
+                return self.send(200,self.server.sync.describe())
             target=(WEB/('index.html' if parsed.path=='/' else unquote(parsed.path).lstrip('/'))).resolve()
             if not target.is_relative_to(WEB.resolve()) or not target.is_file():
                 return self.send(404,{'error':'Not found.'})
@@ -122,6 +126,35 @@ class Handler(BaseHTTPRequestHandler):
                 # makes a newly connected Brain usable immediately, without a
                 # second state request racing the first graph load in the shell.
                 return self.send(201,{'brain':brain,'graph':self.server.store.graph(brain['id'])})
+            if self.path=='/api/sync/account':
+                if body.get('action')=='connect':
+                    return self.send(200,self.server.sync.connect_account(body.get('token')))
+                if body.get('action')=='disconnect':
+                    return self.send(200,self.server.sync.disconnect_account())
+                raise Problem('Unknown action.')
+            if self.path=='/api/sync/brain':
+                sync=self.server.sync
+                if body.get('action')=='configure':
+                    return self.send(200,sync.configure(body.get('brain'),body.get('repo'),body.get('interval'),body.get('onOpen') is True,body.get('confirmPublic') is True))
+                if body.get('action')=='schedule':
+                    return self.send(200,sync.update_schedule(body.get('brain'),body.get('interval'),body.get('onOpen') is True))
+                if body.get('action')=='stop':
+                    return self.send(200,sync.stop(body.get('brain')))
+                raise Problem('Unknown action.')
+            if self.path=='/api/sync/run':
+                return self.send(200,self.server.sync.sync(body.get('brain')))
+            if self.path=='/api/license':
+                entitlements=self.server.sync.entitlements
+                if body.get('action')=='activate':
+                    try:
+                        entitlements.activate(str(body.get('key') or ''))
+                    except LicenseProblem as exc:
+                        raise Problem(str(exc))
+                elif body.get('action')=='remove':
+                    entitlements.remove()
+                else:
+                    raise Problem('Unknown action.')
+                return self.send(200,self.server.sync.describe())
             if self.path=='/api/notes':
                 result=self.server.store.write(body.get('brain'),body.get('path'),body.get('content'),body.get('revision'))
                 return self.send(200,result)
@@ -147,6 +180,8 @@ def serve(port=4783,data_dir=None,open_browser=False,instance_id=None):
     app.store=Store(data_dir)
     app.token=secrets.token_urlsafe(32)
     app.instance_id=instance_id or secrets.token_urlsafe(24)
+    app.sync=SyncService(app.store)
+    app.sync.start()
     if open_browser:
         import webbrowser
         threading.Timer(.5,webbrowser.open,args=(f'http://127.0.0.1:{port}/',)).start()
@@ -156,6 +191,7 @@ def serve(port=4783,data_dir=None,open_browser=False,instance_id=None):
     except KeyboardInterrupt:
         pass
     finally:
+        app.sync.shutdown()
         app.server_close()
     return 0
 

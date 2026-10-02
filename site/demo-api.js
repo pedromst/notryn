@@ -81,8 +81,8 @@
   }
   function request(url,data){
     const route=url.pathname;
-    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.11'};
-    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.11'};
+    if(route==='/api/state')return {brains,token:'sample-only',version:'0.2.0-beta.12'};
+    if(route==='/api/runtime')return {app:'notryn-demo',version:'0.2.0-beta.12'};
     if(route==='/api/theme')return {available:false};
     if(route==='/api/graph')return graph(url.searchParams.get('brain'));
     if(route==='/api/graph/revision')return {revision:graphRevision(url.searchParams.get('brain')),checkedAt:new Date().toISOString()};
@@ -118,6 +118,8 @@
       }
       fail('This action is unavailable in the demo.');
     }
+    if(route==='/api/sync')return {git:{available:true,version:'demo',help:''},account:{connected:false},storage:'this computer\'s secure credential store',intervals:[0,5,10,15,30,60],license:{paywall:false,allowed:true,checkout:[]},brains:{}};
+    if(route.startsWith('/api/sync')||route==='/api/license')fail('GitHub Sync works in the installed app. These sample notes live only in this browser tab.');
     if(route==='/api/removals/list')return {items:[]};
     if(route==='/api/folders/browse')return browseDemo(data);
     if(route==='/api/notes/reveal')fail('Computer folders are available in the installed app. These sample notes live only in this browser tab.');

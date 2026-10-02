@@ -1,0 +1,75 @@
+/* GitHub Sync: two calm steps, a status line and a small topbar signal. */
+.sync-button{position:relative}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.sync-button .sync-dot{position:absolute;right:5px;top:5px;width:6px;height:6px;border:1px solid var(--bg);display:none}
+.sync-button[data-sync=on] .sync-dot,.sync-button[data-sync=syncing] .sync-dot,.sync-button[data-sync=error] .sync-dot{display:block}
+.sync-button[data-sync=on] .sync-dot,.sync-dot[data-state=ok]{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.sync-button[data-sync=syncing] .sync-dot,.sync-dot[data-state=syncing]{background:var(--amber);animation:sync-pulse 1s ease-in-out infinite alternate}
+.sync-button[data-sync=error] .sync-dot,.sync-dot[data-state=error]{background:var(--theme-error,#e2b8a6)}
+.sync-button[data-sync=off]{color:var(--muted)}
+@keyframes sync-pulse{to{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.sync-button[data-sync=syncing] .sync-dot,.sync-dot[data-state=syncing]{animation:none}}
+
+#sync-dialog{width:600px;padding:26px 28px}
+#sync-dialog[open]{display:flex;flex-direction:column}
+#sync-dialog .dialog-heading{align-items:flex-start;margin-bottom:18px}
+#sync-dialog .dialog-heading p{margin:6px 0 0;color:var(--muted);font-size:10px;line-height:1.75;max-width:460px}
+#sync-body{overflow:auto;min-height:0;margin:0 -6px;padding:0 6px}
+#sync-dialog .dialog-actions{margin-top:20px;flex-shrink:0}
+.sync-step{border:1px solid var(--line);border-radius:11px;padding:16px 17px;background:var(--theme-field,#0b1617);margin-bottom:12px}
+.sync-step.waiting{opacity:.55}
+.sync-step-head{display:flex;align-items:flex-start;gap:12px}
+.sync-step-head strong{display:block;font-size:12px;font-weight:500;color:var(--text);overflow-wrap:anywhere}
+.sync-step-head small{display:block;margin-top:4px;font-size:9px;line-height:1.6;color:var(--muted)}
+.sync-number{display:grid;place-items:center;width:24px;height:24px;flex-shrink:0;border:1px solid var(--theme-edge,var(--line));border-radius:50%;color:var(--accent);font-size:10px}
+.sync-step.done .sync-number{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.sync-guide{margin:16px 0 4px;padding:0;list-style:none;counter-reset:guide}
+.sync-guide li{position:relative;padding:0 0 12px 22px;counter-increment:guide;font-size:10px;line-height:1.7;color:var(--muted)}
+.sync-guide li:before{content:counter(guide,lower-alpha);position:absolute;left:0;top:0;color:var(--accent)}
+.sync-guide a,.sync-guide-title{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-size:11px;text-decoration:none}
+.sync-guide a{color:var(--accent)}.sync-guide a:hover{text-decoration:underline;text-underline-offset:3px}
+.sync-guide a .icon{width:12px;height:12px}
+.sync-guide li>span:last-child{display:block}
+.sync-guide b,.sync-public b{color:var(--text);font-weight:500}
+#sync-dialog .sync-inline{display:flex;flex-direction:row;align-items:stretch;gap:8px;margin:4px 0 0}
+#sync-dialog .sync-inline input{flex:1}
+#sync-dialog .sync-inline button{flex-shrink:0;min-height:0}
+.sync-account{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:11px;color:var(--theme-ink,var(--text));overflow-wrap:anywhere}
+.sync-account .icon{width:15px;height:15px;color:var(--accent)}
+.sync-account span{flex:1;min-width:0}
+.sync-account .secondary,.sync-status .secondary{font-size:10px;min-height:32px;padding:6px 10px;flex-shrink:0}
+#sync-brain-form>label:first-child{margin-top:16px}
+.sync-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end}
+#sync-dialog .sync-options label{margin:0}
+#sync-dialog label.sync-check{flex-direction:row;align-items:flex-start;gap:9px;margin:0;color:var(--theme-ink,var(--text));font-size:10px;line-height:1.6;cursor:pointer;padding-bottom:10px}
+#sync-dialog .sync-check input{width:16px;height:16px;min-width:16px;padding:0;margin:1px 0 0;accent-color:var(--accent)}
+#sync-dialog .sync-public{margin-top:14px;padding:11px 12px;border:1px solid var(--theme-error,#e2b8a6);border-radius:8px}
+#sync-brain-form .form-help{margin:14px 0 0;font-size:10px;line-height:1.7}
+.sync-status{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.sync-status>div{display:flex;align-items:flex-start;gap:9px;font-size:10px;line-height:1.7;color:var(--theme-ink,var(--text));min-width:0;overflow-wrap:anywhere}
+.sync-status .sync-dot{margin-top:5px}
+.sync-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;font-size:10px;line-height:1.7;color:var(--muted)}
+#sync-no-brain{margin:14px 0 0}#sync-no-brain button{flex-shrink:0;white-space:nowrap;font-size:10px;min-height:34px;padding:7px 11px}
+#sync-git{color:var(--amber)}
+.sync-locked{display:grid;gap:12px;margin-bottom:12px;padding:16px 17px;border:1px solid var(--theme-edge,var(--accent));border-radius:11px;background:linear-gradient(135deg,var(--theme-soft,#a7dfc514),transparent 70%)}
+.sync-locked strong{font-size:13px;font-weight:500}.sync-locked p{margin:5px 0 0;font-size:10px;line-height:1.7;color:var(--muted)}
+.sync-plans{display:flex;flex-wrap:wrap;gap:8px}.sync-plan{text-decoration:none;border-radius:7px}
+#sync-error{margin:4px 0 0}
+
+/* Discovery: the Brains hub and the first-run screen point to sync. */
+.brains-sync{display:flex;align-items:center;gap:13px;width:calc(100% - 52px);margin:0 26px 20px;padding:12px 14px;border:1px dashed var(--theme-edge,var(--line));border-radius:11px;text-align:left;justify-content:flex-start}
+.brains-sync>span:nth-child(2){flex:1;min-width:0}.brains-sync strong{display:block;font-size:11px;font-weight:500;color:var(--text)}.brains-sync small{display:block;margin-top:4px;font-size:9px;color:var(--muted);overflow-wrap:anywhere}
+.brains-sync .brain-action-symbol{width:32px;height:32px}.brains-sync>.icon{width:14px;color:var(--muted)}
+.welcome-sync{margin-top:22px;font-size:10px;color:var(--muted);gap:8px;padding:8px 10px}
+.welcome-sync .icon{width:15px;height:15px;color:var(--accent)}
+
+@media(max-width:900px){
+ #sync-dialog{width:calc(100vw - 28px);max-width:620px;max-height:calc(100dvh - 28px);padding:21px 18px}
+ .sync-options{grid-template-columns:1fr}
+ .sync-guide li,.sync-step-head small,.sync-status>div,.sync-notice{font-size:11px}
+ .sync-guide a{font-size:12px}
+ #sync-dialog .sync-inline{flex-direction:column}
+ #sync-dialog .sync-inline button{min-height:42px}
+ .brains-sync{width:calc(100% - 36px);margin:0 18px 16px}
+ .welcome-sync{max-width:285px;line-height:1.6;text-align:left}
+}

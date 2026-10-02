@@ -26,12 +26,12 @@ curl -fsSL https://notryn.com/install.sh | sh
 If the domain is unavailable, use the same versioned installer directly from GitHub:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.11/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.12/install.sh | sh
 ```
 
 The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. Omarchy has been tested; not every distribution is verified.
 
-[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.11)
+[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.12)
 
 ## Everyday commands
 
@@ -55,6 +55,7 @@ Updating downloads the package first and checks its integrity and local server b
 - Rename or move notes and folders while Notryn updates their resolved links.
 - Use the mouse, direct shortcuts or a searchable command menu.
 - Keep a personal notebook or project context for tools that can read Markdown.
+- Keep a Brain the same on several computers with optional [GitHub Sync](docs/SYNC.md), through a private repository you own.
 - Work locally, without a Notryn account, cloud subscription or connected AI model.
 
 [Workspace and keyboard guide](docs/USAGE.md)
@@ -68,11 +69,11 @@ Connected folders stay where you put them. The application, settings and Brains 
 | Linux | `~/.local/lib/notryn` | `$XDG_DATA_HOME/notryn`, normally `~/.local/share/notryn` |
 | macOS | `~/Applications/Notryn.app` | `~/Library/Application Support/Notryn` |
 
-New Brains are stored in the location you choose. Brains created by older versions remain in their existing private-state location. The local server listens only on `127.0.0.1`. Nothing is automatically uploaded to an AI model. Uninstalling keeps your data and retains recoverable application backups. Back up your own folders and private state independently.
+New Brains are stored in the location you choose. Brains created by older versions remain in their existing private-state location. The local server listens only on `127.0.0.1`. Nothing is automatically uploaded to an AI model. Notes leave your computer only if you turn on GitHub Sync for a Brain, and then only to the GitHub repository you choose. Uninstalling keeps your data and retains recoverable application backups. Back up your own folders and private state independently.
 
 ## Current limits
 
-The public beta is still being tested. macOS public signing/notarization and Windows packaging remain pending. There is no cloud sync or built-in generative model. Markdown plugins, HTML execution and full Obsidian plugin compatibility are not included. The index currently has safety limits of 2,000 notes and 1 MB per note.
+The public beta is still being tested. macOS public signing/notarization and Windows packaging remain pending. There is no Notryn cloud or built-in generative model; [GitHub Sync](docs/SYNC.md) needs Git 2.31+ and your own private GitHub repository. Markdown plugins, HTML execution and full Obsidian plugin compatibility are not included. The index currently has safety limits of 2,000 notes and 1 MB per note.
 
 Downloads are hosted on GitHub Releases. Your app runs on your computer and does not depend on the developer's Mac. No install telemetry is collected; GitHub package download counts do not measure unique users or completed installations.
 
@@ -92,4 +93,4 @@ python3 -m unittest discover -s tests -v
 
 [Distribution and trust model](docs/DISTRIBUTION.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Public release checklist](docs/PUBLIC-RELEASE-CHECKLIST.md)
 
-Copyright 2026 Pedro Teixeira. [PolyForm Shield 1.0.0](LICENSE) permits free use for allowed purposes, including use within businesses, and restricts competing products. This is source-available, not an OSI open-source license. Third-party components retain their [own licenses](THIRD_PARTY_NOTICES.md). Optional paid sync may come later. [Contribution terms](CONTRIBUTOR-AGREEMENT.md).
+Copyright 2026 Pedro Teixeira. [PolyForm Shield 1.0.0](LICENSE) permits free use for allowed purposes, including use within businesses, and restricts competing products. This is source-available, not an OSI open-source license. Third-party components retain their [own licenses](THIRD_PARTY_NOTICES.md). GitHub Sync is free during the beta and may become an optional paid feature later ([maintainer notes](docs/PAYMENTS.md)). [Contribution terms](CONTRIBUTOR-AGREEMENT.md).
