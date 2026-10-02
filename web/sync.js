@@ -21,7 +21,12 @@ window.NotrynSync=(()=>{
   const button=$('#open-sync');if(!button)return;
   if(on){activeUntil=Math.max(activeUntil,Date.now()+ms);button.classList.add('sync-active');}
   clearTimeout(activeTimer);
-  activeTimer=setTimeout(()=>{if(brainSync()?.state==='syncing'||busyRun)return activity(false);button.classList.remove('sync-active');},Math.max(0,activeUntil-Date.now()));
+  const settle=()=>{
+   // Re-check calmly while a sync is still running; never spin.
+   if(busyRun||brainSync()?.state==='syncing'||Date.now()<activeUntil){activeTimer=setTimeout(settle,Math.max(400,activeUntil-Date.now()));return;}
+   button.classList.remove('sync-active');
+  };
+  activeTimer=setTimeout(settle,Math.max(400,activeUntil-Date.now()));
  }
  let busyRun=false;
  function notice(sync){

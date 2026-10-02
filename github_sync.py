@@ -457,8 +457,8 @@ class SyncService:
         elif (root / '.git').is_symlink() or not (root / '.git').is_dir():
             raise Problem('This Brain uses a linked Git folder that Notryn cannot manage.', 409)
         current_branch = git.run('symbolic-ref', '-q', '--short', 'HEAD', check=False).stdout.strip()
-        if current_branch and current_branch != config['branch'] and self.head(git) is None:
-            # A repository without commits (for example "git init" on master) has nothing to protect.
+        if current_branch and current_branch != config['branch'] and self.head(git) is None and not git.out('for-each-ref', '--count=1', 'refs/heads', 'refs/tags'):
+            # A repository with no commits on any ref (for example "git init" on master) has nothing to protect.
             git.run('symbolic-ref', 'HEAD', 'refs/heads/' + config['branch'])
             current_branch = config['branch']
         if current_branch != config['branch']:
