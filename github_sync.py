@@ -456,6 +456,11 @@ class SyncService:
             git.run('symbolic-ref', 'HEAD', 'refs/heads/' + config['branch'])
         elif (root / '.git').is_symlink() or not (root / '.git').is_dir():
             raise Problem('This Brain uses a linked Git folder that Notryn cannot manage.', 409)
+        current_branch = git.run('symbolic-ref', '-q', '--short', 'HEAD', check=False).stdout.strip()
+        if current_branch != config['branch']:
+            # Never publish another branch (or a detached checkout) into the synced one.
+            shown = current_branch or 'a detached commit'
+            raise Problem(f'This folder is on {shown}, but GitHub Sync uses the branch "{config["branch"]}". Switch the folder to "{config["branch"]}" (git switch {config["branch"]}) and sync again.', 409)
         if (root / '.git' / 'MERGE_HEAD').exists():
             # An interrupted sync left a merge open. Local edits were committed
             # before it began, so aborting returns to them without losing work.

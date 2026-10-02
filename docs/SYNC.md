@@ -32,7 +32,7 @@ You do not need a new repository:
 2. Create the token as above, choosing **your existing repository** under *Only select repositories*.
 3. In **GitHub Sync**, connect the token and type your existing repository (`your-name/my-notes`), then **Start syncing**.
 
-Nothing is overwritten; both sides are merged. Notryn adds its own `notryn` remote and leaves `origin` and Obsidian Git alone. If Obsidian Git also runs on the same computer, turn off its automatic sync so both apps do not sync at the same moment.
+Nothing is overwritten; both sides are merged. Notryn syncs the repository's main (default) branch; if the folder is checked out on another branch, it stops and asks you to switch first. Notryn adds its own `notryn` remote and leaves `origin` and Obsidian Git alone. If Obsidian Git also runs on the same computer, turn off its automatic sync so both apps do not sync at the same moment.
 
 ## Every other computer
 
@@ -41,6 +41,10 @@ Nothing is overwritten; both sides are merged. Notryn adds its own `notryn` remo
 3. Open **GitHub Sync**, connect a token (the same one, or a new one for that computer) and choose the **same repository**. Your notes arrive on the first sync.
 
 If the folder already had notes, both sides are merged: nothing is overwritten.
+
+## Several Brains
+
+Each Brain syncs with its own repository, and you can sync as many as you like. For a new Brain, create another private repository (or use an existing one), add it to your token on GitHub (open the token → **Edit** → add the repository → save), then open GitHub Sync in that Brain and type its repository. The token on this computer does not need to be reconnected.
 
 ## How a sync works
 
