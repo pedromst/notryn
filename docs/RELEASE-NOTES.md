@@ -2,7 +2,7 @@
 
 Clearer GitHub Sync setup and a cloud that shows when your notes move.
 
-- **Two clear options.** Setup now asks where your notes live: *Option 1* creates a new private repository, *Option 2* uses the repository you already have, for example from Obsidian Git or another computer. The token steps follow for both.
+- **Two clear options.** Setup now asks where your notes live: *Option 1* creates a new private repository, *Option 2* uses a repository you already have. The token steps follow for both.
 - **A living cloud.** While notes are sent or received, the top-bar cloud turns blue and fills up. Background syncs show a short message when changes arrive or are sent, or when something goes wrong.
 - **Safer with existing repositories.** If the folder is checked out on another Git branch, sync stops and asks you to switch, so a side branch is never pushed into your main notes. An empty repository created on another branch name is adopted automatically.
 - **Several Brains.** The help page explains syncing many Brains, one repository each, with a single token.
