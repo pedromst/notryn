@@ -175,7 +175,8 @@ class Git:
         self.identity = identity or {}
 
     def env(self):
-        config = [('credential.helper', ''), ('core.quotePath', 'false'), ('commit.gpgSign', 'false'),
+        config = [('credential.helper', ''), ('core.quotePath', 'false'), ('core.autocrlf', 'false'),
+                  ('commit.gpgSign', 'false'),
                   ('push.negotiate', 'false'), ('advice.detachedHead', 'false')]
         if self.token:
             basic = base64.b64encode(('x-access-token:' + self.token).encode()).decode()

@@ -66,14 +66,22 @@ class SyncTests(unittest.TestCase):
         self.assertNotIn(TOKEN, description)
         self.assertEqual(service.describe()['account']['login'], 'ana')
         secret = store.home / 'secrets' / 'github.json'
-        self.assertEqual(secret.stat().st_mode & 0o777, 0o600)
-        self.assertEqual(secret.parent.stat().st_mode & 0o777, 0o700)
+        self.assertTrue(secret.is_file())
+        if os.name != 'nt':
+            self.assertEqual(secret.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(secret.parent.stat().st_mode & 0o777, 0o700)
         self.assertNotIn(TOKEN, (store.home / 'sync.json').read_text())
         self.assertNotIn(TOKEN, store.config.read_text())
         service.disconnect_account()
         self.assertFalse(secret.exists())
         with self.assertRaises(Problem):
             service.connect_account('not-a-token')
+
+    def test_windows_token_backend_is_a_private_file(self):
+        if sys.platform != 'win32':
+            self.skipTest('Windows Credential Manager is only probed on Windows.')
+        self.assertEqual(SecretStore.detect(), 'file')
+        self.assertNotIn('Credential', SecretStore.label(SecretStore.detect()))
 
     def test_token_is_not_stored_in_git_config(self):
         store, service, brain = self.device('one')

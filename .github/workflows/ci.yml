@@ -24,3 +24,68 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: python -m unittest discover -s tests -v
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Keep repository line endings
+        shell: pwsh
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        shell: pwsh
+        run: npm ci
+      - name: Node tests
+        shell: pwsh
+        run: npm test
+      - name: Python tests
+        shell: pwsh
+        run: python -m unittest discover -s tests -v
+      - name: Build unsigned Windows package
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\build.ps1
+      - name: Exercise installer against the built package
+        shell: powershell
+        run: |
+          $version = python -c "from notryn_version import VERSION; print(VERSION)"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\test-install.ps1 -Package "dist\Notryn-$version-windows-x86_64.zip" -ChecksumFile "dist\Notryn-$version-windows-x86_64.zip.sha256" -Smoke "$PWD\scripts\windows-smoke.py"
+      - name: Exercise update and rollback on the built package
+        shell: pwsh
+        run: |
+          $version = python -c "from notryn_version import VERSION; print(VERSION)"
+          python scripts/test-package.py "dist/Notryn-$version-windows-x86_64.zip"
+      - name: Exercise the Electron window
+        shell: powershell
+        run: |
+          $version = python -c "from notryn_version import VERSION; print(VERSION)"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\gui-smoke.ps1 -Package "dist\Notryn-$version-windows-x86_64.zip" -Screenshot "$PWD\dist\windows-gui.png" -Smoke "$PWD\scripts\windows-smoke.py"
+      - name: Scan the package with Windows Defender
+        shell: powershell
+        run: |
+          $version = python -c "from notryn_version import VERSION; print(VERSION)"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\defender-scan.ps1 -Package "dist\Notryn-$version-windows-x86_64.zip" -Report "$PWD\dist\defender-scan.txt"
+      - name: Dry-run the Windows release assets
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\release-dry-run.ps1 -Dist "$PWD\dist" -Report "$PWD\dist\release-dry-run.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-package
+          if-no-files-found: ignore
+          path: |
+            dist/*.zip
+            dist/*.sha256
+            dist/windows-gui.png
+            dist/defender-scan.txt
+            dist/release-dry-run.txt

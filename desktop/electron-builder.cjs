@@ -27,4 +27,12 @@ module.exports = {
     target: [{ target: 'AppImage', arch: ['x64'] }],
     artifactName: 'Notryn-${version}-linux-x86_64.AppImage',
   },
+  win: {
+    // Unsigned beta zip. Skipping the executable editor avoids the winCodeSign
+    // download, which fails when Windows cannot create its internal symlinks.
+    target: [{ target: 'zip', arch: ['x64'] }],
+    artifactName: 'Notryn-${version}-windows-x86_64.zip',
+    signAndEditExecutable: false,
+    verifyUpdateCodeSignature: false,
+  },
 };

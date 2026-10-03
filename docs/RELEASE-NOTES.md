@@ -17,7 +17,7 @@ Install: https://notryn.com/guide.html
 
 Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.13/install.sh
 
-Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
+Linux x86_64, experimental macOS Intel/Apple silicon, and unsigned Windows x64 (beta) packages include installation, update, rollback and uninstall. Windows (beta): `irm https://notryn.com/install.ps1 | iex`. Linux ARM remains unavailable. The Windows build is not code-signed. SmartScreen: choose More info, then Run anyway.
 
 Save and quit before updating. Keep your own note backups. macOS packages are ad-hoc signed and not Apple-notarized; macOS may block them. Do not disable Gatekeeper. The index currently supports up to 2,000 notes, up to 1 MB each.
 

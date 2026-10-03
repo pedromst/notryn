@@ -11,7 +11,32 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
-from notryn_install import Installation, Releases, safe_extract, version_key, https_context
+from notryn_install import Installation, Releases, host_target, safe_extract, version_key, https_context
+
+
+class WindowsFixture:
+    """Two Windows zips. update() follows the installed beta to the newer one."""
+
+    private = False
+
+    def __init__(self, folder):
+        self.folder = Path(folder)
+        self.version = '0.2.0-beta.2'
+        for version in ('0.2.0-beta.1', '0.2.0-beta.2'):
+            archive = self.folder / f'Notryn-{version}-windows-x86_64.zip'
+            root = f'Notryn-{version}'
+            with zipfile.ZipFile(archive, 'w') as package:
+                package.writestr(f'{root}/Notryn.exe', b'gui-' + version.encode())
+                package.writestr(f'{root}/resources/notryn/notryn.exe', version.encode())
+
+    def release(self, version=None, prerelease=False):
+        chosen = version or self.version
+        self.version = chosen
+        return {'tag_name': 'v' + chosen}
+
+    def download(self, release, name, directory):
+        version = release['tag_name'].removeprefix('v')
+        return self.folder / f'Notryn-{version}-windows-x86_64.zip'
 
 
 class FixtureReleases:
@@ -214,6 +239,47 @@ class InstallerTests(unittest.TestCase):
                     if name.endswith('file'):archive.addfile(member)
                 with self.assertRaises(RuntimeError):safe_extract(path,self.root/'out','Notryn')
         self.assertFalse((self.root/'outside').exists())
+
+    def test_windows_x64_is_a_beta_target(self):
+        with patch('notryn_install.platform.system', return_value='Windows'), patch('notryn_install.platform.machine', return_value='AMD64'):
+            self.assertEqual(host_target(), ('windows', 'x86_64'))
+
+    def test_windows_notes_stay_outside_the_app_folder(self):
+        install = Installation(self.root / 'Win user', ('windows', 'x86_64'))
+        self.assertEqual(install.app, install.home / 'AppData/Local/Notryn/app')
+        self.assertEqual(install.data, install.home / 'AppData/Local/Notryn')
+        self.assertFalse(install.data.is_relative_to(install.app))
+        self.assertEqual(install.backups, install.data / '.notryn-backups')
+
+    def test_windows_update_keeps_the_previous_folder_and_rollback_switches_back(self):
+        install = Installation(self.root / 'Win user', ('windows', 'x86_64'), self.root / 'win-data')
+        install.data.mkdir()
+        note = install.data / 'brains.json'
+        note.write_text('{"kept": true}', encoding='utf-8')
+        fixture = WindowsFixture(self.root)
+        fixture.version = '0.2.0-beta.1'
+        with patch.object(install, 'verify_app'):
+            install.install(fixture)
+            self.assertEqual(install.sidecar.read_bytes(), b'0.2.0-beta.1')
+            fixture.version = '0.2.0-beta.2'
+            with patch('notryn_install.Releases', return_value=fixture):
+                install.update()
+            self.assertEqual(install.manifest()['version'], '0.2.0-beta.2')
+            self.assertEqual(install.sidecar.read_bytes(), b'0.2.0-beta.2')
+            previous = install.backups / install.manifest()['previous']
+            self.assertTrue(previous.is_dir())
+            self.assertEqual((previous / 'resources/notryn/notryn.exe').read_bytes(), b'0.2.0-beta.1')
+            self.assertFalse(previous.is_relative_to(install.app))
+            install.rollback()
+            self.assertEqual(install.manifest()['version'], '0.2.0-beta.1')
+            self.assertEqual(install.sidecar.read_bytes(), b'0.2.0-beta.1')
+            kept = install.backups / install.manifest()['previous']
+            self.assertEqual((kept / 'resources/notryn/notryn.exe').read_bytes(), b'0.2.0-beta.2')
+            install.rollback()
+            self.assertEqual(install.manifest()['version'], '0.2.0-beta.2')
+            self.assertEqual(install.sidecar.read_bytes(), b'0.2.0-beta.2')
+        self.assertEqual(note.read_text(encoding='utf-8'), '{"kept": true}')
+        self.assertIn('notryn.exe', install.bin.read_text(encoding='utf-8'))
 
     def test_zip_internal_framework_link_and_escaping_link(self):
         for target, valid in [('Versions/A', True),('../../outside',False)]:

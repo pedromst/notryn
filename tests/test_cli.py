@@ -11,10 +11,11 @@ class CliTests(unittest.TestCase):
     def test_random_instance_starting_with_hyphen_reaches_server_unchanged(self):
         for frozen in (False, True):
             with self.subTest(frozen=frozen), patch('sys.frozen', frozen, create=True):
-                command = process_command('serve', Path('/tmp/test state'), 4783, '-random-token')
+                home = Path('/tmp/test state')
+                command = process_command('serve', home, 4783, '-random-token')
                 parsed = parser().parse_args(command[1 if frozen else 2:])
                 self.assertEqual(parsed.instance, '-random-token')
-                self.assertEqual(parsed.data_dir, '/tmp/test state')
+                self.assertEqual(parsed.data_dir, str(home))
                 self.assertEqual(parsed.command, 'serve')
 
     def test_platform_data_directories_and_override(self):
@@ -38,8 +39,8 @@ class CliTests(unittest.TestCase):
             before = (source / 'brains.json').read_bytes()
             self.assertTrue(copy_state(source, destination))
             self.assertEqual((source / 'brains.json').read_bytes(), before)
-            migrated = json.loads((destination / 'brains.json').read_text())
-            self.assertEqual(migrated['root'], str(destination.resolve() / 'brains' / 'brain-id'))
+            migrated = json.loads((destination / 'brains.json').read_text(encoding='utf-8'))
+            self.assertEqual(Path(migrated['root']).resolve(), (destination / 'brains' / 'brain-id').resolve())
             self.assertFalse(copy_state(source, destination))
 
     def test_state_migration_refuses_symbolic_links(self):

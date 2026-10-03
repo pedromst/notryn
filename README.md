@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/pedromst/notryn/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/pedromst/notryn?include_prereleases&label=release"></a>
   <a href="LICENSE"><img alt="License: PolyForm Shield 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue"></a>
-  <a href="#install"><img alt="Platforms: Linux and macOS beta" src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20beta-lightgrey"></a>
+  <a href="#install"><img alt="Platforms: Linux, macOS beta, Windows beta" src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20beta%20%7C%20Windows%20beta-lightgrey"></a>
   <a href="https://notryn.com"><img alt="Website: notryn.com" src="https://img.shields.io/badge/website-notryn.com-2ea44f"></a>
 </p>
 
@@ -19,20 +19,28 @@ A local Markdown app for notes and projects. Use your mouse or keyboard. The fil
 
 ## Install
 
-Linux first, then macOS. The installer detects your computer, downloads the matching desktop app, verifies its checksum and creates the launcher. Python and Node.js are bundled; you do not need to install them to run Notryn.
+Linux first, then macOS, then Windows (beta). The installer detects your computer, downloads the matching desktop app, verifies its checksum and creates the launcher. Python and Node.js are bundled; you do not need to install them to run Notryn.
 
 | Platform | Package |
 | --- | --- |
 | Linux x86_64, including Omarchy | `.tar.gz` archive, installed for your user |
 | macOS Intel | Desktop app in `~/Applications` |
 | macOS Apple silicon | Native ARM64 package |
-| Windows | Not available yet |
+| Windows (beta) | Unsigned 64-bit zip, installed for your user |
 | iOS / Android | Mobile version in development, no date yet |
 
 Run as your normal user, after saving and quitting an older Notryn:
 
+Linux and macOS:
+
 ```sh
 curl -fsSL https://notryn.com/install.sh | sh
+```
+
+Windows (beta), in PowerShell:
+
+```powershell
+irm https://notryn.com/install.ps1 | iex
 ```
 
 If the domain is unavailable, use the same versioned installer directly from GitHub:
@@ -41,7 +49,7 @@ If the domain is unavailable, use the same versioned installer directly from Git
 curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.13/install.sh | sh
 ```
 
-The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. The published Linux download is `Notryn-<version>-linux-x86_64.tar.gz` (for the current beta, `Notryn-0.2.0-beta.13-linux-x86_64.tar.gz`). It is not a standalone AppImage file. The installer checks that archive, unpacks it for your user, and starts the desktop app without requiring FUSE. Omarchy has been tested; not every distribution is verified.
+The installer opens the desktop app when finished. **Windows (beta) is unsigned.** SmartScreen may say it protected your PC: choose **More info**, then **Run anyway**. Windows Defender may also warn. Do not turn Defender off. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. The published Linux download is `Notryn-<version>-linux-x86_64.tar.gz` (for the current beta, `Notryn-0.2.0-beta.13-linux-x86_64.tar.gz`). It is not a standalone AppImage file. The installer checks that archive, unpacks it for your user, and starts the desktop app without requiring FUSE. Omarchy has been tested; not every distribution is verified.
 
 [Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.13)
 
@@ -91,12 +99,13 @@ Connected folders stay where you put them. The application, settings and Brains 
 | --- | --- | --- |
 | Linux | `~/.local/lib/notryn` | `$XDG_DATA_HOME/notryn`, normally `~/.local/share/notryn` |
 | macOS | `~/Applications/Notryn.app` | `~/Library/Application Support/Notryn` |
+| Windows (beta) | `%LOCALAPPDATA%\Notryn\app` | `%LOCALAPPDATA%\Notryn` |
 
 New Brains are stored in the location you choose. Brains created by older versions remain in their existing private-state location. The local server listens only on `127.0.0.1`. Nothing is automatically uploaded to an AI model. Notes leave your computer only if you turn on GitHub Sync for a Brain, and then only to the GitHub repository you choose. Uninstalling keeps your data and retains recoverable application backups. Back up your own folders and private state independently.
 
 ## Current limits
 
-The public beta is still being tested. macOS public signing/notarization and Windows packaging remain pending. There is no Notryn cloud or built-in generative model. [GitHub Sync](docs/SYNC.md) needs Git 2.31+ and your own private GitHub repository. Markdown plugins and HTML execution are not included. The index currently has safety limits of 2,000 notes and 1 MB per note.
+The public beta is still being tested. macOS public signing/notarization remains pending. Windows (beta) is an unsigned package; a real Windows 10/11 PC still needs the manual checklist in `docs/WINDOWS-MANUAL-TEST.md`. There is no Notryn cloud or built-in generative model. [GitHub Sync](docs/SYNC.md) needs Git 2.31+ and your own private GitHub repository. Markdown plugins and HTML execution are not included. The index currently has safety limits of 2,000 notes and 1 MB per note.
 
 Downloads are hosted on GitHub Releases. Your app runs on your computer and does not depend on the developer's Mac. No install telemetry is collected; GitHub package download counts do not measure unique users or completed installations.
 

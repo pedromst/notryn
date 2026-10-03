@@ -13,4 +13,4 @@ Private desktop testing release. Do not announce as a public launch.
 
 See [Install, update and uninstall](https://github.com/pedromst/notryn/blob/main/docs/INSTALL.md) for commands and troubleshooting.
 
-Windows is pending. macOS is ad-hoc signed for private testing; Apple Developer ID signing and notarization are required before the public Mac launch. Integrity checks trust GitHub and HTTPS; they are not an independent publisher signature. License and public website approval remain outstanding.
+Windows (beta) is an unsigned package installed with `irm https://notryn.com/install.ps1 | iex`. macOS is ad-hoc signed for private testing; Apple Developer ID signing and notarization are required before the public Mac launch. Integrity checks trust GitHub and HTTPS; they are not an independent publisher signature. License and public website approval remain outstanding.

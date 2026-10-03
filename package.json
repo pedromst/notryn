@@ -7,7 +7,8 @@
     "test": "node --test tests/*.test.cjs tests/*.test.mjs",
     "desktop:dev": "electron .",
     "package:mac": "packaging/macos/build-alpha.sh",
-    "package:linux": "packaging/linux/build-alpha.sh"
+    "package:linux": "packaging/linux/build-alpha.sh",
+    "package:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File packaging/windows/build.ps1"
   },
   "license": "PolyForm-Shield-1.0.0",
   "dependencies": {
