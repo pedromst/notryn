@@ -191,7 +191,9 @@ def safe_extract(archive, destination, root_name):
             if target is not None:
                 out = destination.joinpath(*path.parts)
                 out.parent.mkdir(parents=True, exist_ok=True)
-                out.symlink_to(target)
+                # Windows needs the directory flag or a link such as Framework/Current
+                # cannot be opened. Other platforms ignore the flag.
+                out.symlink_to(target, target_is_directory=(out.parent / target).is_dir())
         root = (destination / root_name).resolve()
         for name in links:
             if not (destination / name).resolve().is_relative_to(root):

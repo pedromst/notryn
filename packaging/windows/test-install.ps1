@@ -51,7 +51,9 @@ try {
     }
     $Shell = New-Object -ComObject WScript.Shell
     $Target = $Shell.CreateShortcut($Shortcut).TargetPath
-    if ($Target -ne $Gui) { throw "Start Menu shortcut points at '$Target', not '$Gui'." }
+    $TargetFull = (Get-Item -LiteralPath $Target).FullName
+    $GuiFull = (Get-Item -LiteralPath $Gui).FullName
+    if ($TargetFull -ne $GuiFull) { throw "Start Menu shortcut points at '$TargetFull', not '$GuiFull'." }
 
     $Kept = Join-Path $Root 'brains.json'
     Set-Content -LiteralPath $Kept -Value '{"kept":true}' -Encoding ascii

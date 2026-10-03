@@ -28,7 +28,7 @@ class MoveTests(unittest.TestCase):
         return {p.relative_to(self.root).as_posix(): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
 
     def test_graph_and_reader_share_shortest_unique_path_resolution(self):
-        cases = json.loads((Path(__file__).parent / 'link-resolution.json').read_text())
+        cases = json.loads((Path(__file__).parent / 'link-resolution.json').read_text(encoding='utf-8'))
         for item in cases:
             with self.subTest(item['name']):
                 self.assertEqual(resolve_link(item['target'], item['source'], set(item['paths']), item['kind']), item['expected'])
@@ -141,8 +141,8 @@ class MoveTests(unittest.TestCase):
         self.note('Start.md', '[Go](<Ideas/Olá mundo.md#Olá> "A title")\n[ref]: Ideas/Ol%C3%A1%20mundo.md#part "Title"\n[[Ideas/Olá mundo#Heading|Alias]]\n[Site](https://example.com/Ideas/Olá.md)\n![Map](Ideas/map.png)')
         (self.root / 'Ideas/map.png').write_bytes(b'image')
         self.store.move(self.bid, 'Ideas', 'Projects', 'folder')
-        content = (self.root / 'Start.md').read_text()
-        self.assertIn('<Projects/Ideas/Ol%C3%A1%20mundo.md#Olá> "A title"', content)
+        content = (self.root / 'Start.md').read_text(encoding='utf-8')
+        self.assertIn('<Projects/Ideas/Ol%C3%A1%20mundo.md#Ol\u00e1> "A title"', content)
         self.assertIn('[ref]: Projects/Ideas/Ol%C3%A1%20mundo.md#part "Title"', content)
         # The shortened wikilink remains unique after the folder move.
         self.assertIn('[[Ideas/Olá mundo#Heading|Alias]]', content)

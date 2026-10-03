@@ -122,6 +122,24 @@ def rewrite_links(text, source, new_source, paths, new_paths, relocate):
     return text
 
 
+def rename_path(src, target):
+    """Rename a path, including a case-only change on Windows.
+
+    NTFS treats Path('Case.md') and Path('case.md') as the same file, so a
+    direct rename leaves the old spelling. A two-step rename changes it.
+    """
+    if os.name == 'nt' and os.path.normcase(str(src)) == os.path.normcase(str(target)) and str(src) != str(target):
+        bridge = src.with_name(src.name + '.' + secrets.token_hex(4) + '.notryn-case')
+        src.rename(bridge)
+        try:
+            bridge.rename(target)
+        except OSError:
+            bridge.rename(src)
+            raise
+        return
+    src.rename(target)
+
+
 def rename_item(store, brain_id, source, name, kind, guard=None):
     if not isinstance(source, str):
         raise Problem('Choose a note or folder to rename.')
@@ -157,7 +175,9 @@ def move_item(store, brain_id, source, destination, kind, guard=None, new_name=N
         if kind == 'folder' and (parent == src or parent.is_relative_to(src)):
             raise Problem('A folder cannot be moved inside itself or one of its subfolders.')
         target = parent / (new_name or src.name)
-        if target == src:
+        # Path equality is case-insensitive on Windows, so Case.md == case.md.
+        # Compare the real spelling and treat only an identical path as a no-op.
+        if os.path.normcase(str(target)) == os.path.normcase(str(src)) and target.name == src.name:
             return {'path': source, 'source': source, 'changed': False, 'updatedLinks': 0}
         def occupied():
             if not os.path.lexists(target):
@@ -240,7 +260,7 @@ def move_item(store, brain_id, source, destination, kind, guard=None, new_name=N
         old_removals = copy.deepcopy(store.removals)
         metadata_changed = False
         try:
-            src.rename(target)
+            rename_path(src, target)
             moved = True
             for path, raw in updates.items():
                 atomic(base / relocate(path), raw)
@@ -267,7 +287,7 @@ def move_item(store, brain_id, source, destination, kind, guard=None, new_name=N
                                 raise OSError('Original path is occupied')
                         except FileNotFoundError:
                             pass
-                    target.rename(src)
+                    rename_path(target, src)
                 store.removals = old_removals
                 if metadata_changed:
                     store.persist()
