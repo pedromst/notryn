@@ -133,7 +133,7 @@ The macOS installer writes to `~/Applications/Notryn.app`, not your source check
 - **Port 4783 is occupied:** stop your other Notryn test server before opening the desktop app. The installer tests on a temporary free port and does not kill another process.
 - **Checksum mismatch:** stop and retry the verified release download. Do not bypass the check.
 - **Interrupted installer:** confirm no installer is running. A leftover `installation.lock` folder in the state directory can then be removed; app backups remain in the locations above.
-- **Linux desktop dependencies:** the AppImage includes Electron and Python. The OS still needs a working graphical session and Electron's standard system libraries. Extraction mode avoids requiring FUSE; the installer does not disable Electron's sandbox.
+- **Linux desktop dependencies:** the published package is a `.tar.gz` archive, not a standalone AppImage download. It includes the desktop app and Python. The OS still needs a working graphical session and Electron's standard system libraries. The installer unpacks the archive and starts the desktop app without requiring FUSE. The installer does not disable Electron's sandbox.
 
 ## Hosting and privacy
 

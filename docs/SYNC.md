@@ -1,8 +1,8 @@
 # GitHub Sync
 
-Keep the same Brain on several computers through a **private GitHub repository you own**, similar to the Obsidian Git plugin. Notes travel only between your computers and GitHub. Notryn has no server that receives your notes or your token, and no Notryn account is needed.
+Keep the same Brain on several computers through a **private GitHub repository you own**. Notes travel only between your computers and GitHub. Notryn has no server that receives your notes or your token, and no Notryn account is needed.
 
-GitHub Sync is free during the beta. It may become an optional paid feature in the future to support development. If it does, it will be very affordable, with a one-time option, and the rest of Notryn stays free. Your notes and repository always stay yours.
+Free during the beta. Later, sync may become an optional paid feature at a low price, with a one-time option. The app itself stays free. Your notes and repository always stay yours.
 
 Step-by-step help: https://notryn.com/sync.html
 
@@ -26,7 +26,7 @@ A mobile version of Notryn is in development, with no release date yet. Brains s
 4. Paste the token and press **Connect**. Notryn checks it with GitHub and shows the account it belongs to.
 5. Enter the repository (`your-name/notryn-brain` or its GitHub URL), choose the schedule and press **Start syncing**. Your notes are sent on the first sync.
 
-## Notes already on GitHub (for example Obsidian Git)
+## Notes already on GitHub
 
 You do not need a new repository:
 
@@ -34,7 +34,7 @@ You do not need a new repository:
 2. Create the token as above, choosing **your existing repository** under *Only select repositories*.
 3. In **GitHub Sync**, connect the token and type your existing repository (`your-name/my-notes`), then **Start syncing**.
 
-Nothing is overwritten; both sides are merged. Notryn syncs the repository's main (default) branch; if the folder is checked out on another branch, it stops and asks you to switch first. Notryn adds its own `notryn` remote and leaves `origin` and Obsidian Git alone. If Obsidian Git also runs on the same computer, turn off its automatic sync so both apps do not sync at the same moment.
+Nothing is overwritten; both sides are merged. Notryn syncs the repository's main (default) branch; if the folder is checked out on another branch, it stops and asks you to switch first. Notryn adds its own `notryn` remote and leaves `origin` alone. If another program also syncs the same folder on this computer, turn off its automatic sync so both do not sync at the same moment.
 
 ## Every other computer
 
