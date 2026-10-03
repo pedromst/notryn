@@ -57,6 +57,7 @@ try {
 
     $Kept = Join-Path $Root 'brains.json'
     Set-Content -LiteralPath $Kept -Value '{"kept":true}' -Encoding ascii
+    $Before = [System.IO.File]::ReadAllBytes($Kept)
     & python $Smoke --exe $Sidecar
     if ($LASTEXITCODE -ne 0) { throw "Installed server smoke test failed with exit $LASTEXITCODE." }
 
@@ -64,7 +65,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Uninstall failed with exit $LASTEXITCODE." }
     if (Test-Path -LiteralPath $App) { throw 'Uninstall left the application directory.' }
     if (Test-Path -LiteralPath $Shortcut) { throw 'Uninstall left the Start Menu shortcut.' }
-    if ((Get-Content -LiteralPath $Kept -Raw) -ne '{"kept":true}') { throw 'Uninstall changed the notes file.' }
+    if (-not (Test-Path -LiteralPath $Kept)) { throw 'Uninstall removed the notes file.' }
+    $After = [System.IO.File]::ReadAllBytes($Kept)
+    if ($Before.Length -ne $After.Length -or [Convert]::ToBase64String($Before) -ne [Convert]::ToBase64String($After)) {
+        throw 'Uninstall changed the notes file.'
+    }
     Write-Host 'Installer, shortcut, smoke test and uninstall passed.'
 } finally {
     foreach ($Name in $Names) { [Environment]::SetEnvironmentVariable($Name, $Saved[$Name]) }
