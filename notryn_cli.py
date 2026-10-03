@@ -211,7 +211,10 @@ def copy_state(source, destination):
             content = path.read_text(encoding="utf-8")
             updated = content
             for old in old_paths:
+                # JSON stores Windows paths with escaped backslashes, so a raw
+                # string replace never sees C:\Users\... inside the file.
                 updated = updated.replace(old, new)
+                updated = updated.replace(json.dumps(old)[1:-1], json.dumps(new)[1:-1])
             json.loads(updated)
             path.write_text(updated, encoding="utf-8")
         if destination.exists():

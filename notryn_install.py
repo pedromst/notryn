@@ -191,9 +191,12 @@ def safe_extract(archive, destination, root_name):
             if target is not None:
                 out = destination.joinpath(*path.parts)
                 out.parent.mkdir(parents=True, exist_ok=True)
-                # Windows needs the directory flag or a link such as Framework/Current
-                # cannot be opened. Other platforms ignore the flag.
-                out.symlink_to(target, target_is_directory=(out.parent / target).is_dir())
+                # Archive links are POSIX paths. Windows will not follow a link whose
+                # target still contains '/', and a link to a directory must be marked
+                # as a directory or opening a file through it returns EINVAL.
+                parts = PurePosixPath(target).parts
+                native = os.path.join(*parts) if os.name == 'nt' and parts else target
+                out.symlink_to(native, target_is_directory=out.parent.joinpath(*parts).is_dir())
         root = (destination / root_name).resolve()
         for name in links:
             if not (destination / name).resolve().is_relative_to(root):
