@@ -24,3 +24,47 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: python -m unittest discover -s tests -v
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Keep repository line endings
+        shell: pwsh
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install and test
+        shell: pwsh
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build unsigned Windows package
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\build.ps1
+      - name: Exercise installer against the built package
+        shell: powershell
+        run: |
+          $version = python -c "from notryn_version import VERSION; print(VERSION)"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\test-install.ps1 -Package "dist\Notryn-$version-windows-x86_64.zip" -ChecksumFile "dist\Notryn-$version-windows-x86_64.zip.sha256" -Smoke "$PWD\scripts\windows-smoke.py"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-package
+          if-no-files-found: ignore
+          path: |
+            dist/*.zip
+            dist/*.sha256

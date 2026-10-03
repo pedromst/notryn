@@ -142,7 +142,9 @@ def start_locked(home, port):
         )
     record["pid"] = process.pid
     atomic_json(runtime_path(home), record)
-    for _ in range(50):
+    # Windows Defender can hold a freshly unpacked executable for a while.
+    attempts = 300 if sys.platform == "win32" else 50
+    for _ in range(attempts):
         if probe(record, timeout=0.2):
             return record, True
         if process.poll() is not None:

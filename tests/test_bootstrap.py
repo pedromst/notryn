@@ -1,13 +1,19 @@
 import hashlib
 import os
-import pty
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+try:
+    import pty
+except ImportError:
+    pty = None
+
 SCRIPT = Path(__file__).resolve().parents[1] / 'packaging/install.sh'
 
+@unittest.skipUnless(pty is not None and os.name == 'posix', 'The shell bootstrap is POSIX-only.')
 class BootstrapTests(unittest.TestCase):
     def test_private_bootstrap_verifies_before_execution_and_passes_arguments(self):
         with tempfile.TemporaryDirectory() as temporary:

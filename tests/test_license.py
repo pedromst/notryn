@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -52,7 +53,9 @@ class LicenseTests(unittest.TestCase):
         entitlements.activate(key)
         self.assertTrue(entitlements.allows('github-sync'))
         self.assertFalse(entitlements.allows('something-else'))
-        self.assertEqual(entitlements.path.stat().st_mode & 0o777, 0o600)
+        self.assertTrue(entitlements.path.is_file())
+        if os.name != 'nt':
+            self.assertEqual(entitlements.path.stat().st_mode & 0o777, 0o600)
         self.assertNotIn(key, json.dumps(entitlements.describe('github-sync')))
         entitlements.remove()
         self.assertFalse(entitlements.allows('github-sync'))
