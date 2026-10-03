@@ -15,7 +15,7 @@ while test "$#" -gt 0; do
 done
 printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$' || { echo 'Invalid version.' >&2; exit 2; }
 test "$(id -u)" -ne 0 || { echo 'Run as your normal user, without sudo.' >&2; exit 1; }
-case "$(uname -s)" in Linux) OS=linux ;; Darwin) OS=macos ;; *) echo 'Windows installer is not available yet.' >&2; exit 1 ;; esac
+case "$(uname -s)" in Linux) OS=linux ;; Darwin) OS=macos ;; *) echo 'Windows (beta): irm https://notryn.com/install.ps1 | iex' >&2; exit 1 ;; esac
 case "$(uname -m)" in x86_64|amd64) ARCH=x86_64 ;; arm64|aarch64) ARCH=arm64 ;; *) echo 'Unsupported architecture.' >&2; exit 1 ;; esac
 test "$OS:$ARCH" != linux:arm64 || { echo 'This release supports Linux x86_64; Linux ARM is not yet available.' >&2; exit 1; }
 if test "$PRIVATE" -eq 1; then

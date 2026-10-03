@@ -39,7 +39,35 @@ if (-not $Built) {
     throw "Windows zip was not produced. Found: $($found -join ', ')"
 }
 $Archive = Join-Path $Output $Name
-Copy-Item -LiteralPath $Built.FullName -Destination $Archive -Force
+$StageParent = Join-Path $Build 'zip-root'
+$Stage = Join-Path $StageParent "Notryn-$Version"
+$Extract = Join-Path $Build 'electron-extract'
+foreach ($path in @($StageParent, $Extract)) {
+    if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Recurse -Force }
+}
+New-Item -ItemType Directory -Force -Path $Stage | Out-Null
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::ExtractToDirectory($Built.FullName, $Extract)
+$Gui = Get-ChildItem -LiteralPath $Extract -Recurse -Filter 'Notryn.exe' -File |
+    Where-Object { $_.Directory.Name -ne 'notryn' } |
+    Select-Object -First 1
+if (-not $Gui) { throw 'The Electron zip does not contain Notryn.exe.' }
+Copy-Item -Path (Join-Path $Gui.Directory.FullName '*') -Destination $Stage -Recurse -Force
+$Wrap = Join-Path $Build 'wrap-zip.py'
+@'
+import sys
+import zipfile
+from pathlib import Path
+stage, archive = Path(sys.argv[1]), Path(sys.argv[2])
+if archive.exists():
+    archive.unlink()
+with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as package:
+    for path in stage.rglob("*"):
+        if path.is_file():
+            package.write(path, stage.name + "/" + path.relative_to(stage).as_posix())
+'@ | Set-Content -LiteralPath $Wrap -Encoding ascii
+& python $Wrap $Stage $Archive
+if ($LASTEXITCODE -ne 0) { throw "Could not pack the Windows zip (exit $LASTEXITCODE)." }
 $Hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Archive).Hash.ToLower()
 Set-Content -LiteralPath "$Archive.sha256" -Value "$Hash  $Name" -Encoding ascii
 Write-Output $Archive

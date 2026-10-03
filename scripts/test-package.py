@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='notryn-lifecycle-') as temporary:
     (data / 'brains.json').write_text('{"brains": []}')
     # Existing alpha layout exercises migration plus real backup/rollback.
     installation.app.parent.mkdir(parents=True)
-    legacy = safe_extract(archive, Path(temporary) / 'legacy', 'Notryn-' + VERSION if system == 'linux' else 'Notryn.app')
+    legacy = safe_extract(archive, Path(temporary) / 'legacy', 'Notryn.app' if system == 'macos' else 'Notryn-' + VERSION)
     legacy.rename(installation.app)
     installation.install(BuiltRelease())
     assert run([installation.bin, 'version']) == VERSION

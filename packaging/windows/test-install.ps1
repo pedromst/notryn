@@ -46,7 +46,7 @@ try {
     $Gui = Join-Path $App 'Notryn.exe'
     $Sidecar = Join-Path $App 'resources\notryn\notryn.exe'
     $Shortcut = Join-Path $Menu 'Notryn.lnk'
-    foreach ($Path in @($Gui, $Sidecar, $Shortcut, (Join-Path $Root 'uninstall.ps1'), (Join-Path $Root 'install.json'))) {
+    foreach ($Path in @($Gui, $Sidecar, $Shortcut, (Join-Path $Root 'uninstall.ps1'), (Join-Path $Root 'installation.json'), (Join-Path $Root 'notryn.cmd'))) {
         if (-not (Test-Path -LiteralPath $Path)) { throw "Missing after install: $Path" }
     }
     $Shell = New-Object -ComObject WScript.Shell

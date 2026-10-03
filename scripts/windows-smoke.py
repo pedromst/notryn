@@ -44,9 +44,16 @@ def main():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--zip')
     source.add_argument('--exe')
+    source.add_argument('--port', type=int)
+    parser.add_argument('--brains')
     args = parser.parse_args()
     temporary = tempfile.TemporaryDirectory(prefix='notryn-windows-smoke-')
     try:
+        if args.port:
+            brains = Path(args.brains or (Path(temporary.name) / 'Brains'))
+            brains.mkdir(parents=True, exist_ok=True)
+            exercise(args.port, brains)
+            return
         if args.zip:
             destination = Path(temporary.name) / 'package'
             with zipfile.ZipFile(args.zip) as archive:
@@ -80,31 +87,35 @@ def main():
                 print(server_log.read_text(encoding='utf-8', errors='replace'), file=sys.stderr)
             raise SystemExit(completed.returncode)
         try:
-            status, state = request(port, '/api/state')
-            if status != 200 or not state.get('token'):
-                raise SystemExit('Brain state endpoint did not return a session.')
-            token = state['token']
-            _, created = request(port, '/api/brains', token, {'action': 'create', 'name': 'Smoke', 'path': str(brains)})
-            brain = created['brain']['id']
-            _, saved = request(port, '/api/notes', token, {'brain': brain, 'path': 'Hello.md', 'content': '# Hello from Windows\n', 'revision': None})
-            if saved.get('path') != 'Hello.md':
-                raise SystemExit('Saving the note did not return Hello.md.')
-            _, note = request(port, '/api/note?' + urllib.parse.urlencode({'brain': brain, 'path': 'Hello.md'}))
-            if note.get('content') != '# Hello from Windows\n':
-                raise SystemExit('Read-back content did not match: ' + json.dumps(note))
-            _, graph = request(port, '/api/graph?' + urllib.parse.urlencode({'brain': brain}))
-            paths = [node.get('path') for node in graph.get('nodes', [])]
-            if paths != ['Hello.md']:
-                raise SystemExit('Brain graph did not list the note: ' + json.dumps(paths))
-            on_disk = (brains / 'Smoke' / 'Hello.md').read_text(encoding='utf-8')
-            if on_disk != '# Hello from Windows\n':
-                raise SystemExit('Note file on disk did not match.')
-            print('Smoke test passed.')
+            exercise(port, brains)
         finally:
             subprocess.run([str(sidecar), 'stop', '--data-dir', str(data)], check=False, timeout=30)
             time.sleep(0.2)
     finally:
         temporary.cleanup()
+
+
+def exercise(port, brains):
+    status, state = request(port, '/api/state')
+    if status != 200 or not state.get('token'):
+        raise SystemExit('Brain state endpoint did not return a session.')
+    token = state['token']
+    _, created = request(port, '/api/brains', token, {'action': 'create', 'name': 'Smoke', 'path': str(brains)})
+    brain = created['brain']['id']
+    _, saved = request(port, '/api/notes', token, {'brain': brain, 'path': 'Hello.md', 'content': '# Hello from Windows\n', 'revision': None})
+    if saved.get('path') != 'Hello.md':
+        raise SystemExit('Saving the note did not return Hello.md.')
+    _, note = request(port, '/api/note?' + urllib.parse.urlencode({'brain': brain, 'path': 'Hello.md'}))
+    if note.get('content') != '# Hello from Windows\n':
+        raise SystemExit('Read-back content did not match: ' + json.dumps(note))
+    _, graph = request(port, '/api/graph?' + urllib.parse.urlencode({'brain': brain}))
+    paths = [node.get('path') for node in graph.get('nodes', [])]
+    if paths != ['Hello.md']:
+        raise SystemExit('Brain graph did not list the note: ' + json.dumps(paths))
+    on_disk = (Path(brains) / 'Smoke' / 'Hello.md').read_text(encoding='utf-8')
+    if on_disk != '# Hello from Windows\n':
+        raise SystemExit('Note file on disk did not match.')
+    print('Smoke test passed.')
 
 
 def reparse(name):

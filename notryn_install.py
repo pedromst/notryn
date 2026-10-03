@@ -47,15 +47,20 @@ def version_key(value):
 
 
 def host_target():
-    system = {'Linux': 'linux', 'Darwin': 'macos'}.get(platform.system())
+    system = {'Linux': 'linux', 'Darwin': 'macos', 'Windows': 'windows'}.get(platform.system())
     arch = {'AMD64': 'x86_64', 'x86_64': 'x86_64', 'arm64': 'arm64', 'aarch64': 'arm64'}.get(platform.machine())
+    if system == 'windows' and arch != 'x86_64':
+        raise RuntimeError('Windows (beta) currently supports 64-bit PCs. Linux ARM is not available yet.')
     if not system or not arch or (system == 'linux' and arch != 'x86_64'):
-        raise RuntimeError('This release supports Linux x86_64 and macOS Intel/Apple silicon. Windows is not available yet.')
+        raise RuntimeError('This release supports Linux x86_64, macOS Intel/Apple silicon, and Windows x64 (beta).')
     return system, arch
 
 
 def run(args, **kwargs):
-    result = subprocess.run([str(arg) for arg in args], capture_output=True, text=True, timeout=kwargs.pop('timeout', 120), **kwargs)
+    command = [str(arg) for arg in args]
+    if os.name == 'nt' and command and command[0].lower().endswith('.cmd'):
+        command = ['cmd.exe', '/c', subprocess.list2cmdline(command)]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=kwargs.pop('timeout', 120), **kwargs)
     if result.returncode:
         raise RuntimeError('Command failed: ' + Path(str(args[0])).name + '\n' + (result.stderr or result.stdout).strip()[-1200:])
     return result.stdout.strip()
@@ -207,20 +212,46 @@ def safe_extract(archive, destination, root_name):
 class Installation:
     def __init__(self, home=None, target=None, data=None):
         self.home = Path(home or Path.home()).resolve()
+        explicit_home = home is not None
         self.system, self.arch = target or host_target()
-        self.app = self.home / ('.local/lib/notryn' if self.system == 'linux' else 'Applications/Notryn.app')
+        if self.system == 'linux':
+            self.app = self.home / '.local/lib/notryn'
+            self.bin = self.home / '.local/bin/notryn'
+        elif self.system == 'macos':
+            self.app = self.home / 'Applications/Notryn.app'
+            self.bin = self.home / '.local/bin/notryn'
+        elif self.system == 'windows':
+            local = Path(os.environ['LOCALAPPDATA']) if not explicit_home and os.environ.get('LOCALAPPDATA') else self.home / 'AppData' / 'Local'
+            self.app = local / 'Notryn' / 'app'
+            self.bin = local / 'Notryn' / 'notryn.cmd'
+            roaming = Path(os.environ['APPDATA']) if not explicit_home and os.environ.get('APPDATA') else self.home / 'AppData' / 'Roaming'
+            self.shortcut = roaming / 'Microsoft/Windows/Start Menu/Programs/Notryn.lnk'
+        else:
+            raise RuntimeError('Unsupported platform.')
         self.backups = self.app.parent / '.notryn-backups'
-        self.data = Path(data or os.environ.get('NOTRYN_HOME') or (self.home / 'Library/Application Support/Notryn' if self.system == 'macos' else Path(os.environ.get('XDG_DATA_HOME', self.home / '.local/share')) / 'notryn')).expanduser().resolve()
+        if data is not None:
+            self.data = Path(data).expanduser().resolve()
+        elif os.environ.get('NOTRYN_HOME'):
+            self.data = Path(os.environ['NOTRYN_HOME']).expanduser().resolve()
+        elif self.system == 'macos':
+            self.data = (self.home / 'Library/Application Support/Notryn').resolve()
+        elif self.system == 'windows':
+            self.data = self.app.parent.resolve()
+        else:
+            self.data = (Path(os.environ.get('XDG_DATA_HOME', self.home / '.local/share')) / 'notryn').expanduser().resolve()
         if self.data.is_relative_to(self.app.resolve()) or self.data.is_relative_to(self.backups.resolve()):
             raise RuntimeError('Notes and settings must be outside the application and application-backup folders.')
-        self.bin = self.home / '.local/bin/notryn'
 
     @property
     def sidecar(self):
         return self.sidecar_in(self.app)
 
     def sidecar_in(self, app):
-        return Path(app) / ('sidecar/notryn' if self.system == 'linux' else 'Contents/Resources/notryn/notryn')
+        if self.system == 'linux':
+            return Path(app) / 'sidecar/notryn'
+        if self.system == 'macos':
+            return Path(app) / 'Contents/Resources/notryn/notryn'
+        return Path(app) / 'resources/notryn/notryn.exe'
 
     def manifest_path(self, app=None):
         # Keep management metadata outside signed macOS bundles.
@@ -229,13 +260,13 @@ class Installation:
     def write_manifest(self, value, app=None):
         path = self.manifest_path(app)
         temporary = path.with_name(path.name + '.tmp-' + secrets.token_hex(4))
-        temporary.write_text(json.dumps(value, indent=2) + '\n')
+        temporary.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
         temporary.chmod(0o600)
         os.replace(temporary, path)
 
     def manifest(self, app=None):
         try:
-            value = json.loads(self.manifest_path(app).read_text())
+            value = json.loads(self.manifest_path(app).read_text(encoding='utf-8'))
             version_key(value['version'])
             if value['platform'] != self.system or value['arch'] != self.arch:
                 raise ValueError()
@@ -267,7 +298,12 @@ class Installation:
         try:
             self.stopped()
             # Never follow application/launcher destinations supplied through links.
-            for target in (self.app, self.backups, self.bin, self.home / '.local/share/applications/com.notryn.Notryn.desktop', self.home / '.local/share/icons/hicolor/scalable/apps/notryn.svg'):
+            destinations = [self.app, self.backups, self.bin]
+            if self.system == 'linux':
+                destinations += [self.home / '.local/share/applications/com.notryn.Notryn.desktop', self.home / '.local/share/icons/hicolor/scalable/apps/notryn.svg']
+            elif self.system == 'windows':
+                destinations.append(self.shortcut)
+            for target in destinations:
                 if any(parent.is_symlink() for parent in (target, *target.parents) if parent != self.home.parent):
                     raise RuntimeError('A symbolic link in the installation destination was refused.')
             yield
@@ -278,7 +314,7 @@ class Installation:
         binary = self.sidecar_in(root)
         if not binary.is_file():
             raise RuntimeError('The local server is missing from the package.')
-        shell = root / ('Notryn.AppImage' if self.system == 'linux' else 'Contents/MacOS/Notryn')
+        shell = {'linux': root / 'Notryn.AppImage', 'macos': root / 'Contents/MacOS/Notryn', 'windows': root / 'Notryn.exe'}[self.system]
         if not shell.is_file():
             raise RuntimeError('The desktop application is missing from the package.')
         if self.system == 'macos':
@@ -290,12 +326,16 @@ class Installation:
                 with socket.socket() as sock:
                     sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
                 try:
-                    run([binary, 'start', '--data-dir', temporary, '--port', str(port)], timeout=30)
+                    run([binary, 'start', '--data-dir', temporary, '--port', str(port)], timeout=90 if self.system == 'windows' else 30)
                     run([binary, 'status', '--data-dir', temporary])
                 finally:
                     run([binary, 'stop', '--data-dir', temporary])
 
     def launchers(self):
+        if self.system == 'windows':
+            self.bin.parent.mkdir(parents=True, exist_ok=True)
+            self.bin.write_text('@echo off\r\n"' + str(self.sidecar) + '" %*\r\n', encoding='utf-8')
+            return
         import shlex
         self.bin.parent.mkdir(parents=True, exist_ok=True)
         script = '#!/bin/sh\nexec ' + shlex.quote(str(self.sidecar)) + ' "$@"\n'
@@ -326,7 +366,7 @@ class Installation:
             with tempfile.TemporaryDirectory(prefix='notryn-download-') as temporary:
                 archive = client.download(release, name, temporary)
                 with Progress('Unpacking app'):
-                    root = safe_extract(archive, Path(temporary) / 'unpacked', 'Notryn-' + version if self.system == 'linux' else 'Notryn.app')
+                    root = safe_extract(archive, Path(temporary) / 'unpacked', 'Notryn.app' if self.system == 'macos' else 'Notryn-' + version)
                 with Progress('Checking app'):
                     self.verify_app(root, version)
                 self.app.parent.mkdir(parents=True, exist_ok=True)
@@ -411,6 +451,8 @@ class Installation:
             if self.system == 'linux':
                 for path in ['applications/com.notryn.Notryn.desktop', 'icons/hicolor/scalable/apps/notryn.svg']:
                     (self.home / '.local/share' / path).unlink(missing_ok=True)
+            elif self.system == 'windows':
+                self.shortcut.unlink(missing_ok=True)
             print('Notryn uninstalled. Notes and settings were kept at ' + str(self.data) + '.\nApplication backups were kept at ' + str(self.backups) + '.')
 
     def open(self):
@@ -418,6 +460,8 @@ class Installation:
             raise RuntimeError('Install the desktop application first.')
         if self.system == 'macos':
             subprocess.Popen(['/usr/bin/open', str(self.app)])
+        elif self.system == 'windows':
+            subprocess.Popen([str(self.app / 'Notryn.exe')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:
             environment = os.environ.copy(); environment['APPIMAGE_EXTRACT_AND_RUN'] = '1'
             subprocess.Popen([str(self.app / 'Notryn.AppImage')], env=environment, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

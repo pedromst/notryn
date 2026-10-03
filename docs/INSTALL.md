@@ -1,6 +1,6 @@
 # Install, update and uninstall
 
-Public beta `0.2.0-beta.13`. Linux/Omarchy first; macOS Intel and Apple silicon packages use the same commands. Windows has no installer yet.
+Public beta `0.2.0-beta.13`. Linux/Omarchy first; macOS Intel and Apple silicon packages use the same commands. Windows (beta) is an unsigned 64-bit package.
 
 ## Before installing
 
@@ -11,9 +11,19 @@ Public beta `0.2.0-beta.13`. Linux/Omarchy first; macOS Intel and Apple silicon 
 
 ## Installation
 
+Linux and macOS:
+
 ```sh
 curl -fsSL https://notryn.com/install.sh | sh
 ```
+
+Windows (beta), in PowerShell:
+
+```powershell
+irm https://notryn.com/install.ps1 | iex
+```
+
+The Windows script picks the latest published GitHub release that contains `Notryn-<version>-windows-x86_64.zip`, checks SHA-256, and installs it for the current user. That zip is attached when a release is published. This branch does not publish one.
 
 This downloads and executes the published bootstrap. To inspect it first:
 
@@ -34,6 +44,17 @@ Add `--no-open` to install without opening the app. The bootstrap detects the OS
 During download, the terminal shows the measured percentage, transferred size and average speed. Checking, unpacking and installing each have an animated activity indicator, then a completion mark. Redirected output stays readable as plain progress messages; set `NO_COLOR=1` to disable terminal colours.
 
 On Linux, open **Notryn** from the app menu. On macOS, open **Notryn.app** in your user's **Applications** folder. Running `notryn` opens this same desktop app, not a browser tab.
+
+### Windows (beta)
+
+The package is not code-signed. SmartScreen may say Windows protected your PC. Choose **More info**, then **Run anyway**. Windows Defender may warn about the unsigned app. Do not turn Defender off, and do not remove the download mark by hand. After installation, update and roll back with:
+
+```powershell
+& "$env:LOCALAPPDATA\Notryn\notryn.cmd" update
+& "$env:LOCALAPPDATA\Notryn\notryn.cmd" rollback
+```
+
+Rollback keeps the previous application folder and switches back to it. Notes stay where they are. A second rollback can switch forward again.
 
 ### macOS experimental beta
 
@@ -109,12 +130,12 @@ It does not delete your data or empty Trash. There is no destructive `--purge` f
 
 ## Locations
 
-| Item | Linux | macOS |
-| --- | --- | --- |
-| App | `~/.local/lib/notryn` | `~/Applications/Notryn.app` |
-| App backups | `~/.local/lib/.notryn-backups` | `~/Applications/.notryn-backups` |
-| Command | `~/.local/bin/notryn` | `~/.local/bin/notryn` |
-| Settings, recovery data and older app-created Brains | `$XDG_DATA_HOME/notryn` or `~/.local/share/notryn` | `~/Library/Application Support/Notryn` |
+| Item | Linux | macOS | Windows (beta) |
+| --- | --- | --- | --- |
+| App | `~/.local/lib/notryn` | `~/Applications/Notryn.app` | `%LOCALAPPDATA%\Notryn\app` |
+| App backups | `~/.local/lib/.notryn-backups` | `~/Applications/.notryn-backups` | `%LOCALAPPDATA%\Notryn\.notryn-backups` |
+| Command | `~/.local/bin/notryn` | `~/.local/bin/notryn` | `%LOCALAPPDATA%\Notryn\notryn.cmd` |
+| Settings, recovery data and older app-created Brains | `$XDG_DATA_HOME/notryn` or `~/.local/share/notryn` | `~/Library/Application Support/Notryn` | `%LOCALAPPDATA%\Notryn` |
 
 New Brains are folders in the location selected during creation. Use the same normal user and state location when updating. A custom `NOTRYN_HOME` remains supported for terminal server work; it is not a way to relocate the desktop installation.
 
@@ -134,6 +155,8 @@ The macOS installer writes to `~/Applications/Notryn.app`, not your source check
 - **Checksum mismatch:** stop and retry the verified release download. Do not bypass the check.
 - **Interrupted installer:** confirm no installer is running. A leftover `installation.lock` folder in the state directory can then be removed; app backups remain in the locations above.
 - **Linux desktop dependencies:** the published package is a `.tar.gz` archive, not a standalone AppImage download. It includes the desktop app and Python. The OS still needs a working graphical session and Electron's standard system libraries. The installer unpacks the archive and starts the desktop app without requiring FUSE. The installer does not disable Electron's sandbox.
+- **Windows SmartScreen:** the beta is unsigned. If Windows says it protected your PC, choose **More info**, then **Run anyway**.
+- **Windows Defender:** Defender may flag an unsigned beta. A clean scan on a GitHub runner is not proof for a home PC. Do not turn Defender off to finish installation.
 
 ## Hosting and privacy
 

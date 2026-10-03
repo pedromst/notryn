@@ -27,9 +27,14 @@ jobs:
           - runner: macos-15
             platform: macos
             arch: arm64
+          - runner: windows-latest
+            platform: windows
+            arch: x86_64
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
+      - name: Keep repository line endings
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -42,8 +47,14 @@ jobs:
       - run: npm test
       - run: python -m unittest discover -s tests -v
       - name: Build native package and standalone installer
+        if: matrix.platform != 'windows'
         run: sh packaging/${{ matrix.platform }}/build-alpha.sh
+      - name: Build unsigned Windows package
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging\windows\build.ps1
       - name: Exercise package lifecycle with disposable notes
+        if: matrix.platform != 'windows'
         env:
           NOTRYN_TEST_API_TOKEN: ${{ github.token }}
         run: |
@@ -53,6 +64,12 @@ jobs:
           python scripts/test-package.py "dist/Notryn-$VERSION-${{ matrix.platform }}-${{ matrix.arch }}.$EXT"
           "dist/notryn-setup-${{ matrix.platform }}-${{ matrix.arch }}" --help
           "dist/notryn-setup-${{ matrix.platform }}-${{ matrix.arch }}" --check-downloads
+      - name: Exercise Windows update, rollback and uninstall
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $version = python -c "from notryn_version import VERSION; print(VERSION)"
+          python scripts/test-package.py "dist/Notryn-$version-windows-x86_64.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: notryn-${{ matrix.platform }}-${{ matrix.arch }}

@@ -1,16 +1,63 @@
-# Notryn Windows bootstrap.
+# Notryn Windows (beta) bootstrap.
 # Public use: irm https://notryn.com/install.ps1 | iex
-# The published release asset does not exist until a Windows package is released.
-# CI points this script at a local zip with NOTRYN_INSTALL_PACKAGE.
+# Unsigned beta. SmartScreen may say Windows protected your PC: choose More info, then Run anyway.
+# CI can point this script at a local zip with NOTRYN_INSTALL_PACKAGE.
+# NOTRYN_INSTALL_SELECT_FIXTURE runs the release picker only and installs nothing.
 & {
     $ErrorActionPreference = 'Stop'
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    $Version = '0.2.0-beta.13'
-    if ($env:NOTRYN_INSTALL_VERSION) { $Version = $env:NOTRYN_INSTALL_VERSION.Trim().TrimStart('v') }
-    if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$') {
-        throw 'Invalid version.'
+    function Get-NotrynVersionKey([string]$Value) {
+        if ($Value -match '^v?(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$') {
+            $stage = 3
+            $number = 0
+            if ($Matches[4]) {
+                $stage = @{ alpha = 0; beta = 1; rc = 2 }[$Matches[4]]
+                $number = [int]$Matches[5]
+            }
+            return '{0:D5}.{1:D5}.{2:D5}.{3:D5}.{4:D5}' -f [int]$Matches[1], [int]$Matches[2], [int]$Matches[3], $stage, $number
+        }
+        return $null
     }
+
+    function Select-NotrynWindowsRelease {
+        param($Releases, [string]$Version)
+        $Best = $null
+        $BestKey = ''
+        foreach ($Release in @($Releases)) {
+            if ($Release.draft) { continue }
+            $Tag = [string]$Release.tag_name
+            $Key = Get-NotrynVersionKey $Tag
+            if (-not $Key) { continue }
+            $Ver = $Tag.TrimStart('v')
+            if ($Version -and $Ver -ne $Version.Trim().TrimStart('v')) { continue }
+            $AssetName = "Notryn-$Ver-windows-x86_64.zip"
+            $Asset = @($Release.assets) | Where-Object { $_ -and $_.name -eq $AssetName -and $_.state -eq 'uploaded' } | Select-Object -First 1
+            if (-not $Asset) { continue }
+            if ($Key -le $BestKey) { continue }
+            $Sha = ''
+            if ([string]$Asset.digest -match '^sha256:([0-9a-f]{64})$') { $Sha = $Matches[1] }
+            $BestKey = $Key
+            $Best = [pscustomobject]@{
+                tag = $Tag
+                version = $Ver
+                asset = $AssetName
+                sha256 = $Sha
+                url = "https://github.com/pedromst/notryn/releases/download/$Tag/$AssetName"
+                sha256Url = "https://github.com/pedromst/notryn/releases/download/$Tag/$AssetName.sha256"
+            }
+        }
+        if (-not $Best) { throw 'No published Windows release asset was found.' }
+        return $Best
+    }
+
+    if ($env:NOTRYN_INSTALL_SELECT_FIXTURE) {
+        $Fixture = Get-Content -LiteralPath $env:NOTRYN_INSTALL_SELECT_FIXTURE -Raw -Encoding utf8 | ConvertFrom-Json
+        $Chosen = Select-NotrynWindowsRelease -Releases $Fixture -Version $env:NOTRYN_INSTALL_VERSION
+        Write-Output ($Chosen | ConvertTo-Json -Compress)
+        return
+    }
+
     $Arch = $env:PROCESSOR_ARCHITECTURE
     if ($Arch -notin @('AMD64', 'x64')) {
         throw "This package is for 64-bit Windows. This computer is $Arch."
@@ -20,8 +67,10 @@
     $Menu = if ($env:NOTRYN_INSTALL_START_MENU) { $env:NOTRYN_INSTALL_START_MENU } else { Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs' }
     $App = Join-Path $Root 'app'
     $Shortcut = Join-Path $Menu 'Notryn.lnk'
-    $Manifest = Join-Path $Root 'install.json'
+    $Manifest = Join-Path $Root 'installation.json'
     $Uninstall = Join-Path $Root 'uninstall.ps1'
+    $Launcher = Join-Path $Root 'notryn.cmd'
+    $Backups = Join-Path $Root '.notryn-backups'
 
     function Remove-ReparsePoint([string]$Path) {
         if (-not (Test-Path -LiteralPath $Path)) { return }
@@ -39,24 +88,39 @@
     }
 
     Remove-ReparsePoint $Root
-    $AssetName = "Notryn-$Version-windows-x86_64.zip"
     $Work = Join-Path ([IO.Path]::GetTempPath()) ('notryn-setup-' + [guid]::NewGuid().ToString('n'))
     New-Item -ItemType Directory -Path $Work | Out-Null
     try {
         $Package = $env:NOTRYN_INSTALL_PACKAGE
+        $Version = if ($env:NOTRYN_INSTALL_VERSION) { $env:NOTRYN_INSTALL_VERSION.Trim().TrimStart('v') } else { '' }
         if ($Package) {
             if (-not (Test-Path -LiteralPath $Package)) { throw "Package not found: $Package" }
             $Package = (Resolve-Path -LiteralPath $Package).Path
-            Write-Host "Preparing Notryn $Version for Windows x64 from a local package."
+            if (-not $Version -and [IO.Path]::GetFileName($Package) -match '^Notryn-(.+)-windows-x86_64\.zip$') {
+                $Version = $Matches[1]
+            }
+            if (-not $Version) { throw 'Set NOTRYN_INSTALL_VERSION for this local package.' }
+            Write-Host "Preparing Notryn $Version for Windows x64 (beta) from a local package."
         } else {
-            $Base = "https://github.com/pedromst/notryn/releases/download/v$Version"
-            $Package = Join-Path $Work $AssetName
-            $ChecksumFile = Join-Path $Work "$AssetName.sha256"
-            Write-Host "Preparing Notryn $Version for Windows x64."
+            Write-Host 'Looking up the latest Windows release...'
+            $Headers = @{ 'User-Agent' = 'Notryn installer'; 'Accept' = 'application/vnd.github+json' }
+            $Index = Invoke-RestMethod -Uri 'https://api.github.com/repos/pedromst/notryn/releases?per_page=100' -Headers $Headers
+            $Chosen = Select-NotrynWindowsRelease -Releases $Index -Version $Version
+            $Version = $Chosen.version
+            $Package = Join-Path $Work $Chosen.asset
+            Write-Host "Preparing Notryn $Version for Windows x64 (beta)."
             Write-Host 'Downloading Notryn...'
-            Invoke-WebRequest -Uri "$Base/$AssetName" -OutFile $Package -UseBasicParsing
-            Invoke-WebRequest -Uri "$Base/$AssetName.sha256" -OutFile $ChecksumFile -UseBasicParsing
-            $env:NOTRYN_INSTALL_CHECKSUM_FILE = $ChecksumFile
+            Invoke-WebRequest -Uri $Chosen.url -OutFile $Package -UseBasicParsing
+            if ($Chosen.sha256) {
+                $env:NOTRYN_INSTALL_CHECKSUM = $Chosen.sha256
+            } else {
+                $ChecksumFile = Join-Path $Work "$($Chosen.asset).sha256"
+                Invoke-WebRequest -Uri $Chosen.sha256Url -OutFile $ChecksumFile -UseBasicParsing
+                $env:NOTRYN_INSTALL_CHECKSUM_FILE = $ChecksumFile
+            }
+        }
+        if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$') {
+            throw 'Invalid version.'
         }
 
         $Length = (Get-Item -LiteralPath $Package).Length
@@ -102,11 +166,25 @@
         New-Item -ItemType Directory -Force -Path $Root, $Menu | Out-Null
         Remove-ReparsePoint $Root
         Remove-ReparsePoint $Menu
+        $PreviousName = $null
         if (Test-Path -LiteralPath $App) {
             Remove-ReparsePoint $App
-            Remove-Item -LiteralPath $App -Recurse -Force
+            New-Item -ItemType Directory -Force -Path $Backups | Out-Null
+            Remove-ReparsePoint $Backups
+            $OldVersion = 'legacy'
+            if (Test-Path -LiteralPath $Manifest) {
+                try { $OldVersion = (Get-Content -LiteralPath $Manifest -Raw -Encoding utf8 | ConvertFrom-Json).version } catch { $OldVersion = 'legacy' }
+            }
+            $PreviousName = 'notryn-' + $OldVersion + '-' + [guid]::NewGuid().ToString('n').Substring(0, 12)
+            $Backup = Join-Path $Backups $PreviousName
+            Move-Item -LiteralPath $App -Destination $Backup
+            if (Test-Path -LiteralPath $Manifest) {
+                Copy-Item -LiteralPath $Manifest -Destination ($Backup + '.json')
+            }
         }
         Copy-Item -LiteralPath $Bundle.FullName -Destination $App -Recurse
+        $SidecarPath = Join-Path $App 'resources\notryn\notryn.exe'
+        Set-Content -LiteralPath $Launcher -Value "@echo off`r`n`"$SidecarPath`" %*`r`n" -Encoding ascii
 
         $Shell = New-Object -ComObject WScript.Shell
         $Link = $Shell.CreateShortcut($Shortcut)
@@ -115,7 +193,15 @@
         $Link.Description = 'Notryn'
         $Link.Save()
 
-        @{ version = $Version; sha256 = $Actual } | ConvertTo-Json | Set-Content -LiteralPath $Manifest -Encoding utf8
+        $Record = [ordered]@{
+            version = $Version
+            platform = 'windows'
+            arch = 'x86_64'
+            private = $false
+            previous = $PreviousName
+            sha256 = $Actual
+        }
+        $Record | ConvertTo-Json | Set-Content -LiteralPath $Manifest -Encoding utf8
         @"
 `$ErrorActionPreference = 'Stop'
 `$shortcut = @'
@@ -127,9 +213,13 @@ $App
 `$manifest = @'
 $Manifest
 '@
+`$launcher = @'
+$Launcher
+'@
 if (Test-Path -LiteralPath `$shortcut) { Remove-Item -LiteralPath `$shortcut -Force }
 if (Test-Path -LiteralPath `$app) { Remove-Item -LiteralPath `$app -Recurse -Force }
 if (Test-Path -LiteralPath `$manifest) { Remove-Item -LiteralPath `$manifest -Force }
+if (Test-Path -LiteralPath `$launcher) { Remove-Item -LiteralPath `$launcher -Force }
 Write-Output 'Notryn was uninstalled. Notes and settings were kept in:'
 Write-Output @'
 $Root
@@ -139,6 +229,7 @@ $Root
         Write-Host "Installed Notryn $Version."
         Write-Host "App: $App"
         Write-Host "Start Menu: $Shortcut"
+        Write-Host "Command: $Launcher"
         Write-Host "Uninstall: powershell -NoProfile -ExecutionPolicy Bypass -File `"$Uninstall`""
         if ($env:NOTRYN_INSTALL_NO_OPEN -ne '1') {
             Start-Process -FilePath (Join-Path $App 'Notryn.exe')

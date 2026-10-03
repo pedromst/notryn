@@ -27,7 +27,8 @@ function sidecar() {
 function command(args) {
   return spawnSync(sidecar(), args, {
     encoding: 'utf8',
-    timeout: 15000,
+    // Defender can hold a freshly unpacked Windows executable.
+    timeout: process.platform === 'win32' ? 90000 : 15000,
     env: { ...process.env, NOTRYN_HOME: stateDirectory() },
   });
 }

@@ -2,7 +2,7 @@
 
 ## First phase
 
-Free local desktop app, distributed through GitHub Releases. Linux x86_64 first, macOS x86_64/arm64 next. Windows is explicitly pending until there is a tested package. No cloud login is required by the app. Public downloads do not require authentication. Legacy private installations should run the public bootstrap once.
+Free local desktop app, distributed through GitHub Releases. Linux x86_64 first, macOS x86_64/arm64 next, Windows x64 (beta) unsigned. No cloud login is required by the app. Public downloads do not require authentication. Legacy private installations should run the public bootstrap once.
 
 The domain hosts a small bootstrap at `/install.sh`. It detects the target, obtains a standalone setup executable for the selected release, checks SHA-256 and runs it. Setup validates the app archive against the release asset metadata and runs the new sidecar in disposable state before activation. Updating uses the same installation code bundled in the CLI.
 
@@ -23,14 +23,14 @@ GitHub publishes SHA-256 digests in [release asset metadata](https://docs.github
 
 ## Build and verification
 
-`packaging/linux/build-alpha.sh` and `packaging/macos/build-alpha.sh` build the app and standalone setup. PyInstaller, Electron and editor dependencies are pinned. `scripts/test-package.py` exercises native archives using disposable homes with spaces, start/status/stop, refusal while running, rollback twice and uninstall/data preservation.
+`packaging/linux/build-alpha.sh`, `packaging/macos/build-alpha.sh` and `packaging/windows/build.ps1` build the app. PyInstaller, Electron and editor dependencies are pinned. `scripts/test-package.py` exercises native archives using disposable homes with spaces, start/status/stop, refusal while running, rollback twice and uninstall/data preservation.
 
-The packaging workflow runs on Linux, macOS Intel and macOS ARM64. All package checks must pass before a beta prerelease is created. Existing release tags/assets are never replaced by this workflow. Bump versions in `notryn_version.py`, `package.json`, `package-lock.json`, bootstrap and documentation for another release.
+The packaging workflow runs on Linux, macOS Intel, macOS ARM64 and Windows x64. It publishes only when someone starts it by hand and leaves publish enabled. Existing release tags/assets are never replaced. Bump versions in `notryn_version.py`, `package.json`, `package-lock.json`, bootstrap and documentation for another release. A dry-run in ordinary CI lists the Windows zip and SHA256 file without creating a release.
 
 ## Release policy
 
 Public beta authorized by the project owner on 8 September 2026. The project uses PolyForm Shield 1.0.0 with explicit contributor terms. Build jobs test Linux x86_64 and macOS Intel/ARM64 independently before creating an immutable prerelease.
 
-macOS packages remain experimental and are not Apple-notarized. No security-protection bypass is part of installation. Windows and Linux ARM are not advertised as supported. Physical-device testing across more distributions remains ongoing. Stable macOS release requires Developer ID signing, notarization and fresh-download tests.
+macOS packages remain experimental and are not Apple-notarized. No security-protection bypass is part of installation. Windows (beta) is unsigned: SmartScreen can require More info, then Run anyway, and Defender may warn. Linux ARM is not available. Physical-device testing across more distributions remains ongoing. Stable macOS release requires Developer ID signing, notarization and fresh-download tests. A signed Windows build needs a code-signing certificate, which this beta does not use.
 
 Release asset download counts are aggregate requests, not installations or unique users. There is no app telemetry. See `scripts/download-stats.py`.
