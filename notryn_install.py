@@ -58,8 +58,10 @@ def host_target():
 
 def run(args, **kwargs):
     command = [str(arg) for arg in args]
-    if os.name == 'nt' and command and command[0].lower().endswith('.cmd'):
-        command = ['cmd.exe', '/c', subprocess.list2cmdline(command)]
+    if os.name == 'nt' and command and command[0].lower().endswith(('.cmd', '.bat')):
+        # cmd.exe removes the first and last quote from a /c argument. A path
+        # with spaces needs one extra pair or the launcher is "not recognized".
+        command = 'cmd.exe /c "' + subprocess.list2cmdline(command) + '"'
     result = subprocess.run(command, capture_output=True, text=True, timeout=kwargs.pop('timeout', 120), **kwargs)
     if result.returncode:
         raise RuntimeError('Command failed: ' + Path(str(args[0])).name + '\n' + (result.stderr or result.stdout).strip()[-1200:])
