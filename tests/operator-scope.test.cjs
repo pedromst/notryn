@@ -33,3 +33,12 @@ test('rodapés e privacidade não têm NIF nem nome completo',()=>{
 test('a morada é sempre escrita da mesma forma',()=>{
  for(const p of pages)for(const m of p.text.match(/Rua 8[^<]*/g)||[])assert.equal(m,'Rua 8, n.º 589, 4500-370 Espinho, Portugal',p.file);
 });
+
+const strip=h=>h.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<svg[\s\S]*?<\/svg>/g,' ').replace(/<[^>]+>/g,' ');
+const BRAND=/\b(brands?|branding|branded|trademarks?|trading as|trading name|operated under)\b/i;
+test('páginas legais e rodapés não se declaram marca',()=>{
+ for(const p of pages){
+  if(['contact.html','privacy.html','terms.html'].includes(p.file))assert.equal(strip(p.text).match(BRAND)?.[0]??null,null,p.file);
+  for(const f of p.text.match(/<footer[\s\S]*?<\/footer>/g)||[])assert.equal(strip(f).match(BRAND)?.[0]??null,null,'rodapé em '+p.file);
+ }
+});
