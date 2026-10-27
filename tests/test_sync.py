@@ -11,7 +11,8 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from github_sync import Git, SecretStore, SyncService, parse_repo, explain, GitError
+from unittest import mock
+from github_sync import Git, SecretStore, SyncService, child_env, parse_repo, explain, GitError
 from notryn_license import Entitlements
 from server import Handler
 from store import Problem, Store
@@ -297,6 +298,28 @@ class SyncTests(unittest.TestCase):
         self.assertNotIn(TOKEN, git.scrub('fatal: ' + TOKEN))
         self.assertIn('Contents: Read and write', explain(GitError('remote: Permission to ana/notes.git denied. 403', 128)))
         self.assertIn('not found', explain(GitError('remote: Repository not found.', 128)))
+
+
+class ChildEnvTests(unittest.TestCase):
+    def test_bundled_openssl_never_reaches_git(self):
+        # The launcher (PyInstaller) starts the AppImage (PyInstaller): both bundles leak into the restored path.
+        with tempfile.TemporaryDirectory() as tmp:
+            launcher, appdir, meipass = Path(tmp, 'sidecar/_internal'), Path(tmp, 'appimage'), Path(tmp, 'appimage/notryn/_internal')
+            for folder in (launcher, meipass):
+                folder.mkdir(parents=True)
+                (folder / 'base_library.zip').touch()
+            system = Path(tmp, 'system-lib'); system.mkdir()
+            environ = {'APPDIR': str(appdir), 'LD_LIBRARY_PATH': f'{meipass}:{appdir}/usr/lib:{launcher}',
+                       'LD_LIBRARY_PATH_ORIG': f'{appdir}/usr/lib:{launcher}:{system}'}
+            with mock.patch.dict(os.environ, environ, clear=True), mock.patch.object(sys, 'frozen', True, create=True), \
+                    mock.patch.object(sys, '_MEIPASS', str(meipass), create=True):
+                env = child_env()
+            self.assertEqual(env['LD_LIBRARY_PATH'], str(system))
+            self.assertNotIn('LD_LIBRARY_PATH_ORIG', env)
+            environ['LD_LIBRARY_PATH_ORIG'] = f'{appdir}/usr/lib:{launcher}'
+            with mock.patch.dict(os.environ, environ, clear=True), mock.patch.object(sys, 'frozen', True, create=True), \
+                    mock.patch.object(sys, '_MEIPASS', str(meipass), create=True):
+                self.assertNotIn('LD_LIBRARY_PATH', child_env())
 
 
 class SyncHttpTests(unittest.TestCase):
