@@ -1,21 +1,19 @@
-# Notryn 0.2.0-beta.13
+# Notryn 0.2.0-beta.14
 
-Clearer GitHub Sync setup and a cloud that shows when your notes move.
+GitHub Sync now works on Linux systems with a recent OpenSSL.
 
-- **Two clear options.** Setup now asks where your notes live: *Option 1* creates a new private repository, *Option 2* uses a repository you already have. The token steps follow for both.
-- **A living cloud.** While notes are sent or received, the top-bar cloud turns blue and fills up. Background syncs show a short message when changes arrive or are sent, or when something goes wrong.
-- **Safer with existing repositories.** If the folder is checked out on another Git branch, sync stops and asks you to switch, so a side branch is never pushed into your main notes. An empty repository created on another branch name is adopted automatically.
-- **Several Brains.** The help page explains syncing many Brains, one repository each, with a single token.
+- **Sync fixed on Linux.** On distributions with OpenSSL 3.5 or newer (for example Arch and Omarchy), every sync stopped with "Git could not finish the sync: ... libssl.so.3: version `OPENSSL_3.5.0' not found". Notryn handed its own bundled libraries to Git; Git now always uses your system's OpenSSL.
+- **Nothing to set up again.** Your GitHub account, repositories and sync interval are kept. After updating, open the Brain and sync runs on its own, or press sync once.
 
-Help: https://notryn.com/sync.html
+macOS is not affected by this issue.
 
-Validated with Python, Node and isolated Chromium coverage for the sync flows, branch protection, the transfer animation and desktop/mobile layout.
+Validated with Python and Node tests, including a regression test for the launcher and AppImage library paths, and a reproduction of the failure on Omarchy with OpenSSL 3.6.
 
 Free to use under PolyForm Shield 1.0.0. No account, subscription or note telemetry.
 
 Install: https://notryn.com/guide.html
 
-Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.13/install.sh
+Fallback installer: https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.14/install.sh
 
 Linux x86_64 and experimental macOS Intel/Apple-silicon packages include installation, update, rollback and uninstall commands. Windows and Linux ARM packages remain unavailable.
 
