@@ -51,13 +51,29 @@ def parse_repo(value):
     return text
 
 
+def bundled_library_dir(entry, roots):
+    """True for a folder of libraries shipped with Notryn rather than the system."""
+    path = os.path.realpath(entry)
+    if any(path == root or path.startswith(root + os.sep) for root in roots):
+        return True
+    # Any PyInstaller bundle, such as the launcher that started this AppImage.
+    return os.path.isfile(os.path.join(path, 'base_library.zip'))
+
+
 def child_env(extra=None):
-    """Environment for helper programs, without PyInstaller's private libraries."""
+    """Environment for helper programs, without PyInstaller's private libraries.
+
+    Git and curl must load the system OpenSSL. The launcher is itself a
+    PyInstaller program, so even LD_LIBRARY_PATH_ORIG can point at bundled
+    libraries; those folders are dropped from whatever path is restored.
+    """
     env = dict(os.environ)
     if getattr(sys, 'frozen', False):
         original = env.pop('LD_LIBRARY_PATH_ORIG', None)
-        if original is not None:
-            env['LD_LIBRARY_PATH'] = original
+        roots = [os.path.realpath(root) for root in (getattr(sys, '_MEIPASS', None), env.get('APPDIR')) if root]
+        kept = [entry for entry in (original or '').split(os.pathsep) if entry and not bundled_library_dir(entry, roots)]
+        if kept:
+            env['LD_LIBRARY_PATH'] = os.pathsep.join(kept)
         else:
             env.pop('LD_LIBRARY_PATH', None)
     env.update(extra or {})

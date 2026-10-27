@@ -415,6 +415,13 @@ class Installation:
             subprocess.Popen(['/usr/bin/open', str(self.app)])
         else:
             environment = os.environ.copy(); environment['APPIMAGE_EXTRACT_AND_RUN'] = '1'
+            # Do not hand the launcher's bundled libraries (old OpenSSL) to the app and its git.
+            if getattr(sys, 'frozen', False):
+                original = environment.pop('LD_LIBRARY_PATH_ORIG', None)
+                if original:
+                    environment['LD_LIBRARY_PATH'] = original
+                else:
+                    environment.pop('LD_LIBRARY_PATH', None)
             subprocess.Popen([str(self.app / 'Notryn.AppImage')], env=environment, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 

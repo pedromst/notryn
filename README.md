@@ -38,12 +38,12 @@ curl -fsSL https://notryn.com/install.sh | sh
 If the domain is unavailable, use the same versioned installer directly from GitHub:
 
 ```sh
-curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.13/install.sh | sh
+curl -fsSL https://github.com/pedromst/notryn/releases/download/v0.2.0-beta.14/install.sh | sh
 ```
 
-The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. The published Linux download is `Notryn-<version>-linux-x86_64.tar.gz` (for the current beta, `Notryn-0.2.0-beta.13-linux-x86_64.tar.gz`). It is not a standalone AppImage file. The installer checks that archive, unpacks it for your user, and starts the desktop app without requiring FUSE. Omarchy has been tested; not every distribution is verified.
+The installer opens the desktop app when finished. **macOS packages are experimental: ad-hoc signed, not Apple-notarized.** macOS may block them; do not disable Gatekeeper. Linux requires an x86_64 graphical system with Electron's standard system libraries. The published Linux download is `Notryn-<version>-linux-x86_64.tar.gz` (for the current beta, `Notryn-0.2.0-beta.14-linux-x86_64.tar.gz`). It is not a standalone AppImage file. The installer checks that archive, unpacks it for your user, and starts the desktop app without requiring FUSE. Omarchy has been tested; not every distribution is verified.
 
-[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.13)
+[Full installation guide](docs/INSTALL.md) · [Release notes](docs/RELEASE-NOTES.md) · [Downloads](https://github.com/pedromst/notryn/releases/tag/v0.2.0-beta.14)
 
 ## What you can do
 
